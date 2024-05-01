@@ -1,0 +1,7 @@
+seidart.recipes.seismic\_attenuation module
+===========================================
+
+.. automodule:: seidart.recipes.seismic_attenuation
+   :members:
+   :undoc-members:
+   :show-inheritance:
