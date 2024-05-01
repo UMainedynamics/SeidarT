@@ -36,11 +36,13 @@ jobs:
       
       - name: Generate .rst files for specific Python scripts
         run: |
-          FOLDERS=('routines' 'visualization' 'simulations')
-          for FOLDER in "${FOLDERS[@]}"; do
-            MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/seidart/$FOLDER"
-            sphinx-apidoc -o docs/source $MODULE_PATH -e
-          done
+          MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/seidart
+          sphinx-apidoc -o docs/source $MODULE_PATH -e
+          # FOLDERS=('routines' 'visualization' 'simulations')
+          # for FOLDER in "${FOLDERS[@]}"; do
+          #   MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/seidart/$FOLDER"
+          #   sphinx-apidoc -o docs/source $MODULE_PATH -e
+          # done
       
       - name: Copy files to the source directory
         run: |
