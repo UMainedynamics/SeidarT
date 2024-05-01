@@ -3,10 +3,10 @@ name: Build Sphinx Documentation
 on:
   push:
     branches:
-      - master
+      - [main, master, develop]
   pull_request:
     branches: 
-      - master
+      - [main, master, develop]
       
 jobs:
   build-docs:
