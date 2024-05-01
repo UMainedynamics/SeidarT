@@ -25,16 +25,16 @@ Welcome to SeidarT's documentation!
    
    
    ROUTINES.md
-   seidart.routines.definitions.rst
-   seidart.routines.materials.rst
-   seidart.routines.prjbuild.rst
-   seidart.routines.sourcefunction.rst
-   seidart.routines.prjrun.rst
-   seidart.routines.arraybuild.rst
-   seidart.visualization.imgen.rst
-   seidart.visualization.im2anim.rst
-   seidart.simulations.commond_offset.rst
-   seidart.routines.orientsynth.rst
+   routines.definitions.rst
+   routines.materials.rst
+   routines.prjbuild.rst
+   routines.sourcefunction.rst
+   routines.prjrun.rst
+   routines.arraybuild.rst
+   visualization.imgen.rst
+   visualization.im2anim.rst
+   simulations.commond_offset.rst
+   routines.orientsynth.rst
    
 .. toctree::
    :maxdepth: 2
