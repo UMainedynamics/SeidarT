@@ -1,0 +1,16 @@
+*.dat
+bin/
+docsrc/_build
+SDdata/
+.vscode
+*.fuse_hidden*
+.DS_Store
+src/seidart/fortran/*.so
+src/seidart/fortran/*.mod
+src/seidart.egg-info
+__pycache__
+build/lib.linux-x86_64-cpython-311/
+build/temp.linux-x86_64-cpython-311/
+build/src.linux-x86_64-3.11/seidart/fortran/*
+EXAMPLES/
+dist/
