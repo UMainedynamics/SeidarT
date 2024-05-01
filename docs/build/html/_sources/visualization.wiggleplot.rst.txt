@@ -1,0 +1,7 @@
+visualization.wiggleplot module
+===============================
+
+.. automodule:: visualization.wiggleplot
+   :members:
+   :undoc-members:
+   :show-inheritance:
