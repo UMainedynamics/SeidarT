@@ -66,7 +66,7 @@ class Array:
         else:
             self.is_seismic = False
             self.dt = self.electromag.dt
-            self.gain = self.time_steps
+            self.gain = self.electromag.time_steps
         
          
         # __, self.receivers_xyz = self.loadxyz()
