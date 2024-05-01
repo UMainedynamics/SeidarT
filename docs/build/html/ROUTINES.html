@@ -1,0 +1,369 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Command Line Interface" href="CLI.html" /><link rel="prev" title="1. SeidarT" href="README.html" />
+
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.04.27 -->
+        <title>Standard Routines - SeidarT documentation v1.1.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=437aa6ec" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">SeidarT documentation v1.1.0</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">SeidarT documentation v1.1.0</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">General Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. SeidarT</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Standard Routines <a name="standard-routines"></a></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="png-creation.html">Creating a png file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build-docs.html">Building documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="materials_description.html">Currently available materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="standard-routines-a-name-standard-routines-a">
+<h1>Standard Routines <a name="standard-routines"></a><a class="headerlink" href="#standard-routines-a-name-standard-routines-a" title="Link to this heading">¶</a></h1>
+<!-- ### Table of Contents
+[Standard Routines](#standard-routines)  
+[.prj File](#prj-file)  
+[Domain Inputs](#domain-inputs)  
+[Material Inputs](#material-inputs)  
+[Seismic and EM Inputs](#seismic-and-electromagnetic-inputs)  
+[Attenuation Inputs](#attenuation-input)  
+[Tensor Components](#tensor-components)  
+[Class Definitions](#class-definitions)   --><p>The <em>routines</em> directory contains the primary functionality for building and running models. <em>Bash</em> executables and Python modules are built during the install for many of the scripts found in this directory. Those are:</p>
+<ul class="simple">
+<li><p>prjbuild</p></li>
+<li><p>prjrun</p></li>
+<li><p>sourcefunction</p></li>
+<li><p>arraybuild</p></li>
+</ul>
+<p><em>SeidarT</em> models are built from a .png file where each unique color corresponds to a different material. There is built in support for a limited number of materials, which can be referenced in the <em>materials.py</em> script, however the motivation for building this toolbox is for studying snow and ice so those have much more robust representation. There is room to expand in the material definitions. Building a project starts with <em>prjbuild</em> which creates a comma delimited ‘.prj’ file that contains the domain, material, and model configurations for either a seismic or electromagnetic wave propagation model.</p>
+<section id="prj-file-a-name-project-file-a">
+<h2>.prj File <a name="project-file"></a><a class="headerlink" href="#prj-file-a-name-project-file-a" title="Link to this heading">¶</a></h2>
+<p>In a .prj file, there are 8 categories which can be identified by the line prefix. These are:</p>
+<ul class="simple">
+<li><p>I - PNG image reference</p></li>
+<li><p>D - domain inputs</p></li>
+<li><p>M - material inputs</p></li>
+<li><p>S - seismic model inputs</p></li>
+<li><p>A - attenuation inputs (seismic only)</p></li>
+<li><p>C - seismic tensor components</p></li>
+<li><p>E - electromagnetic model inputs</p></li>
+<li><p>P - permittivity and conductivity tensors</p></li>
+</ul>
+</section>
+<section id="domain-inputs-a-name-domain-inputs-a">
+<h2>Domain Inputs <a name="domain-inputs"></a><a class="headerlink" href="#domain-inputs-a-name-domain-inputs-a" title="Link to this heading">¶</a></h2>
+<p><strong>User defined inputs and defintions</strong><br /><em>dim</em> - This is the dimension of the model which can be 2 or 2.5; default = 2.<br /><em>ny</em> - For 2.5D models, this number must be &gt;=1. Default is ‘n/a’.<br /><em>dx</em> - The spatial step in the x-direction<br /><em>dy</em> - The spatial step in the y-direction<br /><em>dz</em> - The spatial step in the z-direction<br /><em>cpml</em> - the thickness of the Convolutional Perfectly Matched Layer often referred to as the absorbing boundary. Default is 10.</p>
+<p>When building a project from a .png file, the number of spatial steps in the x- and z-directions is autofilled. For a 2.5D model, <strong>dim</strong> needs to be set to 2.5, and <strong>ny</strong> needs a non-zero value. Their are default values that are emplaced but can be changed accordingly. <em>cpml</em> defines the absorbing boundary thickness for all 4 (or 6) borders of the model domain. Less power is absorbed when the model is poorly conditioned such that the source function has a corresponding wavelength that is comparable to or smaller than the spatial step - <strong>dx</strong>, <strong>dy</strong>, or <strong>dz</strong>. One solution is to increase the absorbing boundary thickness or decrease the maximum spatial step.</p>
+</section>
+<section id="material-inputs-a-name-material-inputs-a">
+<h2>Material Inputs <a name="material-inputs"></a><a class="headerlink" href="#material-inputs-a-name-material-inputs-a" title="Link to this heading">¶</a></h2>
+<p>There are 9 fields for each material. These are:</p>
+<ol class="simple">
+<li><p><em>number</em> - the number ID that relates to the color. This is used to relate info from inputs to the image.</p></li>
+<li><p><em>id</em> - this is the string ID of a material found in the material.py dictionary.</p></li>
+<li><p><em>R/G/B</em> - This is a unique RGB color to help the user identify which material belongs here.</p></li>
+<li><p><em>Temperature</em> - the temperature of the material in Celsius.</p></li>
+<li><p><em>Density</em> - the density of the material in g/cm<sup>3.</p></li>
+<li><p><em>Porosity</em> - the percentage of pore space in the material.</p></li>
+<li><p><em>Water_Content</em> - the percentage of the pore space that is water. All other pore space is assumed to be air.</p></li>
+<li><p><em>Anisotropic</em> - A flag whether the material is anisotropic.</p></li>
+<li><p><em>ANG_File</em> - If <em>Anisotropic</em> is True then a file containing the Euler angles in radians for z-x-z transformation needs to be supplied. This could be a .txt. Columns 1-3 in the ANG_File must contain the values for the z-x-z rotation.</p></li>
+</ol>
+</section>
+<section id="seismic-and-electromagnetic-inputs-a-name-model-inputs-a">
+<h2>Seismic and Electromagnetic Inputs <a name="model-inputs"></a><a class="headerlink" href="#seismic-and-electromagnetic-inputs-a-name-model-inputs-a" title="Link to this heading">¶</a></h2>
+<p><em>time_steps</em> - the number of time steps to run the simulation.
+<em>x, y, z</em> - the spatial location of the source in the cartesian reference frame of the model.
+<em>f0</em> - the center frequency of the source function in Hz.
+<em>theta</em> - source rotation in the x-z plane in degrees. A value of 90<sup>o</sup> is a vertical source (i.e. F<sub>x</sub> = 0)<br /><em>phi</em> - source rotation in the x-y plance in degrees. A value of 0<sup>o</sup> has a zero component in the y-direction.</p>
+</section>
+<section id="attenuation-input-a-name-attenuation-inputs-a">
+<h2>Attenuation Input <a name="attenuation-inputs"></a><a class="headerlink" href="#attenuation-input-a-name-attenuation-inputs-a" title="Link to this heading">¶</a></h2>
+</section>
+<section id="tensor-components-a-name-tensor-components-a">
+<h2>Tensor Components <a name="tensor-components"></a><a class="headerlink" href="#tensor-components-a-name-tensor-components-a" title="Link to this heading">¶</a></h2>
+<p>**dt is not passed to the Fortran FDTD code, and is computed from the smallest spatial step and the maximum propagation velocity. Changing this value will alter the plotting axes so it is best to leave it alone.</p>
+<section id="class-definitions-a-name-classes-a">
+<h3>Class Definitions <a name="classes"></a><a class="headerlink" href="#class-definitions-a-name-classes-a" title="Link to this heading">¶</a></h3>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="CLI.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Command Line Interface</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="README.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">1. </span>SeidarT</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Steven Bernsen
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Standard Routines <a name="standard-routines"></a></a><ul>
+<li><a class="reference internal" href="#prj-file-a-name-project-file-a">.prj File <a name="project-file"></a></a></li>
+<li><a class="reference internal" href="#domain-inputs-a-name-domain-inputs-a">Domain Inputs <a name="domain-inputs"></a></a></li>
+<li><a class="reference internal" href="#material-inputs-a-name-material-inputs-a">Material Inputs <a name="material-inputs"></a></a></li>
+<li><a class="reference internal" href="#seismic-and-electromagnetic-inputs-a-name-model-inputs-a">Seismic and Electromagnetic Inputs <a name="model-inputs"></a></a></li>
+<li><a class="reference internal" href="#attenuation-input-a-name-attenuation-inputs-a">Attenuation Input <a name="attenuation-inputs"></a></a></li>
+<li><a class="reference internal" href="#tensor-components-a-name-tensor-components-a">Tensor Components <a name="tensor-components"></a></a><ul>
+<li><a class="reference internal" href="#class-definitions-a-name-classes-a">Class Definitions <a name="classes"></a></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
+    </body>
+</html>
