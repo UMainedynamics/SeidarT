@@ -36,7 +36,7 @@ jobs:
         run: |
           FOLDERS=('routines' 'visualization' 'simulations')
           for FOLDER in "${FOLDERS[@]}"; do
-            MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/$FOLDER" 
+            MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/seidart/$FOLDER"
             sphinx-apidoc -o docs/source $MODULE_PATH -e
           done
       
