@@ -25,16 +25,16 @@ Welcome to SeidarT's documentation!
    
    
    ROUTINES.md
-   routines.definitions.rst
-   routines.materials.rst
-   routines.prjbuild.rst
-   routines.sourcefunction.rst
-   routines.prjrun.rst
-   routines.arraybuild.rst
-   visualization.imgen.rst
-   visualization.im2anim.rst
-   simulations.commond_offset.rst
-   routines.orientsynth.rst
+   routines.definitions
+   routines.materials
+   routines.prjbuild
+   routines.sourcefunction
+   routines.prjrun
+   routines.arraybuild
+   visualization.imgen
+   visualization.im2anim
+   simulations.commond_offset
+   routines.orientsynth
    
 .. toctree::
    :maxdepth: 2
