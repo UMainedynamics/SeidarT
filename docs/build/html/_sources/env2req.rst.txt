@@ -1,7 +1,0 @@
-env2req module
-==============
-
-.. automodule:: env2req
-   :members:
-   :undoc-members:
-   :show-inheritance:

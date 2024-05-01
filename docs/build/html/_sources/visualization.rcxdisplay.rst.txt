@@ -1,7 +1,0 @@
-visualization.rcxdisplay module
-===============================
-
-.. automodule:: visualization.rcxdisplay
-   :members:
-   :undoc-members:
-   :show-inheritance:

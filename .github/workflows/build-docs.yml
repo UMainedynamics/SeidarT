@@ -32,6 +32,7 @@ jobs:
           python -m pip install --upgrade pip 
           pip install recommonmark furo babel beautifulsoup4 commonmark docutils numpy pandas ruamel.yaml
           pip install sphinx sphinx-autodoc-typehints sphinx-rtd-theme sphinxcontrib-applehelp sphinxcontrib-devhelp sphinxcontrib-htmlhelp sphinxcontrib-jquery sphinxcontrib-jsmath sphinxcontrib-qthelp sphinxcontrib-serializinghtml
+          pip install seidart
       
       - name: Generate .rst files for specific Python scripts
         run: |
