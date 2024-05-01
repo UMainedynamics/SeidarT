@@ -1,0 +1,22 @@
+name: seidart
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - pyevtk
+  - python=3.11.8
+  - numpy=1.26.4
+  - pandas
+  - gfortran
+  - libgfortran5
+  - scipy
+  - setuptools
+  - imagemagick
+  - ghostscript
+  - glob2
+  - matplotlib
+  - wheel
+  - pip:
+      - mplstereonet
+      - seidart
