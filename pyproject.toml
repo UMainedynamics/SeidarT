@@ -10,11 +10,11 @@ description = "seidarT is a 2 and 2.5d seismic and electromagnetic modeling suit
 requires-python = ">=3.11"
 readme = "README.md"
 authors = [
-    { name = "Steven Bernsen", email = "spbernsen@alaska.edu"},
+    { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
 ]
 maintainers = [
-    { name = "Steven Bernsen", email = "spbernsen@alaska.edu"},
+    { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
 ]
 dependencies = [
@@ -49,7 +49,7 @@ packages = [
 
 # Optionals
 [project.urls]
-homepage = "https://github.com/sbernsen/SeidarT"
+homepage = "https://github.com/UMainedynamics/SeidarT"
 documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
 

@@ -4,6 +4,7 @@ from glob2 import glob
 import argparse
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from typing import Tuple
 from seidart.routines.definitions import *
 
 # =============================================================================
@@ -319,6 +320,65 @@ class Array:
         
         self.ax.update_datalim( ((0,0),(m, n)))
         plt.show()
+    
+    # -------------------------------------------------------------------------
+    def wiggleplot(
+            self, 
+            receiver_number: int, 
+            plot_complex: bool = False, 
+            plot_background: str = 'none',
+            figure_size: Tuple[float, float] = (8, 5),
+            **kwargs
+        ):
+        '''
+        Plot an individual receiver from the list of the receiver files. Use 
+        indices in the Python reference frame with the first component being 0. 
+        
+        :param receiver_number: Specify the indice of the reciever from the 
+            receiver file to plot.  
+        :type receiver_number: int
+        :param plot_complex: Plot the complex part of the solution if True.
+        :type plot_complex: bool
+        :param plot_background: Specify the plot background color. Default is 
+            transparent.
+        :type plot_background: str
+        :param figure_size: Specify the figure dimensions in inches. Default is
+            (8,5) width and height, respectively.
+        :type figure_size: Tuple[float, float]
+        :param **kwargs: Additional plotting parameters as defined in 
+            matplotlib.pyplot.plot. 
+        :type **kwargs: dict
+        '''
+        default_plotspec = {
+            'linewidth': 2,
+            'linestyle': '-',
+            'color': 'k',
+            'alpha': 1
+        }
+        
+        plot_params = {**default_plotspec, **kwargs}
+        
+        if plot_complex:
+            # Use complex values 
+            dat = self.timeseries_complex[:,n]
+        else:
+            dat = self.timeseries[:,n]
+            
+        timevector = np.arange(0, len(dat) ) * self.dt 
+        
+        self.wigglefig = plt.figure(facecolor='none', figsize = figure_size )
+        self.wiggleax = plt.gca()
+        
+        self.wiggleax.plot(timevector, dat, **plot_params)
+        self.wiggleax.set_facecolor(plot_background)
+        ax.set_xlabel('Two-way travel time (s)')
+        if self.is_seismic:
+            self.wiggleax.set_ylabel('Velocity (m/s)')
+        else:
+            self.wiggleax.set_ylabel('Electric Field (V/m)')
+        
+        plt.tight_layout()
+        
     
     # -------------------------------------------------------------------------
     def save(self):

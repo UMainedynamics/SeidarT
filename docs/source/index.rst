@@ -16,26 +16,22 @@ Welcome to SeidarT's documentation!
    :caption: General Overview
    
    README.md
+   getting_started
+   initialize_project 
+   project_file
+   running_model
+   display_outputs 
+   anisotropic_materials
 
-.. _modules:
+.. _simulations:
 
 .. toctree::
+   :numbered:
    :maxdepth: 2
-   :caption: Module Components:
+   :caption: Simulations
    
-   
-   ROUTINES.md
-   seidart.routines.definitions
-   seidart.routines.materials
-   seidart.routines.prjbuild
-   seidart.routines.sourcefunction
-   seidart.routines.prjrun
-   seidart.routines.arraybuild
-   seidart.visualization.imgen
-   seidart.visualization.im2anim
-   seidart.simulations.commond_offset
-   seidart.routines.orientsynth
-   
+   common_offset
+
 .. toctree::
    :maxdepth: 2
    :caption: Command Line Interface
@@ -47,6 +43,26 @@ Welcome to SeidarT's documentation!
    arraybuild
    im2anim
    
+.. _modules:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Module Components:
+   
+   ROUTINES.md
+   seidart.routines.definitions
+   seidart.routines.materials
+   seidart.routines.prjbuild
+   seidart.routines.sourcefunction
+   seidart.routines.prjrun
+   seidart.routines.arraybuild
+   seidart.routines.orientsynth
+   VISUALIZATION.md
+   seidart.visualization.imgen
+   seidart.visualization.im2anim
+   SIMULATIONS.md
+   seidart.simulations.commond_offset
+
 
 .. toctree::
     :maxdepth: 2
