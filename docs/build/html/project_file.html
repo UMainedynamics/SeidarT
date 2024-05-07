@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="prjbuild" href="prjbuild.html" /><link rel="prev" title="Common Offset" href="common_offset.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Common Offset" href="common_offset.html" /><link rel="prev" title="Creating a project file" href="initialize_project.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Command Line Interface - SeidarT documentation v1.1.0</title>
+        <title>Project File - SeidarT documentation v1.1.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
@@ -171,8 +171,8 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
-<ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Command Line Interface</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
@@ -220,9 +220,169 @@
           </label>
         </div>
         <article role="main">
-          <section id="command-line-interface">
-<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
-<p>The primary <em>SeidarT</em> functionality can be accessed via <em>Bash</em> command line namely: <em>prjbuild</em>, <em>prjrun</em>, <em>sourcefunction</em>, <em>arraybuild</em>, <em>rcxdisplay</em>, <em>im2anim</em>, and <em>orientsynth</em>. This is useful for scripting <em>Bash</em> files. If building outside of the conda environment, ensure that the required dependencies are installed.</p>
+          <section id="project-file">
+<h1>Project File<a class="headerlink" href="#project-file" title="Link to this heading">#</a></h1>
+<div class="table-wrapper colwidths-given docutils container" id="id1">
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Table: .prj File lines and their meanings</span><a class="headerlink" href="#id1" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Line</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">I,fill2.png</span></code></p></td>
+<td><p>The image file associated with this <em>.prj</em> file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D,dim,2</span></code></p></td>
+<td><div class="line-block">
+<div class="line"><strong>Choose either 2D or 2.5D.</strong></div>
+<div class="line">2.5D is the 2D image extruded in the y-direction.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D,nx,240</span></code></p></td>
+<td><p>Read from the image file. Do not change.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D,ny,1</span></code></p></td>
+<td><p><strong>Number of pixels in the extruded direction if using 2.5D.</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D,nz,50</span></code></p></td>
+<td><p>Read from the image file. Do not change.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D,dx,1</span></code></p></td>
+<td><p><strong>Number of meters each pixel represents in the x direction.</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D,dy,1</span></code></p></td>
+<td><p><strong>Number of meters each pixel represents in the y direction.</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D,dz,1</span></code></p></td>
+<td><p><strong>Number of meters each pixel represents in the z direction.</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D,cpml,20</span></code></p></td>
+<td><p><strong>Thickness of absorbing boundary layer. A typical value is 20.</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D,nmats,3</span></code></p></td>
+<td><p>Read from the image file. Do not change.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">D,tfile,</span></code></p></td>
+<td><p>An attenuation processing value that is not yet implemented.</p></td>
+</tr>
+<tr class="row-odd"><td><div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">M,1,ice1h,98/197/178,</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">-10,2,910,0,0,TRUE,</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">test.ang</span></code></div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">One comma-separated-values line per material</div>
+<div class="line">(per color in the model image).</div>
+<div class="line"><strong>User should change/add the material name (see list),</strong></div>
+<div class="line"><strong>temperature (in degrees Celsius), density, porosity, water content,</strong></div>
+<div class="line"><strong>whether the material is anisotropic (TRUE or FALSE),</strong></div>
+<div class="line"><strong>and if anistropic, the name of the anisotropy file.</strong></div>
+<div class="line"><strong>Use a dummy value of 2 for attenuation, recognizing that</strong></div>
+<div class="line"><strong>attenuation is not yet incorporated in the calculations.</strong></div>
+<div class="line">User should not change the material ID or R/G/B values.</div>
+<div class="line">Note: Since large density gradients cause numerical instabilities,</div>
+<div class="line">the density for air must be increased.</div>
+<div class="line">A value of 400.0 works until a better formulation</div>
+<div class="line">of the air-rock interface is implemented.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">S,dt,</span></code></p></td>
+<td><p>Timestep will be calculated automatically.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">S,time_steps,500</span></code></p></td>
+<td><p><strong>Decide how many timesteps you want the model to run.</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">S,x,100</span></code></p></td>
+<td><p><strong>x-coordinate of the seismic source</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">S,y,0</span></code></p></td>
+<td><p><strong>y-coordinate of the seismic source</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">S,z,0</span></code></p></td>
+<td><p><strong>z-coordinate of the seismic source</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">S,f0,60</span></code></p></td>
+<td><p><strong>Frequency of the seismic source</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">S,theta,0</span></code></p></td>
+<td><p><strong>Inclination of the seismic source (+ is down)</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">S,phi,0</span></code></p></td>
+<td><div class="line-block">
+<div class="line"><strong>Angle of seismic source from x-axis in the x-y plane</strong></div>
+<div class="line"><strong>(+ is counterclockwise when viewed from above)</strong></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">C,0.0,</span></code></p></td>
+<td><div class="line-block">
+<div class="line">Stiffness tensor for each material. User <em>can</em></div>
+<div class="line">enter or change this manually if desired. If blank,</div>
+<div class="line">calculated from materials information in the earlier section.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E,dt,</span></code></p></td>
+<td><p>Timestep will be calculated automatically.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E,time_steps,500</span></code></p></td>
+<td><p><strong>Number of timesteps to run the model.</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E,x,100</span></code></p></td>
+<td><p><strong>x-coordinate of the radar source</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E,y,0</span></code></p></td>
+<td><p><strong>y-coordinate of the radar source</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E,z,0</span></code></p></td>
+<td><p><strong>z-coordinate of the radar source</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E,f0,1e8</span></code></p></td>
+<td><div class="line-block">
+<div class="line"><strong>Frequency of the radar source.</strong></div>
+<div class="line"><strong>10-100MHz is a good range to start.</strong></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E,theta,0</span></code></p></td>
+<td><p><strong>Inclination of the radar source (+ is down)</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E,phi,0</span></code></p></td>
+<td><div class="line-block">
+<div class="line"><strong>Angle of radar source from x-axis in the x-y plane</strong></div>
+<div class="line"><strong>(+ is counterclockwise when viewed from above)</strong></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">P,0.0,</span></code></p></td>
+<td><div class="line-block">
+<div class="line">Permittivity tensor for each material.</div>
+<div class="line">User <em>can</em> enter or change this manually if desired.</div>
+<div class="line">If blank, calculated from materials information in the</div>
+<div class="line">earlier section.</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><p><em>orientation file</em></p>
+<blockquote>
+<div><p>A delimited file of one entry of Bunge notation Euler angles per line.
+A typical number of entries is 500 to ensure a smooth data field.</p>
+</div></blockquote>
+</li>
+</ul>
 </section>
 
         </article>
@@ -230,23 +390,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="prjbuild.html">
+          <a class="next-page" href="common_offset.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">prjbuild</div>
+                <div class="title">Common Offset</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="common_offset.html">
+          <a class="prev-page" href="initialize_project.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Common Offset</div>
+                <div class="title">Creating a project file</div>
                 
               </div>
             </a>

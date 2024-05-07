@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="prjbuild" href="prjbuild.html" /><link rel="prev" title="Common Offset" href="common_offset.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Creating a project file" href="initialize_project.html" /><link rel="prev" title="1. SeidarT" href="README.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Command Line Interface - SeidarT documentation v1.1.0</title>
+        <title>Getting Started - SeidarT documentation v1.1.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
@@ -134,7 +134,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -171,8 +171,8 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
-<ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Command Line Interface</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
@@ -214,15 +214,71 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="command-line-interface">
-<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
-<p>The primary <em>SeidarT</em> functionality can be accessed via <em>Bash</em> command line namely: <em>prjbuild</em>, <em>prjrun</em>, <em>sourcefunction</em>, <em>arraybuild</em>, <em>rcxdisplay</em>, <em>im2anim</em>, and <em>orientsynth</em>. This is useful for scripting <em>Bash</em> files. If building outside of the conda environment, ensure that the required dependencies are installed.</p>
+          <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
+<section id="general-workflow">
+<h2>General workflow<a class="headerlink" href="#general-workflow" title="Link to this heading">#</a></h2>
+<p>Using SeidarT follows a relatively simple workflow.</p>
+<ol class="arabic simple">
+<li><p>You need two or three files to start:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>A 2D image saved in <em>png</em> format.</p></li>
+<li><p>A <em>csv</em> file listing the X,Y,Z coordinates of receivers for your survey</p></li>
+<li><p>If your material is anisotropic, you need a file in the format delimited file specifying the</p></li>
+</ul>
+<p>Euler angles for a number of crystals, with one triplet per line. See an example orientation
+file and/or generate one using the <code class="docutils literal notranslate"><span class="pre">orientation_tensor</span></code> function.</p>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>Generate a project file (using <code class="docutils literal notranslate"><span class="pre">prjbuild</span></code>) and edit that text file to set up your survey.</p></li>
+<li><p>Create files describing the radar or seismic source (<code class="docutils literal notranslate"><span class="pre">sourcefunction</span></code>).</p></li>
+<li><p>Choose the style of survey you want to do [single shot, common offset, common midpoint, or (in development) polarimetric] and run the calculations.</p></li>
+<li><p>For single shot, you can create an animation of the wave propagation (<code class="docutils literal notranslate"><span class="pre">im2anim</span></code> for 2D or <code class="docutils literal notranslate"><span class="pre">vtkbuild</span></code> for 2.5D).</p></li>
+<li><p>Display your results as radar- or seismograms, or wiggle plots. You can also save the timeseries-receiver data in a <em>csv</em> file for further processing in different software.</p></li>
+</ol>
+<p>Output from the seismic model is m/s and from the radar model is</p>
+</section>
+<section id="files-to-generate-or-edit">
+<h2>Files to generate or edit<a class="headerlink" href="#files-to-generate-or-edit" title="Link to this heading">#</a></h2>
+<ul>
+<li><p><em>PNG image (.png)</em></p>
+<blockquote>
+<div><p>This defines the geometry of your model system. A good starting size is
+50 to 500 pixels for each direction. Each RGB color represents a different
+material, so <strong>the file must be saved with no antialiasing</strong>. Typically each pixel represents the same distance in x and z (in meters).
+To get started on a new project create a new folder and save the image
+to the folder. From the command line, change directories to the
+project folder then enter the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prjbuild</span> <span class="o">-</span><span class="n">i</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">geometry</span><span class="o">/</span><span class="n">image</span><span class="o">.</span><span class="n">png</span> <span class="o">-</span><span class="n">p</span> <span class="n">project_filename</span><span class="o">.</span><span class="n">prj</span>
+</pre></div>
+</div>
+<p>Below, we describe the <em>prj</em> file structure and how to edit it.</p>
+</div></blockquote>
+</li>
+<li><p><em>receiver locations (text file, commonly receivers.xyz)</em></p>
+<blockquote>
+<div><p>A comma separated list of X,Y,Z coordinates (one set per line,
+with X,Y,Z as the first line) for receiver locations. Can use pixels, but
+more typically meters as the units.</p>
+</div></blockquote>
+</li>
+<li><p><em>project file (.prj)</em></p>
+<blockquote>
+<div><p>This file is the heart of the software. It defines domain values, material properties, and survey conditions for
+electromagnetic and seismic runs. Here, we identify what each line means and which to edit.
+All lines with # are comments. Bold text indicates a line the user should edit.</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
 </section>
 
         </article>
@@ -230,23 +286,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="prjbuild.html">
+          <a class="next-page" href="initialize_project.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">prjbuild</div>
+                <div class="title">Creating a project file</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="common_offset.html">
+          <a class="prev-page" href="README.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Common Offset</div>
+                <div class="title"><span class="section-number">1. </span>SeidarT</div>
                 
               </div>
             </a>
@@ -268,8 +324,28 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#general-workflow">General workflow</a></li>
+<li><a class="reference internal" href="#files-to-generate-or-edit">Files to generate or edit</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

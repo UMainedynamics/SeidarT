@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="prjbuild" href="prjbuild.html" /><link rel="prev" title="Common Offset" href="common_offset.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Project File" href="project_file.html" /><link rel="prev" title="Getting Started" href="getting_started.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Command Line Interface - SeidarT documentation v1.1.0</title>
+        <title>Creating a project file - SeidarT documentation v1.1.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
@@ -171,8 +171,8 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
-<ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Command Line Interface</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
@@ -220,9 +220,17 @@
           </label>
         </div>
         <article role="main">
-          <section id="command-line-interface">
-<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
-<p>The primary <em>SeidarT</em> functionality can be accessed via <em>Bash</em> command line namely: <em>prjbuild</em>, <em>prjrun</em>, <em>sourcefunction</em>, <em>arraybuild</em>, <em>rcxdisplay</em>, <em>im2anim</em>, and <em>orientsynth</em>. This is useful for scripting <em>Bash</em> files. If building outside of the conda environment, ensure that the required dependencies are installed.</p>
+          <section id="creating-a-project-file">
+<h1>Creating a project file<a class="headerlink" href="#creating-a-project-file" title="Link to this heading">#</a></h1>
+<p>A project file can be generating using <em>prjbuild</em>. When</p>
+<dl class="simple">
+<dt>::</dt><dd><p>from seidart.routines.prjbuild import prjbuild
+prjbuild(<em>image_file_path</em>, <em>name_of_project</em>)</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">Checking</span> <span class="n">inputs</span>
+</pre></div>
+</div>
 </section>
 
         </article>
@@ -230,23 +238,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="prjbuild.html">
+          <a class="next-page" href="project_file.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">prjbuild</div>
+                <div class="title">Project File</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="common_offset.html">
+          <a class="prev-page" href="getting_started.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Common Offset</div>
+                <div class="title">Getting Started</div>
                 
               </div>
             </a>
