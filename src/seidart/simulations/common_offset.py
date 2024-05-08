@@ -31,12 +31,16 @@ class CommonOffset(Array):
 
         :param source_file: The source file that contains the source locations
         :type source_file: str
-        :param args: Additional positional arguments inherited from the Array 
-            class.
-        :type args: tuple
-        :param kwargs: Additional keyword arguments inherited from the Array 
-            class.
-        :type kwargs: dict
+        :param channel: The field direction to plot in either V[x,y,z] or E[x,y,z].  
+        :type channel: str
+        :param prjfile: The associated project file. 
+        :type prjfile: str
+        :param receiver_file: The receiver file that contains the receivers locations.
+        :type receiver_file: str
+        :param receiver_indices: If the receiver and source file are provided as indices then this needs to be flagged as True. Default to is in cartesian coordinates.
+        :type receiver_indices: bool
+        :param single_precision: 
+        :type single_precision: bool
 
         """
         # super().__init__(source_file, *args, **kwargs) 
@@ -195,6 +199,13 @@ class CommonOffset(Array):
             self.timeseries = self.co_image
             self.timeseries_complex = self.co_image_complex
 
+    def streamer_run(self):
+        '''
+        Simulate a seismic streamer or multi-offset radar. The outputs for each source location are saved in a m-by-n-by-p where m is the length of the time series, n is the number of source locations, and p is the number of receivers. 
+        
+        The receiver file and source file must be equal length. The number of survey points is going to be the number of source locations minus the number of receivers in the streamer. 
+        '''
+        pass
     # def receiver_timeseries(self):
     #     if self.domain.dim == 2.5:
     #         all_files = glob(
