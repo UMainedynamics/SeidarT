@@ -223,10 +223,14 @@
           <section id="common-offset">
 <h1>Common Offset<a class="headerlink" href="#common-offset" title="Link to this heading">#</a></h1>
 <p>We have wrapped other <em>SeidarT</em> functions into a class that will simulate a common offset survey. Along with the project file and the receiver file, a source location file needs to be provided. The source and receiver files are formatted the same with the same length. Each line in the source file corresponds to the same line in the receiver file. This allows the user to build a survey over topography, and even though it is called common offset, this can be very easily adapted for cross borehole surveys.</p>
-<dl class="simple">
-<dt>::</dt><dd><p>from seidart.simulations.common_offset import CommonOffset</p>
-</dd>
-</dl>
+<p>The general steps to build a common offset profile are:</p>
+<ol class="arabic simple">
+<li><p>Create the receiver and source file. If the source spacing is the same as the source-receiver offset, one way approach is to copy the receiver or source file and delete the first and last set of values for the source and receiver files, respectively. Another approach to creating the source or receiver file is to draw them in the png when building the model. In the <em>seidart.routines.definitions</em> module is the <em>rcxgen</em> function. The given rgb value will create a CSV file of all of the locations where that color is found. This color will have to be defined in the project file but can be a duplicate material.</p></li>
+</ol>
+<p>2. Import the <em>CommonOffset</em> class from simulations.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seidart.simulations.common_offset</span> <span class="kn">import</span> <span class="n">CommonOffset</span>
+</pre></div>
+</div>
 </section>
 
         </article>
