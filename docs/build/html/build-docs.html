@@ -3,12 +3,13 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="Currently available materials" href="materials_description.html" /><link rel="prev" title="Creating a png file" href="png-creation.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Collaboration" href="collaboration.html" /><link rel="prev" title="Creating a png file" href="png-creation.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Building documentation - SeidarT documentation v1.1.0</title>
+        <title>Building documentation - SeidarT documentation v1.3.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
     
     
@@ -123,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v1.1.0</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v1.3.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +147,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v1.1.0</span>
+  <span class="sidebar-brand-text">SeidarT documentation v1.3.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -222,34 +223,28 @@
         <article role="main">
           <section id="building-documentation">
 <h1>Building documentation<a class="headerlink" href="#building-documentation" title="Link to this heading">#</a></h1>
-<p>This documentation is built with Sphinx 3.5.4 and rst2pdf 0.98.</p>
-<p>To build the documentation, ensure you are in the SeidarT conda
-environment, then install the requirements:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx</span><span class="o">==</span><span class="mf">3.5.4</span> <span class="n">sphinx_rtd_theme</span> <span class="n">rst2pdf</span>
+<p>This documentation is built with Sphinx.</p>
+<p>There has been a separate documentation environment to limit the dependencies in <em>SeidarT</em>. The YML file to build the documentation environment is in the root directory of the GitHub repo, <em>documentation-environment.yml</em>. For installing dependencies outside of conda, refer to this document to install the required packages. To build the documentation,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">env</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">documentation</span><span class="o">-</span><span class="n">environment</span><span class="o">.</span><span class="n">yml</span>
 </pre></div>
 </div>
-<p>Then, change directory into <code class="docutils literal notranslate"><span class="pre">docsrc/</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">SeidarT</span><span class="o">/</span><span class="n">docsrc</span>
+<p>This installs required dependencies to build the documentation from <a class="reference external" href="https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html">Sphinx docstrings</a> or for <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">Numpy docstrings</a>. After building the environment, activate it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">documentation</span>
 </pre></div>
 </div>
-<p>Then, use the <code class="docutils literal notranslate"><span class="pre">make</span></code> command to direct Sphinx to build
-the documentation:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">github</span>
+<p>Using the <em>sphinx-apidoc</em> command you can generate the documentation. The source files are in <em>docs/source</em> and the code that we want to generate the autodocs fore is in <em>src/</em> so use the correct relative paths when running the command. For example, from the <em>docs</em> folder, run the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="o">-</span><span class="n">apidoc</span> <span class="o">-</span><span class="n">o</span> <span class="o">./</span><span class="n">source</span> <span class="o">../</span><span class="n">src</span> <span class="o">-</span><span class="n">e</span>
 </pre></div>
 </div>
-<p>This will build documentation (both HTML and PDF) and move these
-items to the folder where GitHub will look to render them (<code class="docutils literal notranslate"><span class="pre">docs/</span></code>).
-Additionally, you can specify which documentation is built by using
-the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">pdf</span></code> in order to preview these.
-The outputs of these intermediary commands will be in
-<code class="docutils literal notranslate"><span class="pre">docsrc/_build/html</span></code> or <code class="docutils literal notranslate"><span class="pre">docsrc/_build/pdf</span></code>.</p>
-<p>Additional information can be found
-<a class="reference external" href="https://github.com/sbernsen/SeidarT/blob/master/docsrc/README.md">here</a>.</p>
+<p>Then, while still in the <em>docs</em> folder, generate the html and PDF files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">html</span>
+</pre></div>
+</div>
+<p>This will build documentation and move these
+items to <em>docs/build/</em> folder where GitHub will look to render them (<code class="docutils literal notranslate"><span class="pre">docs/</span></code>). You can preview any of the HTML files in the <em>docs/build/html/</em> folder in a web viewer like <em>Firefox</em>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Sphinx 4.0 and above depreciates a function that rst2pdf relies
-on to build the PDF file. At this time it is necessary to downgrade
-to Sphinx 3.5.4 in order to build documentation in PDF format.</p>
+<p>When contributing, use robust comments, type hints, docstrings, and include examples. Self-documenting code is very helpful, but to avoid any ambiguity, add comments. As the source code evolves, some comments will need to be updated.</p>
 </div>
 </section>
 
@@ -258,12 +253,12 @@ to Sphinx 3.5.4 in order to build documentation in PDF format.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="materials_description.html">
+          <a class="next-page" href="collaboration.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Currently available materials</div>
+                <div class="title">Collaboration</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

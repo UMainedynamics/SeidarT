@@ -1,5 +1,5 @@
 Creating a png file
-#########################
+~~~~~~~~~~~~~~~~~~~
 
 .. |gimp| raw:: html
 
@@ -21,11 +21,10 @@ and open software that are more than sufficient.
 .. note::
 
     When creating a PNG, anti-aliasing must be turned off to avoid
-    color boundary gradients.
+    color boundary gradients. When building the project file from a PNG, if antialiasing isn't turned off, this will be evident in the material list. 
 
-Building images in Inkscape has some advantages other than being free.
-Saving a .svg to pdf allows the user to change the number of pixels
-and the spatial resolution of the image quite easily. With
+Building images in Inkscape has some advantages other than being free. It is a robust graphics application that provides a lot of control. Saving a .svg to pdf allows the user to change the number of pixels
+and the spatial resolution of the image quite easily, but keep in mind that the size of all features within the image will increase/decrease accordingly (i.e. 1px wide will become 2px wide when doubling the domain size. With
 ghostscript, the command ::
 
     gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=<file> -r96 <input_file>
@@ -36,5 +35,5 @@ in Document Properties. When saving the SVG as PDF, you will be
 prompted with options, and the value for Resolution for rasterization
 (dpi): will determine - in order to get the same pixel setting that
 you set in Inkscape - the value for the :code:`-r` (resolution) option
-above. If you want to double the resolution, just double this number
+above. In the above code block, the default rasterization of 96 was used so if you want to double the resolution, just double this number
 (i.e. :code:`-r192`).

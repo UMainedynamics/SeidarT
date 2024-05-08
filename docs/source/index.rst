@@ -31,6 +31,7 @@ Welcome to SeidarT's documentation!
    :caption: Simulations
    
    common_offset
+   multi_offset
 
 .. toctree::
    :maxdepth: 2
@@ -70,6 +71,7 @@ Welcome to SeidarT's documentation!
 
     png-creation
     build-docs
+    collaboration
     materials_description
     units
     references

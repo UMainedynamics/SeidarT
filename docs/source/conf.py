@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'SeidarT'
 copyright = '2024, Steven Bernsen'
 author = 'Steven Bernsen'
-version = '1.1.0'
+version = '1.3.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -27,6 +27,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.graphviz",
     "recommonmark",
 ]
 

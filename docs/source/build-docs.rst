@@ -1,35 +1,29 @@
 Building documentation
 #############################
 
-This documentation is built with Sphinx 3.5.4 and rst2pdf 0.98.
+This documentation is built with Sphinx.
 
-To build the documentation, ensure you are in the SeidarT conda
-environment, then install the requirements::
+There has been a separate documentation environment to limit the dependencies in *SeidarT*. The YML file to build the documentation environment is in the root directory of the GitHub repo, *documentation-environment.yml*. For installing dependencies outside of conda, refer to this document to install the required packages. To build the documentation, ::
+    
+    conda env create -f documentation-environment.yml
 
-    pip install sphinx==3.5.4 sphinx_rtd_theme rst2pdf
+This installs required dependencies to build the documentation from `Sphinx docstrings <https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html>`_ or for `Numpy docstrings <https://numpydoc.readthedocs.io/en/latest/format.html>`_. After building the environment, activate it::
+     
+    conda activate documentation
 
-Then, change directory into ``docsrc/``::
-
-    cd SeidarT/docsrc
-
-Then, use the ``make`` command to direct Sphinx to build
-the documentation::
-
-    make github
-
-This will build documentation (both HTML and PDF) and move these
-items to the folder where GitHub will look to render them (``docs/``).
-Additionally, you can specify which documentation is built by using
-the ``make html`` or ``make pdf`` in order to preview these.
-The outputs of these intermediary commands will be in
-``docsrc/_build/html`` or ``docsrc/_build/pdf``.
-
-Additional information can be found
-`here <https://github.com/sbernsen/SeidarT/blob/master/docsrc/README.md>`_.
+Using the *sphinx-apidoc* command you can generate the documentation. The source files are in *docs/source* and the code that we want to generate the autodocs fore is in *src/* so use the correct relative paths when running the command. For example, from the *docs* folder, run the command::
+    
+    sphinx-apidoc -o ./source ../src -e
 
 
-.. note::
+Then, while still in the *docs* folder, generate the html and PDF files::
+    
+    make html 
 
-    Sphinx 4.0 and above depreciates a function that rst2pdf relies
-    on to build the PDF file. At this time it is necessary to downgrade
-    to Sphinx 3.5.4 in order to build documentation in PDF format.
+This will build documentation and move these
+items to *docs/build/* folder where GitHub will look to render them (``docs/``). You can preview any of the HTML files in the *docs/build/html/* folder in a web viewer like *Firefox*.
+
+.. note:: 
+    When contributing, use robust comments, type hints, docstrings, and include examples. Self-documenting code is very helpful, but to avoid any ambiguity, add comments. As the source code evolves, some comments will need to be updated. 
+
+    

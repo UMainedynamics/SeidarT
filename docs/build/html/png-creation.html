@@ -6,9 +6,10 @@
 <link rel="search" title="Search" href="search.html" /><link rel="next" title="Building documentation" href="build-docs.html" /><link rel="prev" title="Simulations Module" href="SIMULATIONS.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Creating a png file - SeidarT documentation v1.1.0</title>
+        <title>Creating a png file - SeidarT documentation v1.3.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
     
     
@@ -123,7 +124,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v1.1.0</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v1.3.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +147,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v1.1.0</span>
+  <span class="sidebar-brand-text">SeidarT documentation v1.3.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -232,11 +233,10 @@ and open software that are more than sufficient.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>When creating a PNG, anti-aliasing must be turned off to avoid
-color boundary gradients.</p>
+color boundary gradients. When building the project file from a PNG, if antialiasing isn’t turned off, this will be evident in the material list.</p>
 </div>
-<p>Building images in Inkscape has some advantages other than being free.
-Saving a .svg to pdf allows the user to change the number of pixels
-and the spatial resolution of the image quite easily. With
+<p>Building images in Inkscape has some advantages other than being free. It is a robust graphics application that provides a lot of control. Saving a .svg to pdf allows the user to change the number of pixels
+and the spatial resolution of the image quite easily, but keep in mind that the size of all features within the image will increase/decrease accordingly (i.e. 1px wide will become 2px wide when doubling the domain size. With
 ghostscript, the command</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gs</span> <span class="o">-</span><span class="n">q</span> <span class="o">-</span><span class="n">dBATCH</span> <span class="o">-</span><span class="n">dNOPAUSE</span> <span class="o">-</span><span class="n">sDEVICE</span><span class="o">=</span><span class="n">png16m</span> <span class="o">-</span><span class="n">sOutputFile</span><span class="o">=&lt;</span><span class="n">file</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">r96</span> <span class="o">&lt;</span><span class="n">input_file</span><span class="o">&gt;</span>
 </pre></div>
@@ -247,7 +247,7 @@ in Document Properties. When saving the SVG as PDF, you will be
 prompted with options, and the value for Resolution for rasterization
 (dpi): will determine - in order to get the same pixel setting that
 you set in Inkscape - the value for the <code class="code docutils literal notranslate"><span class="pre">-r</span></code> (resolution) option
-above. If you want to double the resolution, just double this number
+above. In the above code block, the default rasterization of 96 was used so if you want to double the resolution, just double this number
 (i.e. <code class="code docutils literal notranslate"><span class="pre">-r192</span></code>).</p>
 </section>
 
