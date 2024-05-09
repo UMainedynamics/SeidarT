@@ -24,12 +24,12 @@ Welcome to SeidarT's documentation!
    display_outputs 
    anisotropic_materials
 
-.. _simulations:
+.. _recipes:
 
 .. toctree::
    :numbered:
    :maxdepth: 2
-   :caption: Simulations
+   :caption: Recipes
    
    common_offset
    multi_offset

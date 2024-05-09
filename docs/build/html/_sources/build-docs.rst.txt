@@ -15,7 +15,6 @@ Using the *sphinx-apidoc* command you can generate the documentation. The source
     
     sphinx-apidoc -o ./source ../src -e
 
-
 Then, while still in the *docs* folder, generate the html and PDF files::
     
     make html 
