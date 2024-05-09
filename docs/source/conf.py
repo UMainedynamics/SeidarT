@@ -28,7 +28,7 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.graphviz",
-    "recommonmark",
+    "recommonmark"
 ]
 
 templates_path = ['_templates']

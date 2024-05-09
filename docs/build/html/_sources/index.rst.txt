@@ -8,6 +8,8 @@
 Welcome to SeidarT's documentation!
 ===================================
 
+.. mdinclude:: README.md
+
 .. _tutorial:
 
 .. toctree::
@@ -15,7 +17,6 @@ Welcome to SeidarT's documentation!
    :maxdepth: 2
    :caption: General Overview
    
-   README.md
    getting_started
    initialize_project 
    project_file
