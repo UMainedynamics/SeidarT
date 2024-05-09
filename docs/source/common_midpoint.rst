@@ -1,5 +1,5 @@
-Single Source Linear Array/Common Midpoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Common Midpoint
+~~~~~~~~~~~~~~~
 
 Simulating a common midpoint (CMP) survey is relatively easy in SeidarT. A typical CMP is likely to have a fixed linear array and multiple source points along the array, although there are many different techniques for achieving different results. This tutorial creates a single source point, but can easily be expanded to having multiple source points (and/or multiple array layouts) by duplicating the project file for each source location, changing the source location in the project file and rerunning the model, or by looping through an array of source locations in a Python script. The Fortran binary files corresponding to each model run will contain the source location in the filename so that each model doesn't overwrite the previous model. 
 
@@ -7,7 +7,7 @@ The general steps to create a single shot survey are:
 
 1. **Build the project file**
 
-2. **Create the receiver file**. This is a CSV delimited file with header fields X,Y,Z. The values can be the indices of the receiver (i.e. nodal point) or the distance from the origin - :math:`\Delta x_i \cdot \text{Indice}_{\text{rcx}}`_. The origin is defined as the top left corner of the model PNG. 
+2. **Create the receiver file**. This is a CSV delimited file with header fields X,Y,Z. The values can be the indices of the receiver (i.e. nodal point) or the distance from the origin - :math:`\Delta x_i \cdot \text{Indice}_{\text{rcx}}`. The origin is defined as the top left corner of the model PNG. 
 
 3. **Load the project file**. This creates the model, domain, and material objects required for modeling.
 
@@ -21,7 +21,8 @@ The general steps to create a single shot survey are:
 
 8. **Visualize and/or save outputs**.  
 
-Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the `src/seidart/recipes/single_source <https://github.com/UMainedynamics/SeidarT/tree/main/src/seidart/recipes/sinlge_source>`_ folder. 
+Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the `src/seidart/recipes/single_source <https://github.com/UMainedynamics/SeidarT/tree/main/src/seidart/recipes/single_source>`_ folder. 
+
 
 .. code-block:: python
     :linenos:

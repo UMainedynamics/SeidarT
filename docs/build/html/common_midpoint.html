@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="1. Common Offset" href="common_offset.html" /><link rel="prev" title="3. Project File" href="project_file.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Single Source Linear Array/Common Midpoint - SeidarT documentation v1.3.0</title>
+        <title>Common Midpoint - SeidarT documentation v1.3.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -232,13 +232,13 @@
           </label>
         </div>
         <article role="main">
-          <section id="single-source-linear-array-common-midpoint">
-<h1>Single Source Linear Array/Common Midpoint<a class="headerlink" href="#single-source-linear-array-common-midpoint" title="Link to this heading">#</a></h1>
+          <section id="common-midpoint">
+<h1>Common Midpoint<a class="headerlink" href="#common-midpoint" title="Link to this heading">#</a></h1>
 <p>Simulating a common midpoint (CMP) survey is relatively easy in SeidarT. A typical CMP is likely to have a fixed linear array and multiple source points along the array, although there are many different techniques for achieving different results. This tutorial creates a single source point, but can easily be expanded to having multiple source points (and/or multiple array layouts) by duplicating the project file for each source location, changing the source location in the project file and rerunning the model, or by looping through an array of source locations in a Python script. The Fortran binary files corresponding to each model run will contain the source location in the filename so that each model doesn’t overwrite the previous model.</p>
 <p>The general steps to create a single shot survey are:</p>
 <ol class="arabic simple">
 <li><p><strong>Build the project file</strong></p></li>
-<li><p><strong>Create the receiver file</strong>. This is a CSV delimited file with header fields X,Y,Z. The values can be the indices of the receiver (i.e. nodal point) or the distance from the origin - <a href="#id1"><span class="problematic" id="id2">:math:`\Delta x_i \cdot \text{Indice}_{\text{rcx}}`_</span></a>. The origin is defined as the top left corner of the model PNG.</p></li>
+<li><p><strong>Create the receiver file</strong>. This is a CSV delimited file with header fields X,Y,Z. The values can be the indices of the receiver (i.e. nodal point) or the distance from the origin - <span class="math notranslate nohighlight">\(\Delta x_i \cdot \text{Indice}_{\text{rcx}}\)</span>. The origin is defined as the top left corner of the model PNG.</p></li>
 <li><p><strong>Load the project file</strong>. This creates the model, domain, and material objects required for modeling.</p></li>
 <li><p><strong>Create source function</strong>.</p></li>
 <li><p><strong>Generate tensor coefficients for each material</strong>. The example below corresponds to a project file that already has tensor coefficients. These can be edited and loaded into the model objects.</p></li>
@@ -246,7 +246,7 @@
 <li><p><strong>Create the Array object</strong>.</p></li>
 <li><p><strong>Visualize and/or save outputs</strong>.</p></li>
 </ol>
-<p>Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the <a class="reference external" href="https://github.com/UMainedynamics/SeidarT/tree/main/src/seidart/recipes/sinlge_source">src/seidart/recipes/single_source</a> folder.</p>
+<p>Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the <a class="reference external" href="https://github.com/UMainedynamics/SeidarT/tree/main/src/seidart/recipes/single_source">src/seidart/recipes/single_source</a> folder.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="linenos"> 2</span><span class="kn">from</span> <span class="nn">seidart.routines</span> <span class="kn">import</span> <span class="n">prjbuild</span><span class="p">,</span> <span class="n">prjrun</span><span class="p">,</span> <span class="n">sourcefunction</span>
 <span class="linenos"> 3</span><span class="kn">from</span> <span class="nn">seidart.routines.arraybuild</span> <span class="kn">import</span> <span class="n">Array</span>
@@ -314,8 +314,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="common_offset.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title"><span class="section-number">1. </span>Common Offset</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="project_file.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">3. </span>Project File</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -346,5 +364,6 @@
     <script src="_static/scripts/furo.js?v=32e29ea5"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

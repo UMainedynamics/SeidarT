@@ -20,9 +20,9 @@ Welcome to SeidarT's documentation!
    getting_started
    initialize_project 
    project_file
-   running_model
-   display_outputs 
-   anisotropic_materials
+   .. running_model
+   .. display_outputs 
+   .. anisotropic_materials
 
 .. _recipes:
 
