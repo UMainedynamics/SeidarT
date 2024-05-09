@@ -13,21 +13,19 @@ Welcome to SeidarT's documentation!
 .. _tutorial:
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
    :caption: General Overview
    
    getting_started
    initialize_project 
    project_file
+   anisotropic_materials
    .. running_model
    .. display_outputs 
-   .. anisotropic_materials
 
 .. _recipes:
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
    :caption: Recipes
    
