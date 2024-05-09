@@ -31,6 +31,7 @@ Welcome to SeidarT's documentation!
    :maxdepth: 2
    :caption: Recipes
    
+   common_midpoint
    common_offset
    multi_offset
 
