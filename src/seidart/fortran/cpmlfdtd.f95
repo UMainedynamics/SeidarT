@@ -553,7 +553,7 @@ module cpmlfdtd
     end subroutine stiffness_write
     
     !==========================================================================
-    subroutine attenuation_write(im, alist, npoints_pml, nx, nz, cpmlvalue, seismic) 
+    subroutine attenuation_write(im, alist, npoints_pml, nx, nz, cpmlvalue) 
         ! STIFFNESS_ARRAYS takes a matrix containing the material integer identifiers 
         ! and creates the same size array for each independent coefficient of the 
         ! stiffness matrix along with a density matrix. Since we ae using PML
@@ -596,15 +596,10 @@ module cpmlfdtd
         enddo
         
         ! Write each of the matrices to file
-        if ( seismic ) then
-            call material_rw('gammas_x.dat', gamma_x, .FALSE.)
-            call material_rw('gammas_y.dat', gamma_y, .FALSE.)
-            call material_rw('gammas_z.dat', gamma_z, .FALSE.)
-        else
-            call material_rw('gammae_x.dat', gamma_x, .FALSE.)
-            call material_rw('gammae_y.dat', gamma_y, .FALSE.)
-            call material_rw('gammae_z.dat', gamma_z, .FALSE.)
-        end if    
+        call material_rw('gamma_x.dat', gamma_x, .FALSE.)
+        call material_rw('gamma_y.dat', gamma_y, .FALSE.)
+        call material_rw('gamma_z.dat', gamma_z, .FALSE.)
+           
 
     end subroutine attenuation_write
     
@@ -899,8 +894,8 @@ module cpmlfdtd
             call material_rw('rho.dat', rho, .TRUE.)
             
             ! ------------------- Load Attenuation Coefficients --------------------
-            call material_rw('gammas_x.dat', gamma_x, .TRUE.)
-            call material_rw('gammas_z.dat', gamma_x, .TRUE.)
+            call material_rw('gamma_x.dat', gamma_x, .TRUE.)
+            call material_rw('gamma_z.dat', gamma_z, .TRUE.)
             
             ! ------------------------ Assign some constants -----------------------
         
@@ -1249,8 +1244,9 @@ module cpmlfdtd
         call material_rw('rho.dat', rho, .TRUE.)
         
         ! ------------------- Load Attenuation Coefficients --------------------
-        call material_rw('gammas_x.dat', gamma_x, .TRUE.)
-        call material_rw('gammas_z.dat', gamma_x, .TRUE.)
+        call material_rw('gamma_x.dat', gamma_x, .TRUE.)
+        call material_rw('gamma_z.dat', gamma_z, .TRUE.)
+        call material_rw('gamma_y.dat', gamma_y, .TRUE.)
         
         ! ------------------------ Assign some constants -----------------------
         isource = src(1)+npoints_pml

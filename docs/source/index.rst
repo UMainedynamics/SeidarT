@@ -33,6 +33,8 @@ Welcome to SeidarT's documentation!
    common_offset
    multi_offset
 
+.. _commandline:
+
 .. toctree::
    :maxdepth: 2
    :caption: Command Line Interface

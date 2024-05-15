@@ -35,7 +35,7 @@ class FDTDImage:
     def __init__(
             self, 
             prjfile, inputfile,
-            is_complex: bool, 
+            is_complex: bool = False, 
             is_single_precision: bool = True,
             plottype: str = 'magnitude'
         ):
@@ -114,8 +114,11 @@ class FDTDImage:
         if self.channel == 'Ex':
             self.nx = self.domain.nx - 1
             self.nz = self.domain.nz
-        if self.channel == 'Ez':
+        elif self.channel == 'Ez':
             self.nz = self.domain.nz - 1
+            self.nx = self.domain.nx
+        else:
+            self.nz = self.domain.nz 
             self.nx = self.domain.nx
         
         self.extent = (
@@ -129,8 +132,8 @@ class FDTDImage:
             self.srcx = float(self.electromag.x)/self.dx + self.domain.cpml + 1
             self.srcz = float(self.electromag.z)/self.dz + self.domain.cpml + 1
         else:    
-            self.srcx = float(self.seismic.x)/self.dx + cpml + 1
-            self.srcz = float(self.seismic.z)/self.dz + cpml + 1
+            self.srcx = float(self.seismic.x)/self.dx + self.domain.cpml + 1
+            self.srcz = float(self.seismic.z)/self.dz + self.domain.cpml + 1
         
         # Define tick locations for plotting
         self.xticklocs = np.array(

@@ -56,6 +56,7 @@ class Domain:
         self.dy = None
         self.dz = None
         self.cpml = None
+        self.cpml_attenuation = 0.0 # Default attenuation in the cpml region. Higher is more attenuation.
         self.write = None
         self.imfile = None
         self.exit_status = 1

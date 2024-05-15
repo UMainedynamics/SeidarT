@@ -301,18 +301,17 @@ def runseismic(
         domain.nx,
         domain.nz
     )
-    attenuation_coefficients = modelclass.attenuation_coefficients * \
-        modelclass.dt / (np.ones([domain.nmats, 3]) * \
-            material.material_list[:,3].astype(float) ).T
+    # attenuation_coefficients = modelclass.attenuation_coefficients * \
+    #     modelclass.dt / (np.ones([domain.nmats, 3]) * \
+    #         modelclass.attenuation_coefficients.astype(float) ).T
     # Create the attenuation .dat files
     cpmlfdtd.attenuation_write(
         domain.geometry + 1,
-        attenuation_coefficients,
+        modelclass.attenuation_coefficients,
         domain.cpml,
         # domain.nx, 
         # domain.nz,
-        domain.cpml_attenuation,
-        True
+        domain.cpml_attenuation
     )
     
     if domain.dim == 2.5:
@@ -330,7 +329,7 @@ def runseismic(
         )
     else:
             print('Running 2D model')
-            cpmlfdtd.seismic2c(
+            cpmlfdtd.seismic2(
                 domain.nx + 2*domain.cpml, 
                 domain.nz + 2*domain.cpml,
                 domain.dx, domain.dz,

@@ -75,27 +75,27 @@ class Array:
         if self.channel == 'Vx' or self.channel == 'Vy' or self.channel == 'Vz':
             if self.domain.dim == '2.0':
                 self.source = np.array(
-                    [int(self.seismic.x), int(self.seismic.z)]
+                    [self.seismic.x, self.seismic.z]
                 )
             else:
                 self.source = np.array(
                     [
-                        int(self.seismic.x), 
-                        int(self.seismic.y), 
-                        int(self.seismic.z)
+                        self.seismic.x, 
+                        self.seismic.y, 
+                        self.seismic.z
                     ]
                 )
         else:
             if self.domain.dim == '2.0':
                 self.source = np.array(
-                    [int(self.electromag.x), int(self.electromag.z)]
+                    [self.electromag.x, self.electromag.z]
                 )
             else:
                 self.source = np.array(
                     [
-                        int(self.electromag.x), 
-                        int(self.electromag.y), 
-                        int(self.electromag.z)
+                        self.electromag.x, 
+                        self.electromag.y, 
+                        self.electromag.z
                     ]
                 )
         
