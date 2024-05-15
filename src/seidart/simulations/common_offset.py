@@ -211,11 +211,4 @@ class CommonOffset(Array):
     #         )
 
 
-class MultiOffset(CommonOffset):
-    def streamer_run(self):
-        '''
-        Simulate a seismic streamer or multi-offset radar. The outputs for each source location are saved in a m-by-n-by-p where m is the length of the time series, n is the number of source locations, and p is the number of receivers. 
-        
-        The receiver file and source file must be equal length. The number of survey points is going to be the number of source locations minus the number of receivers in the streamer. 
-        '''
-        pass
+c
