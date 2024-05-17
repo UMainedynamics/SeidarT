@@ -381,18 +381,35 @@ class Array:
         
     
     # -------------------------------------------------------------------------
-    def save(self):
+    def save(self, as_csv=False):
+        """
+        Save the object as a pickle formatted file or the numpy array of 
+        receiver time series to a CSV.
+        
+        :param as_csv: Flag if you would like to export the time series to CSV. 
+            This creates a filename formatted as 
+            <project_name>.<channel>.<src_x>.<src_y>.<src_z>.csv. DEFAULT is False. 
+        :type as_csv: bool
+        """
         filename = '.'.join( 
             [
                 self.prjfile.split('.')[:-1][0],
                 self.channel, 
-                '.'.join(self.source.astype(str)), 
-                '.pkl'
+                '.'.join(self.source.astype(str))
             ]
         )
-        # Pickle the object and save to file
-        with open(filename, 'wb') as file:
-            pickle.dump(self, filename)
+        if as_csv:
+            filename = filename + '.csv'
+            df = pd.DataFrame(self.timeseries)
+            df.to_csv(filename, header = False, index = False)
+        else:
+            # Pickle the object and save to file
+            filename = filename + '.pkl'
+            with open(filename, 'wb') as file:
+                pickle.dump(self, filename)
+            
+        
+        
 
 
 # =============================================================================

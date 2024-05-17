@@ -30,6 +30,31 @@ array_vz.exaggeration = 0.1
 array_vz.sectionplot(
     plot_complex = False
 )
+
+
+n_rcx = array_vz.receiver_xyz.shape[0]
+time_array = np.tile(
+    np.arange(seis.time_steps) * seis.dt, ( n_rcx , 1)
+).T
+
+# Calculate the distance of the receiver from the source. 
+receiver_distances = 
+receiver_distances = np.sqrt(
+    np.sum( 
+        (array_vz.receiver_xyz * dom.dz - array_vz.source)**2, axis = 1
+    )
+)
+# We want distance values to the left of the source to be negative
+receiver_distances = receiver_distances * np.sign( (array_vz.receiver_xyz * dom.dz - array_vz.source)[:,0])
+
+receiver_distances = receiver_distances.repeat(
+    int(seis.time_steps)
+).reshape(n_rcx, int(seis.time_steps)).T
+
+
+plot_phase_picks(array_vz.timeseries, time, receiver_distances, labels, np.unique(labels), gain = 301, exaggeration = 600)
+
+
 build_animation(
         prjfile, 
         'Vz', 10, 20, 0.3, 
