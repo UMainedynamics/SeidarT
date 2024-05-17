@@ -244,50 +244,50 @@
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <p>The Seismic and Radar Toolbox (SeidarT) is a collaboration between researchers at the Universities of Maine and Washington to provide an open source platform for forward modeling mechanical and electromagnetic wave propagation. The major objective of the project is to easily and quickly implement isotropic and anisotropic complex geometries and/or velocity structures to develop prior constraints for - not limited too - investigating, estimating, and imaging englacial ice structure, sub-glacial boundary conditions on the sub-regional scale. Larger problems would require the curvature of the Earth to be taken into consideration, but many glacier seismic and radar experiments do not expand into regional parameter estimation and velocity modeling.</p>
-<p>Much of the Staggered Grid FDTD code has been adopted from the <em>SEISMIC_CPML</em> software provided by  <cite>Computational Infrastucture for Geophysics (CIG) &lt;https://geodynamics.org/cig/software/&gt;</cite>. Further details to the backend numerical code can be found in the [References](#references) section below.</p>
+<p>Much of the Staggered Grid FDTD code has been adopted from the <em>SEISMIC_CPML</em> software provided by  <a class="reference external" href="https://geodynamics.org/cig/software/">Computational Infrastucture for Geophysics (CIG)</a>. Further details to the backend numerical code can be found in the [References](#references) section below.</p>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<p>The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process. Most users should be fine with the “automatic installation” in the [section below](#auto-install).</p>
-<p>SeidarT package binaries are publicly availble on the <cite>PyPi repository &lt;https://pypi.org/project/seidart/&gt;</cite> and <cite>source code &lt;https://github.com/UMainedynamics/SeidarT&gt;</cite> can be found on GitHub.</p>
+<p>The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process. Most users should be fine with the “automatic installation” in the section below.</p>
+<p>SeidarT package binaries are publicly availble on the <a class="reference external" href="https://pypi.org/project/seidart/">PyPi repository</a> and <a class="reference external" href="https://github.com/UMainedynamics/SeidarT">source code</a> can be found on GitHub.</p>
 <section id="auto-installation">
 <h3>“Auto” installation<a class="headerlink" href="#auto-installation" title="Link to this heading">#</a></h3>
-<p>For Windows users, see the VM setup. Unix/Linux users can download the tarball <cite>here &lt;https://github.com/UMainedynamics/SeidarT/blob/main/install.tar.xz?raw=1&gt;</cite>.</p>
-<p>Extract the <em>install</em> directory from the <em>install.tar.gz</em> which includes an install script, <em>full_install.sh</em>, and the <em>seidart-environment.yml</em>. It’s not necessary to know or do much more than execute a few command line entries via a bash terminal or powershell terminal. The install script checks for and installs if necessary the Anaconda/Miniconda package manager. A virtual environment is created to avoid causing system incompatibilities and complicated software dependencies. If Anaconda/Miniconda is not defined in your ‘PATH’ variable than it will be installed using the default install location. After installing the Conda package, the <em>seidart</em> environment is built using pre-defined dependencies in a YAML (Yet Another Markup Language) file. Both <em>Bash</em> executables and Python modules are built during install. In order to use either, the environment must be active. This can be easily done from the <em>Bash</em> command line interface (CLI) using the command
-<code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">seidart</span>
-<span class="pre">`</span></code></p>
-<p>Documentation for managing conda environments with Miniconda or Anaconda can be found <cite>here &lt;https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html&gt;</cite>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found <cite>here &lt;https://docs.anaconda.com/free/navigator/tutorials/manage-environments/&gt;</cite>.</p>
+<p>For Windows users, see the VM setup. Unix/Linux users can download the tarball <a class="reference external" href="https://github.com/UMainedynamics/SeidarT/blob/main/install.tar.xz?raw=1">here</a>.</p>
+<p>Extract the <em>install</em> directory from the <em>install.tar.gz</em> which includes an install script, <em>full_install.sh</em>, and the <em>seidart-environment.yml</em>. It’s not necessary to know or do much more than execute a few command line entries via a bash terminal or powershell terminal. The install script checks for and installs if necessary the Anaconda/Miniconda package manager. A virtual environment is created to avoid causing system incompatibilities and complicated software dependencies. If Anaconda/Miniconda is not defined in your ‘PATH’ variable than it will be installed using the default install location. After installing the Conda package, the <em>seidart</em> environment is built using pre-defined dependencies in a YAML (Yet Another Markup Language) file. Both <em>Bash</em> executables and Python modules are built during install. In order to use either, the environment must be active. This can be easily done from the <em>Bash</em> command line interface (CLI) using the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">seidart</span>
+</pre></div>
+</div>
+<p>Documentation for managing conda environments with Miniconda or Anaconda can be found <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">here</a>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found <a class="reference external" href="https://docs.anaconda.com/free/navigator/tutorials/manage-environments/">here</a>.</p>
 </section>
 <section id="vm-install">
 <h3>VM Install<a class="headerlink" href="#vm-install" title="Link to this heading">#</a></h3>
-<p>There are a few different options for virtual machine software, but <em>VirtualBox</em> is a robust and free VM management software that can be installed on Windows, MacOS, and Linux. Follow the directions to download and install the software from the <cite>website &lt;https://www.virtualbox.org/&gt;</cite>.</p>
-<p>There are a couple options for creating a virtual machine for <em>SeidarT</em>. The simplest is to download the <cite>files &lt;https://drive.google.com/drive/folders/1zVzlKLug95wfy6NCwYGtsbD_cJK8CW1S?usp=drive_link&gt;</cite> (~4GB) for the VM clone from Google Drive. The VM clone requires 4 GB of RAM. Currently, the clone is setup as 5 GB of hard disk space to keep it relatively lightweight so it is recommended that an external drive be used for creating and building models. It is common for a few GB of hard disk space to be used up when running the models which can easily be recovered by deleting the .dat outputs.</p>
-<p>After installing VirtualBox and downloading the VM clone files, launch the VirtualBox software. In the VM manager, click on the <em>Add</em> button and you will be prompted to choose a .vbox file. Navigate to the directory with the VM clone and select it. This will launch a Debian Linux clone with in an Xfce desktop environment. The username and password are <em>seidart</em> which can be changed. <cite>Here &lt;https://reintech.io/blog/managing-users-groups-debian-12&gt;</cite> is an example of how to do so. To get started, open up a <em>Bash</em> terminal and activate the conda environment (see above) and start a Python session by entering into the command line:</p>
-<p><code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">python</span>
-<span class="pre">`</span></code></p>
+<p>There are a few different options for virtual machine software, but <em>VirtualBox</em> is a robust and free VM management software that can be installed on Windows, MacOS, and Linux. Follow the directions to download and install the software from the <a class="reference external" href="https://www.virtualbox.org/">website</a>.</p>
+<p>There are a couple options for creating a virtual machine for <em>SeidarT</em>. The simplest is to download the <a class="reference external" href="https://drive.google.com/drive/folders/1zVzlKLug95wfy6NCwYGtsbD_cJK8CW1S?usp=drive_link">files</a> (~4GB) for the VM clone from Google Drive. The VM clone requires 4 GB of RAM. Currently, the clone is setup as 5 GB of hard disk space to keep it relatively lightweight so it is recommended that an external drive be used for creating and building models. It is common for a few GB of hard disk space to be used up when running the models which can easily be recovered by deleting the .dat outputs.</p>
+<p>After installing VirtualBox and downloading the VM clone files, launch the VirtualBox software. In the VM manager, click on the <em>Add</em> button and you will be prompted to choose a .vbox file. Navigate to the directory with the VM clone and select it. This will launch a Debian Linux clone with in an Xfce desktop environment. The username and password are <em>seidart</em> which can be changed. <a class="reference external" href="https://reintech.io/blog/managing-users-groups-debian-12">Here</a> is an example of how to do so. To get started, open up a <em>Bash</em> terminal and activate the conda environment (see above) and start a Python session by entering into the command line:;</p>
+<blockquote>
+<div><p>python</p>
+</div></blockquote>
 <p>For users that would like to build a VM with more control, different preferences (i.e. hard disk space), for a different flavor of Linux, or using a different VM manager you will need to download the .iso file for the desired Linux then create a new VM. This will prompt you with the setup parameters. Following setup, you can launch your VM and open up a terminal. From here you can follow the <em>Auto Installation</em> (above) or  <em>Manual Installation</em> (below) directions.</p>
 </section>
 <section id="manual-installation">
 <h3>Manual installation<a class="headerlink" href="#manual-installation" title="Link to this heading">#</a></h3>
-<p>The full repo can be found on GitHub and is hosted on PyPi. <em>SeidarT</em> has been tested on Python 3.11 and is not yet supported with Python 3.12. For users that prefer building virtual environments with Anaconda, the install folder contains the <em>seidart-environment.yml</em> or it can be found in the root directory of the GitHub repo. To clone the directory, open a bash terminal and enter the command:
-<code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;github.com:UMainedynamics/SeidarT.git</span>
-<span class="pre">`</span></code></p>
+<p>The full repo can be found on GitHub and is hosted on PyPi. <em>SeidarT</em> has been tested on Python 3.11 and is not yet supported with Python 3.12. For users that prefer building virtual environments with Anaconda, the install folder contains the <em>seidart-environment.yml</em> or it can be found in the root directory of the GitHub repo. To clone the directory, open a bash terminal and enter the command:</p>
+<blockquote>
+<div><p>git clone <a class="reference external" href="mailto:git&#37;&#52;&#48;github&#46;com">git<span>&#64;</span>github<span>&#46;</span>com</a>:UMainedynamics/SeidarT.git</p>
+</div></blockquote>
 <p>Change directories into the install folder</p>
-<p><code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">cd</span> <span class="pre">SeidarT/install</span>
-<span class="pre">`</span></code></p>
-<p>Create and build the <em>seidart</em> environment
-<code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">seidart-environment.yml</span>
-<span class="pre">`</span></code>
-This will install all dependencies and the latest <em>seidart</em> version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  <em>gcc</em>&gt;10, <em>gfortran</em>, <em>ghostscript</em>, <em>imagemagick</em>, <em>numpy</em>, <em>pandas</em>, <em>matplotlib</em>, <em>scipy</em>, <em>glob2</em>, <em>pyevtk</em>, <em>mplstereonet</em>. Following install of all dependencies,
-<code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">pip</span> <span class="pre">install</span> <span class="pre">seidart</span>
-<span class="pre">`</span></code>
-will pull the latest version and install the package from PyPi.</p>
+<blockquote>
+<div><p>cd SeidarT/install</p>
+</div></blockquote>
+<p>Create and build the <em>seidart</em> environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">env</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">seidart</span><span class="o">-</span><span class="n">environment</span><span class="o">.</span><span class="n">yml</span>
+</pre></div>
+</div>
+<p>This will install all dependencies and the latest <em>seidart</em> version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  <em>gcc</em>&gt;10, <em>gfortran</em>, <em>ghostscript</em>, <em>imagemagick</em>, <em>numpy</em>, <em>pandas</em>, <em>matplotlib</em>, <em>scipy</em>, <em>glob2</em>, <em>pyevtk</em>, <em>mplstereonet</em>. Following install of all dependencies,:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">seidart</span>
+</pre></div>
+</div>
+<p>will pull the latest version and install the package from PyPi.</p>
 </section>
 </section>
 <section id="hardware-requirements">
