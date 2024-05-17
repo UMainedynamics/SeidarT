@@ -6,7 +6,7 @@
 <link rel="search" title="Search" href="search.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>vtkbuild - SeidarT documentation v1.6.0</title>
+        <title>seidart.simulations.multioffset module - SeidarT documentation v1.6.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -238,35 +238,8 @@
           </label>
         </div>
         <article role="main">
-          <section id="vtkbuild">
-<h1>vtkbuild<a class="headerlink" href="#vtkbuild" title="Link to this heading">#</a></h1>
-<p><em>Creates a series of 3-dimensional vti files that can be imported into</em>
-<em>Paraview to generate an animation. (Directly building the animation is</em>
-<em>planned for a future release.)</em></p>
-<p><strong>Usage</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vtkbuild<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>-p<span class="w"> </span>PROJECTFILE<span class="w"> </span>-c<span class="w"> </span><span class="o">[</span>Ex<span class="w"> </span>Ey<span class="w"> </span>Ez<span class="w"> </span>Vx<span class="w"> </span>Vy<span class="w"> </span>Vz<span class="o">]</span><span class="w"> </span>-n<span class="w"> </span>NUM_STEPS
-</pre></div>
-</div>
-<p><strong>Inputs</strong></p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">PROJECTFILE</span></code>, <code class="docutils literal notranslate"><span class="pre">--prjfile</span> <span class="pre">PROJECTFILE</span></code> .prj file</p>
-<blockquote>
-<div><p>The full file path for the project file.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">[Ex</span> <span class="pre">Ey</span> <span class="pre">Ez</span> <span class="pre">Vx</span> <span class="pre">Vy</span> <span class="pre">Vz]</span></code>, <code class="docutils literal notranslate"><span class="pre">--channel</span> <span class="pre">[Ex</span> <span class="pre">Ey</span> <span class="pre">Ez</span> <span class="pre">Vx</span> <span class="pre">Vy</span> <span class="pre">Vz]</span></code></p>
-<blockquote>
-<div><p>Whether to plot the seismic or radar model in the X, Y, or Z direction</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">VALUE</span></code>, <code class="docutils literal notranslate"><span class="pre">--num_steps</span> <span class="pre">VALUE</span></code></p>
-<blockquote>
-<div><p>The time step interval between the images that are
-going to be used. n=20 means that 1 out of every 20 images will be used,
-thus significantly reducing how long it takes to compile.</p>
-</div></blockquote>
-</li>
-</ul>
+          <section id="seidart-simulations-multioffset-module">
+<h1>seidart.simulations.multioffset module<a class="headerlink" href="#seidart-simulations-multioffset-module" title="Link to this heading">#</a></h1>
 </section>
 
         </article>

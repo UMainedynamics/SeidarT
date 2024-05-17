@@ -8,7 +8,13 @@
 Welcome to SeidarT's documentation!
 ===================================
 
-.. mdinclude:: README.md
+.. _intro: 
+
+.. toctree::
+   :maxdepth: 2 
+   :caption: Introduction 
+   
+   README
 
 .. _tutorial:
 
@@ -32,6 +38,8 @@ Welcome to SeidarT's documentation!
    common_midpoint
    common_offset
    multi_offset
+
+.. _commandline:
 
 .. toctree::
    :maxdepth: 2

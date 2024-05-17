@@ -8,7 +8,13 @@
 Welcome to SeidarT's documentation!
 ===================================
 
-.. mdinclude:: README.md
+.. _intro: 
+
+.. toctree::
+   :maxdepth: 2 
+   :caption: Introduction 
+   
+   README
 
 .. _tutorial:
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "seidart"
-version = "1.5.0"
+version = "1.6.0"
 license = {file = "LICENSE.txt"}
 description = "seidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
 requires-python = ">=3.11"

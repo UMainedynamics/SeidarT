@@ -41,7 +41,7 @@ jobs:
       
       - name: Copy files to the source directory
         run: |
-          cp README.md docs/source 
+          cp README.rst docs/source 
       
       - name: Build HTML documentation 
         run: |

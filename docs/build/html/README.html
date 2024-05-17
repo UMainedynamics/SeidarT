@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Getting Started" href="getting_started.html" /><link rel="prev" title="Welcome to SeidarT’s documentation!" href="index.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>SeidarT - SeidarT documentation v1.3.0</title>
+        <title>SeidarT - SeidarT documentation v1.6.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v1.3.0</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v1.6.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v1.3.0</span>
+  <span class="sidebar-brand-text">SeidarT documentation v1.6.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -156,12 +156,16 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">General Overview</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">SeidarT</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">General Overview</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
-<li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
@@ -236,50 +240,63 @@
         <article role="main">
           <section id="seidart">
 <h1>SeidarT<a class="headerlink" href="#seidart" title="Link to this heading">#</a></h1>
-<!-- ### Table of Contents --><!-- [Introduction](#introduction)
-[Installation](#install)
-[Auto-Install](#auto-installation)
-[Manual Install](#manual-installation)
-[Hardware Requirements](#hardware-requirements)
-[Operating System Requirements](#operating-system-requirements)   --><p>Full documentation appears in the docs folder.</p>
-<section id="introduction-a-name-introduction-a">
-<h2>Introduction <span class="raw-html-md"><a name="introduction"></a></span><a class="headerlink" href="#introduction-a-name-introduction-a" title="Link to this heading">#</a></h2>
+<p>Full documentation appears in the docs folder.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <p>The Seismic and Radar Toolbox (SeidarT) is a collaboration between researchers at the Universities of Maine and Washington to provide an open source platform for forward modeling mechanical and electromagnetic wave propagation. The major objective of the project is to easily and quickly implement isotropic and anisotropic complex geometries and/or velocity structures to develop prior constraints for - not limited too - investigating, estimating, and imaging englacial ice structure, sub-glacial boundary conditions on the sub-regional scale. Larger problems would require the curvature of the Earth to be taken into consideration, but many glacier seismic and radar experiments do not expand into regional parameter estimation and velocity modeling.</p>
-<p>Much of the Staggered Grid FDTD code has been adopted from the <em>SEISMIC_CPML</em> software provided by <a class="reference external" href="https://geodynamics.org/cig/software/">Computational Infrastucture for Geophysics (CIG)</a>. Further details to the backend numerical code can be found in the <span class="xref std std-ref">References</span> section below.</p>
+<p>Much of the Staggered Grid FDTD code has been adopted from the <em>SEISMIC_CPML</em> software provided by  <cite>Computational Infrastucture for Geophysics (CIG) &lt;https://geodynamics.org/cig/software/&gt;</cite>. Further details to the backend numerical code can be found in the [References](#references) section below.</p>
 </section>
-<section id="installation-a-name-install-a">
-<h2>Installation <span class="raw-html-md"><a name="install"></a></span><a class="headerlink" href="#installation-a-name-install-a" title="Link to this heading">#</a></h2>
-<p>The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process. Most users should be fine with the “automatic installation” in the <span class="xref std std-ref">section below</span>.</p>
-<p>SeidarT package binaries are publicly availble on the <a class="reference external" href="https://pypi.org/project/seidart/">PyPi repository</a> and source code can be found at github (not yet public).</p>
-<section id="auto-installation-a-name-auto-install-a">
-<h3>“Auto” installation <span class="raw-html-md"><a name="auto-install"></a></span><a class="headerlink" href="#auto-installation-a-name-auto-install-a" title="Link to this heading">#</a></h3>
-<p>Extract the <em>install</em> directory from the <em>install.tar.gz</em> or <em>install.bz</em> for Unix/Linux or Windows users, respectively</p>
-<p>There are 2 install scripts, <em>full_install.sh</em> and <em>full_install.bat</em>, which will cover Linux, MacOS 13 and 14, and Windows , respectively. It’s not necessary to know or do much more than execute a few command line entries via a bash terminal or powershell terminal. A virtual environment is created using the Miniconda/Anaconda package manager. This will avoid causing system incompatibilities and complicated software dependencies. Documentation for managing conda environments with Miniconda or Anaconda can be found <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">here</a>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found <a class="reference external" href="https://docs.anaconda.com/free/navigator/tutorials/manage-environments/">here</a>.</p>
-<p>The <em>full_install.?</em> checks for an Anaconda/Miniconda and will install it if it isn’t found. If Anaconda/Miniconda is not defined in your ‘PATH’ variable than it will be installed using the default install location. After installing the Conda package, the <em>seidart</em> environment is built using pre-defined dependencies in a YAML (Yet Another Markup Language) file. Both <em>Bash</em> executables and Python modules are built during install. In order to use either, the environment must be active. This can be easily done from the <em>Bash</em> command line interface (CLI) using the command</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">seidart</span>
-</pre></div>
-</div>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p>The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process. Most users should be fine with the “automatic installation” in the [section below](#auto-install).</p>
+<p>SeidarT package binaries are publicly availble on the <cite>PyPi repository &lt;https://pypi.org/project/seidart/&gt;</cite> and <cite>source code &lt;https://github.com/UMainedynamics/SeidarT&gt;</cite> can be found on GitHub.</p>
+<section id="auto-installation">
+<h3>“Auto” installation<a class="headerlink" href="#auto-installation" title="Link to this heading">#</a></h3>
+<p>For Windows users, see the VM setup. Unix/Linux users can download the tarball <cite>here &lt;https://github.com/UMainedynamics/SeidarT/blob/main/install.tar.xz?raw=1&gt;</cite>.</p>
+<p>Extract the <em>install</em> directory from the <em>install.tar.gz</em> which includes an install script, <em>full_install.sh</em>, and the <em>seidart-environment.yml</em>. It’s not necessary to know or do much more than execute a few command line entries via a bash terminal or powershell terminal. The install script checks for and installs if necessary the Anaconda/Miniconda package manager. A virtual environment is created to avoid causing system incompatibilities and complicated software dependencies. If Anaconda/Miniconda is not defined in your ‘PATH’ variable than it will be installed using the default install location. After installing the Conda package, the <em>seidart</em> environment is built using pre-defined dependencies in a YAML (Yet Another Markup Language) file. Both <em>Bash</em> executables and Python modules are built during install. In order to use either, the environment must be active. This can be easily done from the <em>Bash</em> command line interface (CLI) using the command
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">seidart</span>
+<span class="pre">`</span></code></p>
+<p>Documentation for managing conda environments with Miniconda or Anaconda can be found <cite>here &lt;https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html&gt;</cite>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found <cite>here &lt;https://docs.anaconda.com/free/navigator/tutorials/manage-environments/&gt;</cite>.</p>
 </section>
-<section id="manual-installation-raw-html-md-a-name-manual-install-pip-a">
-<h3>Manual installation:raw-html-md:<cite>&lt;a name=”manual-install-pip”&gt;&lt;/a&gt;</cite><a class="headerlink" href="#manual-installation-raw-html-md-a-name-manual-install-pip-a" title="Link to this heading">#</a></h3>
-<p>The full repo can be found on GitHub and hosted on PyPi. <em>SeidarT</em> has been tested on Python 3.11 and is not yet supported with Python 3.12. For users that prefer building virtual environments with Anaconda, the install folder contains the <em>seidart-environment.yml</em> or it can be found in the root directory of the GitHub repo. The command</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">env</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">seidart</span><span class="o">-</span><span class="n">environment</span><span class="o">.</span><span class="n">yml</span>
-</pre></div>
-</div>
-<p>will install all dependencies and the <em>seidart</em> package. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  <em>gcc</em>&gt;10, <em>gfortran</em>, <em>ghostscript</em>, <em>imagemagick</em>, <em>numpy</em>, <em>pandas</em>, <em>matplotlib</em>, <em>scipy</em>, <em>glob2</em>, <em>pyevtk</em>, <em>mplstereonet</em>. Following install of all dependencies,</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">seidart</span>
-</pre></div>
-</div>
-<p>will pull and install the package from PyPi.</p>
+<section id="vm-install">
+<h3>VM Install<a class="headerlink" href="#vm-install" title="Link to this heading">#</a></h3>
+<p>There are a few different options for virtual machine software, but <em>VirtualBox</em> is a robust and free VM management software that can be installed on Windows, MacOS, and Linux. Follow the directions to download and install the software from the <cite>website &lt;https://www.virtualbox.org/&gt;</cite>.</p>
+<p>There are a couple options for creating a virtual machine for <em>SeidarT</em>. The simplest is to download the <cite>files &lt;https://drive.google.com/drive/folders/1zVzlKLug95wfy6NCwYGtsbD_cJK8CW1S?usp=drive_link&gt;</cite> (~4GB) for the VM clone from Google Drive. The VM clone requires 4 GB of RAM. Currently, the clone is setup as 5 GB of hard disk space to keep it relatively lightweight so it is recommended that an external drive be used for creating and building models. It is common for a few GB of hard disk space to be used up when running the models which can easily be recovered by deleting the .dat outputs.</p>
+<p>After installing VirtualBox and downloading the VM clone files, launch the VirtualBox software. In the VM manager, click on the <em>Add</em> button and you will be prompted to choose a .vbox file. Navigate to the directory with the VM clone and select it. This will launch a Debian Linux clone with in an Xfce desktop environment. The username and password are <em>seidart</em> which can be changed. <cite>Here &lt;https://reintech.io/blog/managing-users-groups-debian-12&gt;</cite> is an example of how to do so. To get started, open up a <em>Bash</em> terminal and activate the conda environment (see above) and start a Python session by entering into the command line:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">python</span>
+<span class="pre">`</span></code></p>
+<p>For users that would like to build a VM with more control, different preferences (i.e. hard disk space), for a different flavor of Linux, or using a different VM manager you will need to download the .iso file for the desired Linux then create a new VM. This will prompt you with the setup parameters. Following setup, you can launch your VM and open up a terminal. From here you can follow the <em>Auto Installation</em> (above) or  <em>Manual Installation</em> (below) directions.</p>
 </section>
-<section id="hardware-requirements-a-name-hardware-requirement-a">
-<h3>Hardware Requirements <span class="raw-html-md"><a name="hardware-requirement"></a></span><a class="headerlink" href="#hardware-requirements-a-name-hardware-requirement-a" title="Link to this heading">#</a></h3>
+<section id="manual-installation">
+<h3>Manual installation<a class="headerlink" href="#manual-installation" title="Link to this heading">#</a></h3>
+<p>The full repo can be found on GitHub and is hosted on PyPi. <em>SeidarT</em> has been tested on Python 3.11 and is not yet supported with Python 3.12. For users that prefer building virtual environments with Anaconda, the install folder contains the <em>seidart-environment.yml</em> or it can be found in the root directory of the GitHub repo. To clone the directory, open a bash terminal and enter the command:
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;github.com:UMainedynamics/SeidarT.git</span>
+<span class="pre">`</span></code></p>
+<p>Change directories into the install folder</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">cd</span> <span class="pre">SeidarT/install</span>
+<span class="pre">`</span></code></p>
+<p>Create and build the <em>seidart</em> environment
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">seidart-environment.yml</span>
+<span class="pre">`</span></code>
+This will install all dependencies and the latest <em>seidart</em> version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  <em>gcc</em>&gt;10, <em>gfortran</em>, <em>ghostscript</em>, <em>imagemagick</em>, <em>numpy</em>, <em>pandas</em>, <em>matplotlib</em>, <em>scipy</em>, <em>glob2</em>, <em>pyevtk</em>, <em>mplstereonet</em>. Following install of all dependencies,
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">pip</span> <span class="pre">install</span> <span class="pre">seidart</span>
+<span class="pre">`</span></code>
+will pull the latest version and install the package from PyPi.</p>
+</section>
+</section>
+<section id="hardware-requirements">
+<h2>Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Link to this heading">#</a></h2>
 <p><em>SeidarT</em> was tested and developed on a quad core 5th gen i7 processor with 16 Gb of RAM without any burden on the system so a typical modern laptop is sufficient for many application. When running models with large domains or a high number of time steps, the computational load is obviously increased, however the storage requirements become more significant. It can be easy to fill up 10’s of Gb of storage, but an external drive can resolve that problem. The Apple M-chips may have compatability issues with particular types of software and Python packages, but we have maintained a relatively simple design along with leveraging some of the most commonly used Python packages which should help to mitigate any issues with computing on an M-chip.</p>
 </section>
-<section id="operating-system-requirements-a-name-operating-system-a">
-<h3>Operating System Requirements <span class="raw-html-md"><a name="operating-system"></a></span><a class="headerlink" href="#operating-system-requirements-a-name-operating-system-a" title="Link to this heading">#</a></h3>
+<section id="operating-system-requirements">
+<h2>Operating System requirements<a class="headerlink" href="#operating-system-requirements" title="Link to this heading">#</a></h2>
 <p>All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development.</p>
-</section>
 </section>
 </section>
 
@@ -288,8 +305,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="getting_started.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Getting Started</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -321,14 +356,15 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">SeidarT</a><ul>
-<li><a class="reference internal" href="#introduction-a-name-introduction-a">Introduction <span class="raw-html-md"><a name="introduction"></a></span></a></li>
-<li><a class="reference internal" href="#installation-a-name-install-a">Installation <span class="raw-html-md"><a name="install"></a></span></a><ul>
-<li><a class="reference internal" href="#auto-installation-a-name-auto-install-a">“Auto” installation <span class="raw-html-md"><a name="auto-install"></a></span></a></li>
-<li><a class="reference internal" href="#manual-installation-raw-html-md-a-name-manual-install-pip-a">Manual installation:raw-html-md:<cite>&lt;a name=”manual-install-pip”&gt;&lt;/a&gt;</cite></a></li>
-<li><a class="reference internal" href="#hardware-requirements-a-name-hardware-requirement-a">Hardware Requirements <span class="raw-html-md"><a name="hardware-requirement"></a></span></a></li>
-<li><a class="reference internal" href="#operating-system-requirements-a-name-operating-system-a">Operating System Requirements <span class="raw-html-md"><a name="operating-system"></a></span></a></li>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#auto-installation">“Auto” installation</a></li>
+<li><a class="reference internal" href="#vm-install">VM Install</a></li>
+<li><a class="reference internal" href="#manual-installation">Manual installation</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#hardware-requirements">Hardware Requirements</a></li>
+<li><a class="reference internal" href="#operating-system-requirements">Operating System requirements</a></li>
 </ul>
 </li>
 </ul>
