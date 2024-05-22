@@ -48,7 +48,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_24_x86_64
           
       - name: Build wheels (macOS)
-        if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: cp311-macosx_*
