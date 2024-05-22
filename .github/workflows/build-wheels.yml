@@ -56,7 +56,7 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: CC=clang CXX=clang++ FC=gfortran-13
           # CIBW_REPAIR_WHEEL_COMMAND_MACOS: "auditwheel repair -w {dest_dir} {wheel}"
         
-      -name: Build wheels (Windows)
+      - name: Build wheels (Windows)
         if: matrix.os == 'windows-latest' 
         run: python -m cibuildwheel --output-dir wheelhouse 
         env: 
