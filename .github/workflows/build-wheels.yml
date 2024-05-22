@@ -54,7 +54,7 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: cp311-macosx_*
-          CIBW_ARCHS_MACOS: auto #x86_64 arm64 universal2
+          CIBW_ARCHS_MACOS: universal2 #x86_64 arm64 universal2
           CIBW_ENVIRONMENT_MACOS: CC=clang CXX=clang++ FC=gfortran-13
           # CIBW_REPAIR_WHEEL_COMMAND_MACOS: "auditwheel repair -w {dest_dir} {wheel}"
         
