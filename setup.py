@@ -13,10 +13,12 @@ def configuration(parent_package='', top_path=None):
     config.add_extension(
         name='seidart.fortran.cpmlfdtd',
         sources=fortran_sources[0],
+        extra_f90_compile_args=['m64'],
     )
     config.add_extension(
         name='seidart.fortran.orientsynth',
-        sources = fortran_sources[1]
+        sources = fortran_sources[1],
+        extra_f90_compile_args=['m64'],
     )
     
     return config
