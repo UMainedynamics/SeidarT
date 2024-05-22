@@ -79,6 +79,15 @@ This will install all dependencies and the latest *seidart* version found on PyP
 
 will pull the latest version and install the package from PyPi. 
 
+Alternatively, if you run into incompatibility with the operating system and the package wheels, you can install locally. To do this, activate your conda environment then navigate to the SeidarT folder. This is the root directory and from here the command::
+    
+    pip install . 
+
+will install dependencies, build wheels based on your OS, and install SeidarT into the environment. For development, or for testing specific repo branches, this method works great. If you want to keep up to date on the version and this is the install method that works for you, pull updates from the main branch first::
+    
+    git pull origin main 
+
+
 
 .. =============================================================================
 Hardware Requirements
@@ -91,3 +100,6 @@ Operating System requirements
 -----------------------------
 
 All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development. 
+
+.. =============================================================================
+Upgrading Versions
