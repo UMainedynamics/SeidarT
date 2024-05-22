@@ -23,6 +23,7 @@ This will build documentation and move these
 items to *docs/build/* folder where GitHub will look to render them (``docs/``). You can preview any of the HTML files in the *docs/build/html/* folder in a web viewer like *Firefox*.
 
 .. note:: 
-    When contributing, use robust comments, type hints, docstrings, and include examples. Self-documenting code is very helpful, but to avoid any ambiguity, add comments. As the source code evolves, some comments will need to be updated. 
+    When contributing, use robust comments, type hints, Sphinx formatted docstrings, and include examples. Self-documenting code is very helpful, but to avoid any ambiguity, add comments. As the source code evolves, some comments will need to be updated. 
 
     
+ 

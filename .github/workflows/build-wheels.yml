@@ -47,16 +47,22 @@ jobs:
           CIBW_BUILD: cp311-*
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_24_x86_64
           
-      - name: Build wheels (macOS and Windows)
+      - name: Build wheels (macOS)
         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: cp311-*
-          CIBW_ARCHS_WINDOWS: auto64
-          CIBW_ARCHS_MACOS: x86_64
-          CIBW_ENVIRONMENT_WINDOWS: CC=gcc CXX=g++ FC=gfortran
+          CIBW_BUILD: cp311-macosx_*
+          CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ENVIRONMENT_MACOS: CC=clang CXX=clang++ FC=gfortran-13
           # CIBW_REPAIR_WHEEL_COMMAND_MACOS: "auditwheel repair -w {dest_dir} {wheel}"
+        
+      -name: Build wheels (Windows)
+        if: matrix.os == 'windows-latest' 
+        run: python -m cibuildwheel --output-dir wheelhouse 
+        env: 
+          CIBW_BUILD: cp311-win_*
+          CIBW_ARCHS_WINDOWS: auto64
+          CIBW_ENVIRONMENT_WINDOWS: CC=gcc CXX=g++ FC=gfortran
 
       - uses: actions/upload-artifact@v3
         with:

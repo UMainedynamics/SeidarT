@@ -21,7 +21,7 @@ The general steps to create a single shot survey are:
 
 8. **Visualize and/or save outputs**.  
 
-Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the `src/seidart/recipes/single_source <https://github.com/UMainedynamics/SeidarT/tree/main/src/seidart/recipes/single_source>`_ folder. 
+Below is a simple template for a single shot survey for a 91 channel linear array at the surface. All of the files including the source code can be found in the `Seidart-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes/tree/main>`_ repo in `src/seidart-recipes/single_source <https://github.com/UMainedynamics/SeidarT-Recipes/tree/main/src/seidart-recipes/single_source>`_ folder. 
 
 
 .. code-block:: python

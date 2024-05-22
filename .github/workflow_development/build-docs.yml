@@ -36,8 +36,8 @@ jobs:
       
       - name: Generate .rst files for specific Python scripts
         run: |
-          MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src/seidart
-          sphinx-apidoc -o docs/source ./src/seidart -e
+          MODULE_PATH="/home/runner/work/SeidarT/SeidarT/src
+          sphinx-apidoc -o docs/source ./src -e
       
       - name: Copy files to the source directory
         run: |
