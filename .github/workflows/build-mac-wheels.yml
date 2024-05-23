@@ -45,7 +45,7 @@ jobs:
       #       FCFLAGS="-arch x86_64"
       #       FFLAGS="-arch x86_64"
       #       LDFLAGS="-arch x86_64"
-      #       MACOSX_DEPLOYMENT_TARGET=10.9
+      #       MACOSX_DEPLOYMENT_TARGET=11.0
 
       - name: Build wheels for arm64
         run: cibuildwheel --output-dir wheelhouse
@@ -56,7 +56,7 @@ jobs:
             FCFLAGS="-arch arm64"
             FFLAGS="-arch arm64"
             LDFLAGS="-arch arm64"
-            MACOSX_DEPLOYMENT_TARGET=10.9
+            MACOSX_DEPLOYMENT_TARGET=11.0
 
       - name: Combine wheels into universal2
         run: |
