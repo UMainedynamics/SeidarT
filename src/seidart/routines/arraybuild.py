@@ -410,8 +410,6 @@ class Array:
             
         
         
-
-
 # =============================================================================
 # ============================== Main Function ================================
 def main(
@@ -548,6 +546,13 @@ if __name__ == "__main__":
         If flagged, plot the complex part of the solution otherwise default to 
         the real valued solution. 
         """
+    )
+    
+    parser.add_argument(
+        '-w', '--wiggleplot', required = False, nargs = 1, type = int, 
+        help = '''Provide the index of the receiver in the receiver file that 
+        you would like to plot as a single 1D time series. The channel provided 
+        in the channel argument is the dimension that will be plotted.'''
     )
     
     # Get the arguments

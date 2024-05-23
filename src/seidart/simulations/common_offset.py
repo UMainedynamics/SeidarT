@@ -198,17 +198,33 @@ class CommonOffset(Array):
             # variables wth the self.co_image variable
             self.timeseries = self.co_image
             self.timeseries_complex = self.co_image_complex
+        
+        self.save()
 
-    
-    # def receiver_timeseries(self):
-    #     if self.domain.dim == 2.5:
-    #         all_files = glob(
-    #             self.channel + '*.' + '.'.join(src_ind.astype(str)) + '.dat'
-    #         )
-    #     else: 
-    #         all_files = glob(
-    #             self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '..dat'
-    #         )
-
-
-#c
+    # -------------------------------------------------------------------------
+    def save(save: bool = True):
+        """
+        Save the object as a pickle formatted file or the numpy array of 
+        receiver time series to a CSV.
+        
+        :param save: Flag if you would like to save the receiver time series and the object. Default is True so setting to False suppresses any save outputs. 
+            <project_name>.<channel>.<src_x>.<src_y>.<src_z>.csv. DEFAULT is False. 
+        :type save: bool
+        """
+        filename = '.'.join( 
+            [
+                self.prjfile.split('.')[:-1][0],
+                self.channel, 
+                '.'.join(self.source.astype(str))
+            ]
+        )
+        if save:
+            csvfilename = filename + '.csv'
+            pklfilename = filename + '.pkl'
+            
+            df = pd.DataFrame(self.timeseries)
+            df.to_csv(filename, header = False, index = False)
+            
+            # Pickle the object and save to file
+            with open(filename, 'wb') as file:
+                pickle.dump(self, filename)
