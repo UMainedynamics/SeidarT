@@ -1,92 +1,92 @@
-name: Build and Publish Wheels
+# name: Build and Publish Wheels
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  build_wheels:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-13, macos-14]
-        python-version: [3.11]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+# jobs:
+#   build_wheels:
+#     runs-on: ${{ matrix.os }}
+#     strategy:
+#       matrix:
+#         os: [macos-13, macos-14]
+#         python-version: [3.11]
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.python-version }}
 
-      - name: Install Homebrew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
-          eval "$(/opt/homebrew/bin/brew shellenv)"
+#       - name: Install Homebrew
+#         run: |
+#           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+#           echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
+#           eval "$(/opt/homebrew/bin/brew shellenv)"
 
-      - name: Install gfortran
-        run: |
-          brew install gcc
+#       - name: Install gfortran
+#         run: |
+#           brew install gcc
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install cibuildwheel==2.18.1 numpy
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           python -m pip install cibuildwheel==2.18.1 numpy
 
-      # - name: Build wheels for x86_64
-      #   run: cibuildwheel --output-dir wheelhouse
-      #   env:
-      #     CIBW_ARCHS_MACOS: "x86_64"
-      #     CIBW_BUILD_VERBOSITY: 1
-      #     CIBW_ENVIRONMENT: |
-      #       FCFLAGS="-arch x86_64"
-      #       FFLAGS="-arch x86_64"
-      #       LDFLAGS="-arch x86_64"
-      #       MACOSX_DEPLOYMENT_TARGET=11.0
+#       # - name: Build wheels for x86_64
+#       #   run: cibuildwheel --output-dir wheelhouse
+#       #   env:
+#       #     CIBW_ARCHS_MACOS: "x86_64"
+#       #     CIBW_BUILD_VERBOSITY: 1
+#       #     CIBW_ENVIRONMENT: |
+#       #       FCFLAGS="-arch x86_64"
+#       #       FFLAGS="-arch x86_64"
+#       #       LDFLAGS="-arch x86_64"
+#       #       MACOSX_DEPLOYMENT_TARGET=11.0
 
-      - name: Build wheels for arm64
-        run: cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_ARCHS_MACOS: "arm64"
-          CIBW_BUILD_VERBOSITY: 1
-          CIBW_ENVIRONMENT: |
-            FCFLAGS="-arch arm64"
-            FFLAGS="-arch arm64"
-            LDFLAGS="-arch arm64"
-            MACOSX_DEPLOYMENT_TARGET=11.0
+#       - name: Build wheels for arm64
+#         run: cibuildwheel --output-dir wheelhouse
+#         env:
+#           CIBW_ARCHS_MACOS: "arm64"
+#           CIBW_BUILD_VERBOSITY: 1
+#           CIBW_ENVIRONMENT: |
+#             FCFLAGS="-arch arm64"
+#             FFLAGS="-arch arm64"
+#             LDFLAGS="-arch arm64"
+#             MACOSX_DEPLOYMENT_TARGET=11.0
 
-      - name: Combine wheels into universal2
-        run: |
-          mkdir -p universal2_wheels
-          for whl in wheelhouse/*macosx_10_9_x86_64.whl; do
-            base=$(basename $whl .whl)
-            arm64_whl="wheelhouse/${base/macosx_10_9_x86_64/macosx_11_0_arm64}.whl"
-            delocate-fuse -w universal2_wheels $whl $arm64_whl
-          done
+#       - name: Combine wheels into universal2
+#         run: |
+#           mkdir -p universal2_wheels
+#           for whl in wheelhouse/*macosx_10_9_x86_64.whl; do
+#             base=$(basename $whl .whl)
+#             arm64_whl="wheelhouse/${base/macosx_10_9_x86_64/macosx_11_0_arm64}.whl"
+#             delocate-fuse -w universal2_wheels $whl $arm64_whl
+#           done
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: universal2_wheels/*.whl
+#       - name: Upload wheels
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: wheels
+#           path: universal2_wheels/*.whl
 
-  publish_wheels:
-    needs: build_wheels
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download wheels
-        uses: actions/download-artifact@v3
-        with:
-          name: wheels
-          path: universal2_wheels
+#   publish_wheels:
+#     needs: build_wheels
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Download wheels
+#         uses: actions/download-artifact@v3
+#         with:
+#           name: wheels
+#           path: universal2_wheels
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.11
 
       # - name: Install twine
       #   run: python -m pip install twine
@@ -96,3 +96,30 @@ jobs:
       #     TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
       #     TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       #   run: python -m twine upload universal2_wheels/*.whl
+
+name: Build macOS Wheels
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy setuptools wheel
+    - name: Build wheels
+      run: |
+        python setup.py bdist_wheel
+    - name: Upload wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist/*.whl
