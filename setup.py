@@ -13,12 +13,12 @@ def configuration(parent_package='', top_path=None):
     config.add_extension(
         name='seidart.fortran.cpmlfdtd',
         sources=fortran_sources[0],
-        extra_f90_compile_args=['m64'],
+        # extra_f90_compile_args=['m64'],
     )
     config.add_extension(
         name='seidart.fortran.orientsynth',
         sources = fortran_sources[1],
-        extra_f90_compile_args=['m64'],
+        # extra_f90_compile_args=['m64'],
     )
     
     return config
@@ -35,17 +35,17 @@ if __name__ == "__main__":
             'seidart.visualization'
         ],
         configuration=configuration,
-        # entry_points = {
-        #     'console_scripts': [
-        #         'prjbuild=seidart.routines.prjbuild:main',
-        #         'prjrun=seidart.routines.prjrun:main',
-        #         'arraybuild=seidart.routines.arraybuild:main',
-        #         'sourcefunction=seidart.routines.sourcefunction:main',
-        #         'rcxdisplay=seidart.visualization.rcxdisplay:main',
-        #         'im2anim=seidart.visualiztion.im2anim:build_animation',
-        #         'orientsynth=seidart.fortran.orientsynth'
-        #     ]
-        # },
+        entry_points = {
+            'console_scripts': [
+                'prjbuild=seidart.routines.prjbuild:main',
+                'prjrun=seidart.routines.prjrun:main',
+                'arraybuild=seidart.routines.arraybuild:main',
+                'sourcefunction=seidart.routines.sourcefunction:main',
+                'rcxdisplay=seidart.visualization.rcxdisplay:main',
+                'im2anim=seidart.visualiztion.im2anim:build_animation',
+                'orientsynth=seidart.fortran.orientsynth'
+            ]
+        },
         install_requires=[
             'numpy',
             'setuptools',
