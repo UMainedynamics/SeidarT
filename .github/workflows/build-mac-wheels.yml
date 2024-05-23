@@ -44,6 +44,7 @@ jobs:
             FCFLAGS="-arch x86_64 -arch arm64"
             FFLAGS="-arch x86_64 -arch arm64"
             LDFLAGS="-arch x86_64 -arch arm64"
+            MACOSX_DEPLOYMENT_TARGET=10.9
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
