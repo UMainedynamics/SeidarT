@@ -27,7 +27,6 @@ if __name__ == "__main__":
     setup(
         name='seidart',
         version='1.6.0',
-        description='SeidarT Project',
         packages=[
             'seidart', 
             'seidart.fortran', 
@@ -36,17 +35,17 @@ if __name__ == "__main__":
             'seidart.visualization'
         ],
         configuration=configuration,
-        entry_points = {
-            'console_scripts': [
-                'prjbuild=seidart.routines.prjbuild:main',
-                'prjrun=seidart.routines.prjrun:main',
-                'arraybuild=seidart.routines.arraybuild:main',
-                'sourcefunction=seidart.routines.sourcefunction:main',
-                'rcxdisplay=seidart.visualization.rcxdisplay:main',
-                'im2anim=seidart.visualiztion.im2anim:build_animation',
-                'orientsynth=seidart.fortran.orientsynth'
-            ]
-        },
+        # entry_points = {
+        #     'console_scripts': [
+        #         'prjbuild=seidart.routines.prjbuild:main',
+        #         'prjrun=seidart.routines.prjrun:main',
+        #         'arraybuild=seidart.routines.arraybuild:main',
+        #         'sourcefunction=seidart.routines.sourcefunction:main',
+        #         'rcxdisplay=seidart.visualization.rcxdisplay:main',
+        #         'im2anim=seidart.visualiztion.im2anim:build_animation',
+        #         'orientsynth=seidart.fortran.orientsynth'
+        #     ]
+        # },
         install_requires=[
             'numpy',
             'setuptools',
