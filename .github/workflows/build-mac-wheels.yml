@@ -1,5 +1,4 @@
 name: Build Wheels For MacOS
-name: Build and Publish Wheels
 
 on:
   push:
