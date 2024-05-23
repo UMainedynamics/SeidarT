@@ -28,18 +28,11 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-        
-      - name: Install Fortran compiler (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install gcc
-          echo "PATH=$(brew --prefix gcc)/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install cibuildwheel and auditwheel
         run: |
           python -m pip install cibuildwheel
           python -m pip install auditwheel
-          python -m pip install delocate
 
       - name: Build wheels (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -49,15 +42,6 @@ jobs:
           CIBW_ARCHS_LINUX: auto aarch64 ppc64le s390x
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_24_x86_64
           
-      - name: Build wheels (macOS)
-        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: cp311-macosx_*
-          CIBW_ARCHS_MACOS: universal2 #x86_64 arm64 universal2
-          CIBW_ENVIRONMENT_MACOS: CC=clang CXX=clang++ FC=gfortran-13
-          # CIBW_REPAIR_WHEEL_COMMAND_MACOS: "auditwheel repair -w {dest_dir} {wheel}"
-        
       - name: Build wheels (Windows)
         if: matrix.os == 'windows-latest' 
         run: python -m cibuildwheel --output-dir wheelhouse 
@@ -70,17 +54,3 @@ jobs:
         with:
           name: wheels
           path: ./wheelhouse/*.whl
-
-      - name: Publish to PyPI
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages_dir: ./wheelhouse
-        
-      # - name: Commit Documentation Changes
-      #   run: |
-      #     git config --local user.email "actions@github.com"
-      #     git config --local user.name "GitHub Action"
-      #     git add docs/ 
-      #     git commit -m "Update wheelhouse" -a || echo "No changes to commit"
-      #     git push
