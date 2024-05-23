@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "seidart"
 version = "1.6.0"
 license = {file = "LICENSE.txt"}
-description = "seidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
+description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
 requires-python = ">=3.11"
-readme = "README.md"
+readme = "README.rst"
 authors = [
     { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
@@ -37,6 +37,20 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
+[project.entry-points.console_scripts]
+prjbuild = "seidart.routines.prjbuild:main"
+prjrun = "seidart.routines.prjrun:main"
+arraybuild = "seidart.routines.arraybuild:main"
+sourcefunction = "seidart.routines.sourcefunction:main"
+rcxdisplay = "seidart.visualization.rcxdisplay:main"
+im2anim = "seidart.visualization.im2anim:build_animation"
+orientsynth = "seidart.fortran.orientsynth"
+
+# Optionals
+[project.urls]
+homepage = "https://github.com/UMainedynamics/SeidarT"
+documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = [
@@ -47,9 +61,7 @@ packages = [
     "seidart.visualization"
 ]
 
-# Optionals
-[project.urls]
-homepage = "https://github.com/UMainedynamics/SeidarT"
-documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+
+
 
 

@@ -1,5 +1,5 @@
 LICENSE.txt
-README.md
+README.rst
 pyproject.toml
 setup.py
 src/seidart/__init__.py
@@ -21,6 +21,7 @@ src/seidart/routines/prjrun.py
 src/seidart/routines/sourcefunction.py
 src/seidart/simulations/__init__.py
 src/seidart/simulations/common_offset.py
+src/seidart/simulations/multioffset.py
 src/seidart/visualization/__init__.py
 src/seidart/visualization/im2anim.py
 src/seidart/visualization/imgen.py
