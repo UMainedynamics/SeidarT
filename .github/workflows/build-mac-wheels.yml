@@ -36,16 +36,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install cibuildwheel==2.18.1 numpy
 
-      - name: Build wheels for x86_64
-        run: cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_ARCHS_MACOS: "x86_64"
-          CIBW_BUILD_VERBOSITY: 1
-          CIBW_ENVIRONMENT: |
-            FCFLAGS="-arch x86_64"
-            FFLAGS="-arch x86_64"
-            LDFLAGS="-arch x86_64"
-            MACOSX_DEPLOYMENT_TARGET=10.9
+      # - name: Build wheels for x86_64
+      #   run: cibuildwheel --output-dir wheelhouse
+      #   env:
+      #     CIBW_ARCHS_MACOS: "x86_64"
+      #     CIBW_BUILD_VERBOSITY: 1
+      #     CIBW_ENVIRONMENT: |
+      #       FCFLAGS="-arch x86_64"
+      #       FFLAGS="-arch x86_64"
+      #       LDFLAGS="-arch x86_64"
+      #       MACOSX_DEPLOYMENT_TARGET=10.9
 
       - name: Build wheels for arm64
         run: cibuildwheel --output-dir wheelhouse
