@@ -1,4 +1,5 @@
 name: Build Wheels For MacOS
+name: Build and Publish Wheels
 
 on:
   push:
@@ -20,6 +21,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+
+      - name: Install gfortran
+        run: brew install gcc
 
       - name: Install dependencies
         run: |
