@@ -27,10 +27,9 @@ jobs:
           echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
           eval "$(/opt/homebrew/bin/brew shellenv)"
 
-      - name: Install gfortran 13
+      - name: Install gfortran
         run: |
-          brew install gcc@13
-          brew link --overwrite gcc@13
+          brew install gcc
 
       - name: Install dependencies
         run: |
