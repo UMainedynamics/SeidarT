@@ -2,9 +2,6 @@
 requires = ["setuptools","wheel","numpy"]
 build-backend = "setuptools.build_meta"
 
-[tool.cibuildwheel] 
-archs = ["x86_64"]
-
 [project]
 name = "seidart"
 version = "1.6.0"

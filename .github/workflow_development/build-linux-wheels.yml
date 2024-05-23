@@ -1,0 +1,56 @@
+name: Build Wheels For Linux OS
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches: 
+      - main
+      - master
+      - develop
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04, ubuntu-22.04]
+
+    steps:
+      - name: Checkout seidart
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install cibuildwheel and auditwheel
+        run: |
+          python -m pip install cibuildwheel
+          python -m pip install auditwheel
+
+      - name: Build wheels (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: cp311-*
+          CIBW_ARCHS_LINUX: auto aarch64 ppc64le s390x
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_24_x86_64
+          
+      # - name: Build wheels (Windows)
+      #   if: matrix.os == 'windows-latest' 
+      #   run: python -m cibuildwheel --output-dir wheelhouse 
+      #   env: 
+      #     CIBW_BUILD: cp311-win_*
+      #     CIBW_ARCHS_WINDOWS: auto ARM64
+      #     CIBW_ENVIRONMENT_WINDOWS: CC=gcc CXX=g++ FC=gfortran
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./wheelhouse/*.whl

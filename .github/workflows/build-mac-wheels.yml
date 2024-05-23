@@ -1,4 +1,4 @@
-name: Build and Publish Wheels
+name: Build Wheels For MacOS
 
 on:
   push:
@@ -21,20 +21,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.18.1
-      
-      - name: Install Fortran compiler (macOS)
-        if: runner.os == 'macOS'
+      - name: Install dependencies
         run: |
-          brew install gcc
-          echo "PATH=$(brew --prefix gcc)/bin:$PATH" >> $GITHUB_ENV
+          python -m pip install --upgrade pip
+          python -m pip install cibuildwheel==2.18.1 numpy
 
       - name: Build wheels
         run: cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_ENVIRONMENT: |
+            FCFLAGS="-arch x86_64 -arch arm64"
+            FFLAGS="-arch x86_64 -arch arm64"
+            LDFLAGS="-arch x86_64 -arch arm64"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
