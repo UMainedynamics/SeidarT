@@ -202,14 +202,14 @@ class CommonOffset(Array):
         self.save()
 
     # -------------------------------------------------------------------------
-    def save(save: bool = True):
+    def save(saveobject: bool = True):
         """
         Save the object as a pickle formatted file or the numpy array of 
         receiver time series to a CSV.
         
-        :param save: Flag if you would like to save the receiver time series and the object. Default is True so setting to False suppresses any save outputs. 
+        :param saveobject: Flag if you would like to save the receiver time series and the object. Default is True so setting to False suppresses any save outputs. 
             <project_name>.<channel>.<src_x>.<src_y>.<src_z>.csv. DEFAULT is False. 
-        :type save: bool
+        :type saveobject: bool
         """
         filename = '.'.join( 
             [
@@ -218,7 +218,7 @@ class CommonOffset(Array):
                 '.'.join(self.source.astype(str))
             ]
         )
-        if save:
+        if saveobject:
             csvfilename = filename + '.csv'
             pklfilename = filename + '.pkl'
             
