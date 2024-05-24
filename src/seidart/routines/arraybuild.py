@@ -360,9 +360,9 @@ class Array:
         
         if plot_complex:
             # Use complex values 
-            dat = self.timeseries_complex[:,n]
+            dat = self.timeseries_complex[:,receiver_number]
         else:
-            dat = self.timeseries[:,n]
+            dat = self.timeseries[:,receiver_number]
             
         timevector = np.arange(0, len(dat) ) * self.dt 
         
