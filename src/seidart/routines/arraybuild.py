@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from typing import Tuple
 from seidart.routines.definitions import *
+import pickle 
 
 # =============================================================================
 class Array:
