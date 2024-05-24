@@ -371,7 +371,7 @@ class Array:
         
         self.wiggleax.plot(timevector, dat, **plot_params)
         self.wiggleax.set_facecolor(plot_background)
-        ax.set_xlabel('Two-way travel time (s)')
+        self.wiggleax.set_xlabel('Two-way travel time (s)')
         if self.is_seismic:
             self.wiggleax.set_ylabel('Velocity (m/s)')
         else:
