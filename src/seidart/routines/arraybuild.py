@@ -382,7 +382,7 @@ class Array:
         
     
     # -------------------------------------------------------------------------
-    def save(self):
+    def save(self, save_object = True):
         """
         Save the object as a pickle formatted file and the numpy array of 
         receiver time series to a CSV.
@@ -395,7 +395,7 @@ class Array:
                 '.'.join(self.source.astype(str))
             ]
         )
-        if save:
+        if save_object:
             csvfilename = filename + '.csv'
             pklfilename = filename + '.pkl'
             
