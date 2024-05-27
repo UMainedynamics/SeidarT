@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "seidart"
-version = "1.6.0"
+version = "1.7.0"
 license = {file = "LICENSE.txt"}
 description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
 requires-python = ">=3.11"
@@ -24,7 +24,8 @@ dependencies = [
     "pandas",
     "mplstereonet",
     "pyevtk",
-    "glob2"
+    "glob2",
+    "dill"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

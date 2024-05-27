@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from typing import Tuple
 from seidart.routines.definitions import *
-import pickle 
+# import pickle 
+import dill as pickle
 
 # =============================================================================
 class Array:
@@ -328,6 +329,7 @@ class Array:
             receiver_number: int, 
             plot_complex: bool = False, 
             plot_background: str = 'none',
+            plot_vertical = True,
             figure_size: Tuple[float, float] = (8, 5),
             **kwargs
         ):
@@ -370,15 +372,27 @@ class Array:
         self.wigglefig = plt.figure(facecolor='none', figsize = figure_size )
         self.wiggleax = plt.gca()
         
-        self.wiggleax.plot(timevector, dat, **plot_params)
-        self.wiggleax.set_facecolor(plot_background)
-        self.wiggleax.set_xlabel('Two-way travel time (s)')
-        if self.is_seismic:
-            self.wiggleax.set_ylabel('Velocity (m/s)')
+        if plot_vertical:
+            self.wiggleax.plot(dat, timevector, **plot_params)
+            self.wiggleax.set_ylabel('Two-way travel time (s)')
+            if self.is_seismic:
+                self.wiggleax.set_xlabel('Velocity (m/s)')
+            else:
+                self.wiggleax.set_xlabel('Electric Field (V/m)')
+            # self.wiggleax.set_ylim(self.wiggleax.get_ylim()[::-1])
+            self.wiggleax.invert_yaxis() 
         else:
-            self.wiggleax.set_ylabel('Electric Field (V/m)')
-        
+            self.wiggleax.plot(timevector, dat, **plot_params)
+            self.wiggleax.set_xlabel('Two-way travel time (s)')
+            if self.is_seismic:
+                self.wiggleax.set_ylabel('Velocity (m/s)')
+            else:
+                self.wiggleax.set_ylabel('Electric Field (V/m)')
+            
+        self.wiggleax.set_facecolor(plot_background)
+            
         plt.tight_layout()
+        plt.show()
         
     
     # -------------------------------------------------------------------------
@@ -388,11 +402,11 @@ class Array:
         receiver time series to a CSV.
         
         """
-        filename = '.'.join( 
+        filename = '-'.join( 
             [
                 self.prjfile.split('.')[:-1][0],
                 self.channel, 
-                '.'.join(self.source.astype(str))
+                '-'.join(self.source.astype(str))
             ]
         )
         if save_object:
@@ -400,11 +414,11 @@ class Array:
             pklfilename = filename + '.pkl'
             
             df = pd.DataFrame(self.timeseries)
-            df.to_csv(filename, header = False, index = False)
+            df.to_csv(csvfilename, header = False, index = False)
             
             # Pickle the object and save to file
-            with open(filename, 'wb') as file:
-                pickle.dump(self, filename)
+            with open(pklfilename, 'wb') as file:
+                pickle.dump(self, file)
             
         
         

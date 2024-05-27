@@ -5,3 +5,4 @@ pandas
 mplstereonet
 pyevtk
 glob2
+dill

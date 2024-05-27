@@ -6,7 +6,6 @@ src/seidart/__init__.py
 src/seidart.egg-info/PKG-INFO
 src/seidart.egg-info/SOURCES.txt
 src/seidart.egg-info/dependency_links.txt
-src/seidart.egg-info/entry_points.txt
 src/seidart.egg-info/requires.txt
 src/seidart.egg-info/top_level.txt
 src/seidart/fortran/__init__.py
