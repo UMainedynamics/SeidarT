@@ -1,4 +1,5 @@
 import numpy as np 
+import pandas as pd
 import matplotlib.pyplot as plt 
 import mplstereonet 
 from scipy.stats import norm, uniform, poisson, skewnorm
@@ -7,17 +8,22 @@ from scipy.spatial.transform import Rotation as R
 
 class Fabric:
     def __init__(self, params, plot = False):
-        self.strikes = None 
-        self.dips = None 
+        self.strikes = np.array([0]) 
+        self.dips = np.array([0]) 
         self.euler_angles = None 
-        self.params = kwargs
+        self.params = params
         self.npts = None
         self.plot = plot
+        self.cmap = 'pink_r'
+        self.alpha = 0.3
+        self.marker_size = 2
+        self.figsize = (8,8)
+        self.build()
     
     def build(self):
-        self.strikes, self.dips = generate_strikes_dips(self.params)
+        self.generate_strikes_dips()
         self.bunge_compute()
-        
+    
     # --------------------------------------------------------------------------
     def strike_dip_to_rotation_matrix(self, strike, dip):
         # Convert strike and dip to radians
@@ -41,15 +47,17 @@ class Fabric:
         # Combined rotation matrix
         rotation_matrix = Rz @ Rx
         return rotation_matrix
-
+    
     # --------------------------------------------------------------------------
-    def rotation_matrix_to_euler_angles(rotation_matrix, seq='xyz'):
+    def rotation_matrix_to_euler_angles(self, rotation_matrix):
         # Convert rotation matrix to Euler angles
-        if R.shape != (3, 3):
+        if rotation_matrix.shape != (3, 3):
             raise ValueError("Input matrix must be 3x3")
         
         # Ensure the matrix is a valid rotation matrix
-        if not np.allclose(np.dot(R, R.T), np.eye(3)) or not np.isclose(np.linalg.det(R), 1):
+        if not np.allclose(
+                np.dot(rotation_matrix, rotation_matrix.T), np.eye(3)
+            ) or not np.isclose(np.linalg.det(rotation_matrix), 1):
             raise ValueError("Input matrix is not a valid rotation matrix")
         
         # Extract the Euler angles
@@ -58,7 +66,7 @@ class Fabric:
         phi2 = np.arctan2(rotation_matrix[2, 0], rotation_matrix[2, 1])
         
         return phi1, Phi, phi2
-
+    
     # ------------------------------------------------------------------------------
     # Function to generate strikes and dips based on a specified distribution
     def generate_strikes_dips(self):
@@ -71,7 +79,7 @@ class Fabric:
         n = len(self.params['npts'])
         for ind in range(n):
             if self.params['distribution'] == 'normal':
-                self.strikes = np.hstack(
+                self.strikes = np.hstack((
                     self.strikes,
                     skewnorm.rvs(
                         a=self.params['skew_strike'][ind], 
@@ -79,77 +87,91 @@ class Fabric:
                         scale=self.params['strike_std'][ind], 
                         size=self.params['npts'][ind]
                     )
-                )
-                self.dips = np.hstack(
+                ))
+                self.dips = np.hstack((
                     self.dips, 
                     skewnorm.rvs(
                         a=self.params['skew_dip'][ind], 
                         loc=self.params['dip'][ind], 
-                        scale=self.params['dip_std'][0], 
-                        size=self.params['npts'][0]
+                        scale=self.params['dip_std'][ind], 
+                        size=self.params['npts'][ind]
                     )
-                )
+                ))
             elif self.params['distribution'] == 'uniform':
-                self.strikes = np.hstack(
+                self.strikes = np.hstack((
                     self.strikes,
                     np.random.uniform(
-                        self.params['strike_low'][0], 
-                        self.params['strike_high'][0], 
-                        self.params['npts'][0]
+                        self.params['strike_low'][ind], 
+                        self.params['strike_high'][ind], 
+                        self.params['npts'][ind]
                     )
-                )
-                self.dips = np.hstack(
+                ))
+                self.dips = np.hstack((
                     self.strikes,
                     np.random.uniform(
-                        self.params['dip_low'][0], 
-                        self.params['dip_high'][0], 
-                        self.params['npts'][0]
+                        self.params['dip_low'][ind], 
+                        self.params['dip_high'][ind], 
+                        self.params['npts'][ind]
                     )
-                )
+                ))
             elif self.params['distribution'] == 'poisson':
-                self.strikes = np.hstack(
+                self.strikes = np.hstack((
                     self.strikes,
                     poisson.rvs(
-                        mu = self.params['lambda_strike'][0], 
-                        size = self.params['npts'][0]
+                        mu = self.params['lambda_strike'][ind], 
+                        size = self.params['npts'][ind]
                     )
-                )
-                self.dips = np.hstack(
+                ))
+                self.dips = np.hstack((
                     self.strikes,
                     poisson.rvs(
-                        mu = self.params['lambda_dip'][0], 
-                        size = self.params['npts'][0]
+                        mu = self.params['lambda_dip'][ind], 
+                        size = self.params['npts'][ind]
                     )
-                )    
-            
-
+                ))
+        
+        self.strikes = self.strikes[1:]
+        self.dips = self.dips[1:]
+    
     # --------------------------------------------------------------------------
-    def projection_plot(self, figsize = (8,8) ):
+    def projection_plot(self):
+        """
+        """
         # Plot the data using mplstereonet
-        self.fig = plt.figure(figsize = figsize) 
+        self.fig = plt.figure(figsize = self.figsize) 
         self.ax = self.fig.add_subplot(111, projection = 'stereonet')
         
-        self.cax = self.ax.density_contourf(self.strikes, self.dips, measurement = 'poles')
-        self.ax.pole(self.strikes, self.dips, 'ko', markersize = 3)
-        self.cbar = fig.colorbar(self.cax)
+        self.cax = self.ax.density_contourf(
+            self.strikes, self.dips, 
+            measurement = 'poles', 
+            cmap = self.cmap
+        )
+        self.ax.pole(
+            self.strikes, self.dips, 
+            '.', c = '#050505', markersize = self.marker_size, 
+            alpha = self.alpha 
+        )
+        self.cbar = self.fig.colorbar(self.cax)
         self.ax.grid()
-        plt.title(f'Strikes and Dips Distribution ({distribution.capitalize()})')
         plt.show()
-
+    
     # --------------------------------------------------------------------------
     def bunge_compute(self):
-        n = len(strikes)
+        """
+        
+        """
+        n = len(self.strikes)
         euler_zxz = np.zeros([n, 3])
         for ind in range(n):
-            rotmat = strike_dip_to_rotation_matrix(self.strikes[ind], self.dips[ind])
-            euler_zxz[ind,:] = rotation_matrix_to_euler_angles(rotmat)
+            rotmat = self.strike_dip_to_rotation_matrix(self.strikes[ind], self.dips[ind])
+            euler_zxz[ind,:] = self.rotation_matrix_to_euler_angles(rotmat)
         
-        self.bunge = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
-        self.bunge.to_csv('euler_angles.csv')
+        self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
+        self.euler_angles.to_csv('euler_angles.csv')
         
         if self.plot:
-            projection_plot()
-        
+            self.projection_plot()
+
 # ==============================================================================
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(
@@ -266,13 +288,3 @@ if __name__ == "__main__":
     
 # Example usage
 # distribution = 'bimodal'  # Change to 'normal', 'uniform', 'poisson', or 'bimodal'
-params = {
-    'distribution': 'normal',
-    'npts': 100,
-    'strike': 90,
-    'strike_std': 15,
-    'dip': 30,
-    'dip_std': 10,
-    'skew_strike': 10,
-    'skew_dip': 5
-}
