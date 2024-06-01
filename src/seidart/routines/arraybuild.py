@@ -408,16 +408,15 @@ class Array:
                 '-'.join(self.source.astype(str))
             ]
         )
-        if save_object:
-            csvfilename = filename + '.csv'
-            pklfilename = filename + '.pkl'
-            
-            df = pd.DataFrame(self.timeseries)
-            df.to_csv(csvfilename, header = False, index = False)
-            
-            # Pickle the object and save to file
-            with open(pklfilename, 'wb') as file:
-                pickle.dump(self, file)
+        csvfilename = filename + '.csv'
+        pklfilename = filename + '.pkl'
+        
+        df = pd.DataFrame(self.timeseries)
+        df.to_csv(csvfilename, header = False, index = False)
+        
+        # Pickle the object and save to file
+        with open(pklfilename, 'wb') as file:
+            pickle.dump(self, file)
             
         
         

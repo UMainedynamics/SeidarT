@@ -201,30 +201,3 @@ class CommonOffset(Array):
         
         self.save()
 
-    # -------------------------------------------------------------------------
-    def save(saveobject: bool = True):
-        """
-        Save the object as a pickle formatted file or the numpy array of 
-        receiver time series to a CSV.
-        
-        :param saveobject: Flag if you would like to save the receiver time series and the object. Default is True so setting to False suppresses any save outputs. 
-            <project_name>.<channel>.<src_x>.<src_y>.<src_z>.csv. DEFAULT is False. 
-        :type saveobject: bool
-        """
-        filename = '.'.join( 
-            [
-                self.prjfile.split('.')[:-1][0],
-                self.channel, 
-                '.'.join(self.source.astype(str))
-            ]
-        )
-        if saveobject:
-            csvfilename = filename + '.csv'
-            pklfilename = filename + '.pkl'
-            
-            df = pd.DataFrame(self.timeseries)
-            df.to_csv(filename, header = False, index = False)
-            
-            # Pickle the object and save to file
-            with open(filename, 'wb') as file:
-                pickle.dump(self, filename)

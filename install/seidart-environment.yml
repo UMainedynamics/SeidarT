@@ -12,6 +12,7 @@ dependencies:
   - libgfortran5
   - scipy
   - setuptools
+  - seaborn
   - imagemagick
   - ghostscript
   - glob2

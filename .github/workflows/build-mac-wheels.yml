@@ -158,3 +158,8 @@ jobs:
             CC=gcc
             CXX=g++
             FC=gfortran
+      
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./wheelhouse/*.whl

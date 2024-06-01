@@ -4,25 +4,37 @@ import matplotlib.pyplot as plt
 import mplstereonet 
 from scipy.stats import norm, uniform, poisson, skewnorm
 from scipy.spatial.transform import Rotation as R
-
+import seaborn as sns
 
 class Fabric:
     def __init__(self, params, plot = False):
         self.strikes = np.array([0]) 
         self.dips = np.array([0]) 
+        self.density = None 
+        self.xedges = None 
+        self.yedges = None 
+        self.contour_levels = None
         self.euler_angles = None 
         self.params = params
         self.npts = None
         self.plot = plot
-        self.cmap = 'pink_r'
+        self.cmap_name = 'pink_r'
+        self.cmap = None
         self.alpha = 0.3
         self.marker_size = 2
         self.figsize = (8,8)
         self.build()
     
     def build(self):
+        self.custom_cmap()
         self.generate_strikes_dips()
+        self.strike_dip_density()
         self.bunge_compute()
+    
+    def custom_cmap(self, n_colors = 100):
+        palette = sns.color_palette(self.cmap_name, n_colors)
+        self.cmap = sns.blend_palette(palette, as_cmap = True)
+        self.cmap.set_under('white', 1.)
     
     # --------------------------------------------------------------------------
     def strike_dip_to_rotation_matrix(self, strike, dip):
@@ -133,25 +145,56 @@ class Fabric:
         self.strikes = self.strikes[1:]
         self.dips = self.dips[1:]
     
+    def strike_dip_density(self):
+        self.xedges, self.yedges, self.density = mplstereonet.density_grid(
+            self.strikes, self.dips, measurement = 'poles'
+        )
+        self.contour_levels = np.arange(
+            0, np.ceil(self.density.max())
+        )
+    #     self.extent = [
+    #         -np.pi/2, np.pi/2, -np.pi, np.pi
+    #     ]
+
+    #     self.extent = [
+    #         self.xedges.min(), self.xedges.max(), 
+    #         self.yedges.min(), self.yedges.max()
+    #     ]
+        
     # --------------------------------------------------------------------------
-    def projection_plot(self):
+    def projection_plot(self, density_sigma = 3):
         """
+        Create the stereonet plot 
         """
         # Plot the data using mplstereonet
-        self.fig = plt.figure(figsize = self.figsize) 
-        self.ax = self.fig.add_subplot(111, projection = 'stereonet')
-        
+        # self.fig = plt.figure(figsize = self.figsize) 
+        # self.ax = self.fig.add_subplot(111, projection = 'stereonet')
+        self.fig, self.ax = mplstereonet.subplots(figsize = self.figsize)
         self.cax = self.ax.density_contourf(
-            self.strikes, self.dips, 
+            self.strikes, self.dips, levels = self.contour_levels,
             measurement = 'poles', 
-            cmap = self.cmap
+            cmap = self.cmap,
+            sigma = density_sigma,
+            gridsize = (100,100)
         )
         self.ax.pole(
             self.strikes, self.dips, 
             '.', c = '#050505', markersize = self.marker_size, 
             alpha = self.alpha 
         )
-        self.cbar = self.fig.colorbar(self.cax)
+        # self.ax.set_azimuth_ticks(np.arange(0, 360, 10) )
+        # self.ax.set_longitude_grid(10)
+        self.ax.set_azimuth_ticklabels([])
+        self.ax.set_xticks(np.radians(np.arange(-80, 90, 10)))
+        self.ax.set_yticks(np.radians(np.arange(0,360,10)))
+        self.ax.set_longitude_grid_ends(90)
+        self.ax.set_rotation(0)
+        self.ax._polar.set_position(self.ax.get_position() )
+        # self.cax = self.ax.imshow(
+        #     self.density#, extent = self.extent, origin = 'lower', cmap = self.cmap
+        # )
+        
+        self.cbar = self.fig.colorbar(self.cax, shrink = 0.5, location = 'bottom' )
         self.ax.grid()
         plt.show()
     
