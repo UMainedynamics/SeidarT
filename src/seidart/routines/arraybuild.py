@@ -11,14 +11,14 @@ import dill as pickle
 # =============================================================================
 class Array:
     def __init__(
-        self, 
-        channel: str,
-        prjfile: str, 
-        receiver_file: str,
-        receiver_indices: bool = False, 
-        single_precision: bool = True,
-        is_complex: bool = False
-    ):
+            self, 
+            channel: str,
+            prjfile: str, 
+            receiver_file: str,
+            receiver_indices: bool = False, 
+            single_precision: bool = True,
+            is_complex: bool = False
+        ):
         """
         Initializes the Array object with project settings and receiver details.
         
@@ -393,7 +393,6 @@ class Array:
         plt.tight_layout()
         plt.show()
         
-    
     # -------------------------------------------------------------------------
     def save(self, save_object = True):
         """

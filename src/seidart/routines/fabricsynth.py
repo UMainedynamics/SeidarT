@@ -7,7 +7,8 @@ from scipy.spatial.transform import Rotation as R
 import seaborn as sns
 
 class Fabric:
-    def __init__(self, params, plot = False):
+    def __init__(self, params, output_filename = 'euler_angles.csv', plot = False):
+        self.output_filename = 'euler_angles.csv'
         self.strikes = np.array([0]) 
         self.dips = np.array([0]) 
         self.density = None 
@@ -224,7 +225,8 @@ if __name__ == "__main__":
         '-t', '--distribution_type', nargs = 1, type = str, required = False, 
         default = ['uniform'], 
         help = """The name of the distribution. Options are: normal, uniform, 
-        poisson, bimodal, multimodal. Default is normal."""
+        poisson. Bi/Multi-modal fabrics require multiple inputs, but the 
+        distibution type is constant. Default is normal."""
     )
     parser.add_argument(
         '-n', '--npts', nargs = '+', type = int, required = False, 
@@ -282,11 +284,7 @@ if __name__ == "__main__":
         help = """The lambda parameter for the Poisson distribution of the dip. 
         Default is 45."""
     )
-    parser.add_argument(
-        '-m', '--multimodal', required = False, action = 'store_true', 
-        help = """Flag whether this is a mixed mode model. The number of modes 
-        is determined by the length of the strike values."""
-    )
+
     parser.add_argument('-P', '--plot', action = 'store_true', required = False,
         help = """Flag to plot the stereonet of strikes and dips."""
     )
@@ -302,11 +300,9 @@ if __name__ == "__main__":
     skew_dip = args.skewness_dip
     lambda_strike = args.lambda_strike 
     lambda_dip = args.lambda_dip 
-    multimodal = args.multimodal 
     plot = args.plot 
     params = {
         'distribution':distribution,
-        'multimodal': multimodal,
         'npts': npts
     }
     if distribution == 'normal':

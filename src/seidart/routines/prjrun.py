@@ -74,7 +74,6 @@ def status_check(
         material: Material, 
         domain: Domain, 
         prjfile: str, 
-        seismic: bool = True, 
         append_to_prjfile: bool = True
     ) -> None:
     """
@@ -82,17 +81,15 @@ def status_check(
     project file if necessary.
 
     :param modelclass: The model class to check.
+    :type modelclass: Union[Model, None]
     :param material: The material class instance.
+    :type material: Material
     :param domain: The domain class instance.
+    :type domain: Domain
     :param prjfile: Path to the project file.
-    :param seismic: Flag indicating if the model is seismic. Defaults to True.
+    :type prjfile: str
     :param append_to_prjfile: Flag to append coefficients to the project file. 
                               Defaults to True.
-    :type modelclass: Union[Model, None]
-    :type material: Material
-    :type domain: Domain
-    :type prjfile: str
-    :type seismic: bool
     :type append_to_prjfile: bool
     """
     if modelclass.exit_status == 0 and \
@@ -103,7 +100,7 @@ def status_check(
         # Assign the materials to their respective corners
         material.sort_material_list()
         
-        if seismic:
+        if modelclass.is_seismic:
             print('Computing the stiffness coefficients.')
             tensor = material.functions.get_seismic(
                 temp = material.temp, 
@@ -125,13 +122,13 @@ def status_check(
         
         # Before we append the coefficients to the text file let's round to the second decimal
         tensor = np.round(tensor, 2)
-        if seismic:
+        if modelclass.is_seismic:
             ind = np.where(tensor.max() == tensor)
             max_rho = tensor[ ind[0][0], -1]
         
         # We're going to find the lines marked 'C' or 'P' and input the values there
 
-        if seismic:
+        if modelclass.is_seismic:
             modelclass.dt = np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
             append_coefficients(prjfile, tensor, CP = 'C', dt = modelclass.dt)
         else:
@@ -215,7 +212,7 @@ def cpmlcompute(
 
     quasi_cp_max = 0.7* deltamin / (2.0 * modelclass.dt)
     alpha_max = np.pi*modelclass.f0
-    if seismic:
+    if modelclass.is_seismic:
         sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
     else:
         sig_max = 0.7 * (NP+1) / (dx * np.sqrt(mu0/eps0) )
@@ -478,7 +475,6 @@ def main(
         material,
         domain,
         prjfile, 
-        seismic=True, 
         append_to_prjfile = append_to_prjfile
     )
     status_check(
@@ -486,7 +482,6 @@ def main(
         material, 
         domain,
         prjfile, 
-        seismic=False, 
         append_to_prjfile = append_to_prjfile,
         use_complex_equations = use_complex_equations
     )

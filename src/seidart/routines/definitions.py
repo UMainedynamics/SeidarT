@@ -179,7 +179,8 @@ class Material:
         """
         Checks the parameters of the material list for completeness.
 
-        It ensures that necessary fields are provided and checks for the presence of .ANG files for anisotropic materials.
+        It ensures that necessary fields are provided and checks for the 
+        presence of .ANG files for anisotropic materials.
         """
         # The fields for the materials in the input are defined as:
         # 'id, R/G/B, Temp., Dens., Por., WC, Anis, ANG_File'
@@ -197,7 +198,9 @@ class Material:
         if check == 0:
             file_check = 0
             for ind in range(0, self.material_list.shape[0]):
-                if self.material_list[ind,6] == 'True' and not self.material_list[ind,7] or self.material_list[ind,7] == 'n/a':
+                if self.material_list[ind,6] == 'True' and \
+                    not self.material_list[ind,7] or \
+                        self.material_list[ind,7] == 'n/a':
                     file_check = file_check + 1
         else:
             print('Material inputs aren"t satisfied.')
@@ -228,13 +231,16 @@ class Model:
     f0 : float or None
         The source frequency.
     theta : float or None
-        The angle of incidence in the xz-plane. Optional, defaults to 0 if unspecified.
+        The angle of incidence in the xz-plane. Optional, defaults to 0 if 
+        unspecified.
     phi : float or None
-        The angle of incidence in the xy-plane. Optional, defaults to 0 if `y` is specified and `phi` is unspecified.
+        The angle of incidence in the xy-plane. Optional, defaults to 0 if `y` 
+        is specified and `phi` is unspecified.
     src : Any
         The source information. Type is unspecified.
     tensor_coefficients : numpy.ndarray or None
-        The tensor coefficients for the simulation. Optional, but required for tensor-based simulations.
+        The tensor coefficients for the simulation. Optional, but required for 
+        tensor-based simulations.
     compute_coefficients : bool
         A flag indicating whether to compute coefficients. Defaults to True.
     attenuation_coefficients : numpy.ndarray or None
@@ -272,11 +278,13 @@ class Model:
         self.fref = None
         self.attenuation_fadjust = None
         self.exit_status = 0
+        self.is_seismic = None
 
     
     def tensor_check(self) -> None:
         """
-        Checks if tensor coefficients are specified and valid. Disables coefficient computation if valid.
+        Checks if tensor coefficients are specified and valid. Disables 
+        coefficient computation if valid.
         """
         # If the tensors are there
         check = 0
@@ -292,7 +300,8 @@ class Model:
     
     def para_check(self) -> None:
         """
-        Performs parameter checks for essential simulation settings and updates the exit status accordingly.
+        Performs parameter checks for essential simulation settings and updates 
+        the exit status accordingly.
         """
         if not self.time_steps:
             self.exit_status = 1
@@ -860,6 +869,8 @@ def loadproject(
             seismic.fref = float(temp[5])
 
     f.close()
+    seismic.is_seismic = True 
+    electromag.is_seismic = False
     return domain, material, seismic, electromag
 
 

@@ -23,8 +23,9 @@ class CommonOffset(Array):
             receiver_file: str,
             receiver_indices: bool = False, 
             single_precision: bool = True,
-            is_complex: bool = False
-        ): #*args, **kwargs) -> None:
+            is_complex: bool = False,
+            status_check: bool = False
+        ): -> None:
         """
         Initialize the CommonOffset object. A receiver file must be provided 
         that coincides with the source file.
@@ -41,6 +42,8 @@ class CommonOffset(Array):
         :type receiver_indices: bool
         :param single_precision: 
         :type single_precision: bool
+        :param status_check: Check to make sure the project file has all necessary parameters filled out. This will also recompute the tensor coefficients. 
+        :type status_check: bool 
 
         """
         # super().__init__(source_file, *args, **kwargs) 
@@ -53,6 +56,7 @@ class CommonOffset(Array):
         self.is_complex = is_complex
         self.gain = 100
         self.exaggeration = 0.5
+        self.status_check = status_check 
         self.build()
 
     def build(self) -> None:
@@ -70,9 +74,19 @@ class CommonOffset(Array):
         if self.channel in ['Vx','Vy','Vz']:
             self.is_seismic = True
             self.dt = self.seismic.dt 
+            if self.status_check:
+                prjrun.status_check(
+                    self.seismic, self.material, self.domain, 
+                    self.prjfile, append_to_prjfile = True
+                )
         else:
             self.is_seismic = False
             self.dt = self.electromag.dt
+            if self.status_check:
+                prjrun.status_check(
+                    self.electromag, self.material, self.domain, 
+                    self.prjfile, append_to_prjfile = True
+                )
         
          
         # Load the source and receiver locations
@@ -128,7 +142,7 @@ class CommonOffset(Array):
         self.source_xyz = self.source_xyz
         self.receiver_xyz = self.receiver_xyz + cpml
     
-    def co_run(self, seismic: bool = True) -> None:
+    def co_run(self) -> None:
         """
         Run the electromagnetic or seismic model and extract the receiver 
         time series
@@ -152,7 +166,7 @@ class CommonOffset(Array):
 
             print(f'Running shot gather for source location {self.source}')
             # Run the seismic or electromagnetic model
-            if seismic:
+            if self.is_seismic:
                 self.seismic.x = self.source[0]
                 self.seismic.y = self.source[1]
                 self.seismic.z = self.source[2]
