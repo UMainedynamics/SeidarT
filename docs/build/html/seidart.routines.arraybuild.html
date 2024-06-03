@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="Visualization Modules" href="VISUALIZATION.html" /><link rel="prev" title="seidart.routines.prjrun module" href="seidart.routines.prjrun.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="seidart.routines.fabricsynth module" href="seidart.routines.fabricsynth.html" /><link rel="prev" title="seidart.routines.prjrun module" href="seidart.routines.prjrun.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>seidart.routines.arraybuild module - SeidarT documentation v2.0.0</title>
+        <title>seidart.routines.arraybuild module - SeidarT documentation v2.0.1</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.0.0</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v2.0.1</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.0.0</span>
+  <span class="sidebar-brand-text">SeidarT documentation v2.0.1</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -189,6 +189,7 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjrun.html">seidart.routines.prjrun module</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
@@ -260,13 +261,22 @@ conditions.</p>
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.loadxyz">
 <span class="sig-name descname"><span class="pre">loadxyz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.loadxyz" title="Link to this definition">#</a></dt>
 <dd><p>Loads and sorts receiver locations from a file and adjusts them
-according to the domain and CPML layer.</p>
+according to the domain and CPML layer.  If the source_file flag is
+True, the source file is loaded instead of the receiver file and saved
+to the object under source_xyz.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_file</strong> (<em>bool</em>) – Flag to indicate if the file is a source file.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.save" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.save" title="Link to this definition">#</a></dt>
+<dd><p>Save the object as a pickle formatted file and the numpy array of
+receiver time series to a CSV.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.sectionplot">
@@ -275,6 +285,29 @@ according to the domain and CPML layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>plot_complex</strong> (<em>bool</em>) – Plot the complex part of the solution if True.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.wiggleplot">
+<span class="sig-name descname"><span class="pre">wiggleplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">receiver_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_vertical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.wiggleplot" title="Link to this definition">#</a></dt>
+<dd><p>Plot an individual receiver from the list of the receiver files. Use
+indices in the Python reference frame with the first component being 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>receiver_number</strong> (<em>int</em>) – Specify the indice of the reciever from the
+receiver file to plot.</p></li>
+<li><p><strong>plot_complex</strong> (<em>bool</em>) – Plot the complex part of the solution if True.</p></li>
+<li><p><strong>plot_background</strong> (<em>str</em>) – Specify the plot background color. Default is
+transparent.</p></li>
+<li><p><strong>figure_size</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Specify the figure dimensions in inches. Default is
+(8,5) width and height, respectively.</p></li>
+<li><p><strong>**kwargs</strong> – <p>Additional plotting parameters as defined in
+matplotlib.pyplot.plot.</p>
+</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -311,12 +344,12 @@ saving actions based on user inputs.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="VISUALIZATION.html">
+          <a class="next-page" href="seidart.routines.fabricsynth.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Visualization Modules</div>
+                <div class="title">seidart.routines.fabricsynth module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -368,6 +401,7 @@ saving actions based on user inputs.</p>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.loadxyz"><code class="docutils literal notranslate"><span class="pre">Array.loadxyz()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.save"><code class="docutils literal notranslate"><span class="pre">Array.save()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.sectionplot"><code class="docutils literal notranslate"><span class="pre">Array.sectionplot()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.wiggleplot"><code class="docutils literal notranslate"><span class="pre">Array.wiggleplot()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>

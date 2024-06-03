@@ -8,6 +8,18 @@ import seaborn as sns
 
 class Fabric:
     def __init__(self, params, output_filename = 'euler_angles.csv', plot = False):
+        """
+        Initialize the object. 
+        
+        :param params: A dictionary of the input parameters. 
+        :type params: dict 
+        :param output_filename: The name of the CSV file that will contain the 
+            Euler angles from the given parameters. Default is 'euler_angles.csv'
+        :type output_fielname: str
+        :param plot: Generate a plot. If plotting is suppressed (False), it can 
+            be plotted later using the class function 'projection_plot'
+        
+        """
         self.output_filename = 'euler_angles.csv'
         self.strikes = np.array([0]) 
         self.dips = np.array([0]) 
@@ -27,18 +39,39 @@ class Fabric:
         self.build()
     
     def build(self):
+        '''
+        Build the object. 
+        '''
         self.custom_cmap()
         self.generate_strikes_dips()
         self.strike_dip_density()
         self.bunge_compute()
     
     def custom_cmap(self, n_colors = 100):
+        '''
+        Compute a custom colormap for the density plot.
+        
+        :param n_colors: The number of colors to be used to compute the 
+            colormap. Default is 100.
+        :type n_colors: int 
+        '''
         palette = sns.color_palette(self.cmap_name, n_colors)
         self.cmap = sns.blend_palette(palette, as_cmap = True)
         self.cmap.set_under('white', 1.)
     
     # --------------------------------------------------------------------------
-    def strike_dip_to_rotation_matrix(self, strike, dip):
+    def strike_dip_to_rotation_matrix(self, strike, dip): 
+        '''
+        Compute the rotation matrix from a strike and dip pair. 
+        
+        :param strike: The strike value in degrees 
+        :type strike: float 
+        :param dip: The dip value in degrees  
+        :type dip: float 
+        
+        :return: rotation_matrix
+        :rtype: np.ndarray
+        '''
         # Convert strike and dip to radians
         strike_rad = np.radians(strike)
         dip_rad = np.radians(dip)
@@ -63,7 +96,13 @@ class Fabric:
     
     # --------------------------------------------------------------------------
     def rotation_matrix_to_euler_angles(self, rotation_matrix):
-        # Convert rotation matrix to Euler angles
+        """
+        Convert rotation matrix to Euler angles
+        
+        :param rotation_matrix: The 3-by-3 orthogonal rotation matrix
+        :type rotation_matrix: np.ndarray 
+        
+        """
         if rotation_matrix.shape != (3, 3):
             raise ValueError("Input matrix must be 3x3")
         
@@ -85,9 +124,6 @@ class Fabric:
     def generate_strikes_dips(self):
         """
         Create a set of strikes and dips according to a distribution. 
-        
-        :param params: The parameters of the distribution.
-        :type params: dict 
         """        
         n = len(self.params['npts'])
         for ind in range(n):
@@ -146,37 +182,30 @@ class Fabric:
         self.strikes = self.strikes[1:]
         self.dips = self.dips[1:]
     
-    def strike_dip_density(self):
-        self.xedges, self.yedges, self.density = mplstereonet.density_grid(
-            self.strikes, self.dips, measurement = 'poles'
-        )
-        self.contour_levels = np.arange(
-            0, np.ceil(self.density.max())
-        )
-    #     self.extent = [
-    #         -np.pi/2, np.pi/2, -np.pi, np.pi
-    #     ]
 
-    #     self.extent = [
-    #         self.xedges.min(), self.xedges.max(), 
-    #         self.yedges.min(), self.yedges.max()
-    #     ]
-        
     # --------------------------------------------------------------------------
     def projection_plot(self, density_sigma = 3):
         """
-        Create the stereonet plot 
+        Create the stereonet plot. The axes and figure inputs are useful when 
+        creating subplots since replacing empty axes objects with mplstereonet 
+        axes objects is not straightforward. 
+        
+        :param density_sigma: The bandwidth parameter for the density plot. A 
+            larger number uses a broader kernel and will smooth the data. 
+            Default is 3.
+        :type density_sigma: float 
+         
         """
         # Plot the data using mplstereonet
-        # self.fig = plt.figure(figsize = self.figsize) 
-        # self.ax = self.fig.add_subplot(111, projection = 'stereonet')
         self.fig, self.ax = mplstereonet.subplots(figsize = self.figsize)
+        
         self.cax = self.ax.density_contourf(
             self.strikes, self.dips, levels = self.contour_levels,
             measurement = 'poles', 
             cmap = self.cmap,
             sigma = density_sigma,
-            gridsize = (100,100)
+            gridsize = (100,100),
+            vmin = 1
         )
         self.ax.pole(
             self.strikes, self.dips, 
@@ -202,7 +231,7 @@ class Fabric:
     # --------------------------------------------------------------------------
     def bunge_compute(self):
         """
-        
+        Compute the euler angles for the z-x-z transform (Bunge's notation)
         """
         n = len(self.strikes)
         euler_zxz = np.zeros([n, 3])
@@ -211,7 +240,7 @@ class Fabric:
             euler_zxz[ind,:] = self.rotation_matrix_to_euler_angles(rotmat)
         
         self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
-        self.euler_angles.to_csv('euler_angles.csv')
+        self.euler_angles.to_csv(self.output_filename)
         
         if self.plot:
             self.projection_plot()

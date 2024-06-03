@@ -63,7 +63,7 @@ Welcome to SeidarT's documentation!
    seidart.routines.sourcefunction
    seidart.routines.prjrun
    seidart.routines.arraybuild
-   seidart.routines.orientsynth
+   seidart.routines.fabricsynth
    VISUALIZATION.md
    seidart.visualization.imgen
    seidart.visualization.im2anim

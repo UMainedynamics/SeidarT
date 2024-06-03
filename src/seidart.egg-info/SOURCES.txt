@@ -16,7 +16,6 @@ src/seidart/routines/arraybuild.py
 src/seidart/routines/definitions.py
 src/seidart/routines/fabricsynth.py
 src/seidart/routines/materials.py
-src/seidart/routines/orientation_tensor.py
 src/seidart/routines/prjbuild.py
 src/seidart/routines/prjrun.py
 src/seidart/routines/sourcefunction.py
