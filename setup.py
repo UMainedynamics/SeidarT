@@ -26,7 +26,7 @@ def configuration(parent_package='', top_path=None):
 if __name__ == "__main__":
     setup(
         name='seidart',
-        version='2.0.1',
+        version='2.0.3',
         packages=[
             'seidart', 
             'seidart.fortran', 
@@ -49,6 +49,8 @@ if __name__ == "__main__":
         install_requires=[
             'numpy',
             'setuptools',
-            'wheel'
+            'wheel',
+            'matplotlib',
+            'seaborn'
         ]
     )

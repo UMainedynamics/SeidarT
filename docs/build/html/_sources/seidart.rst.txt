@@ -8,7 +8,6 @@ Subpackages
    :maxdepth: 4
 
    seidart.fortran
-   seidart.recipes
    seidart.routines
    seidart.simulations
    seidart.visualization

@@ -108,7 +108,6 @@ def sourcefunction(
         modelclass: Model, 
         factor: float, 
         source_type: str, 
-        model_type: str, 
         multimodal: bool = False
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -118,13 +117,10 @@ def sourcefunction(
         orientation.
     :param factor: Amplitude scaling factor for the source.
     :param source_type: The type of source to generate.
-    :param model_type: Specifies whether the source is for a seismic ('s') or 
-        electromagnetic ('e') model.
     :param multimodal: Whether to generate a multimodal source. Defaults to False.
     :type modelclass: Model
     :type factor: float
     :type source_type: str
-    :type model_type: str
     :type multimodal: bool
     :return: A tuple containing the time vector and the x, y, z components of 
         the force, along with the source function.
@@ -147,21 +143,21 @@ def sourcefunction(
     forcex = np.sin( theta ) * np.cos( phi ) * srcfn
     forcey = np.sin( theta ) * np.sin( phi ) * srcfn
     forcez = np.cos( theta ) * srcfn
-    if model_type == 's' or model_type == 'seismic':
+    if modelclass.is_seismic:
         writesrc("seismicsourcex.dat", forcex)
         writesrc("seismicsourcey.dat", forcey)
         writesrc("seismicsourcez.dat", forcez)
-    if model_type == 'e' or model_type == 'electromag':
+    else:
         writesrc("electromagneticsourcex.dat", forcex)
         writesrc("electromagneticsourcey.dat", forcey)
         writesrc("electromagneticsourcez.dat", forcez)
-    return(timevec, forcex, forcey, forcez, srcfn)
+    
+    return timevec, forcex, forcey, forcez, srcfn
 
 def main(
         prjfile: str, 
         source_type: str, 
         factor: float, 
-        model_type: str,
         multimodal: bool, 
         make_plot: bool
     ) -> None:
@@ -172,8 +168,6 @@ def main(
     :param prjfile: Path to the project file.
     :param source_type: Type of the source function to generate.
     :param factor: Amplitude scaling factor for the source.
-    :param model_type: Specifies the model type ('s' for seismic, 'e' for 
-        electromagnetic).
     :param multimodal: Indicates if a multimodal source should be generated. 
         Defaults to False.
     :param make_plot: Whether to plot the generated source function. Defaults 
@@ -181,7 +175,6 @@ def main(
     :type prjfile: str
     :type source_type: str
     :type factor: float
-    :type model_type: str
     :type multimodal: bool
     :type make_plot: bool
     """
@@ -198,18 +191,17 @@ def main(
         timevec, fx, fy, fz, srcfn = sourcefunction(
             seismic, 
             factor, 
-            source_type, 
-            model_type, 
+            source_type,  
             multimodal = multimodal
         )
-    if model_type == 'e' or model_type == 'electromagnetic':
+    else:
         timevec, fx, fy, fz, srcfn = sourcefunction(
             electromag, 
             factor, 
             source_type, 
-            model_type, 
             multimodal = multimodal
         )
+    
     if make_plot:
         plotsource(timevec, srcfn)
         plt.show()

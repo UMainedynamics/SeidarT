@@ -5,24 +5,25 @@ import mplstereonet
 from scipy.stats import norm, uniform, poisson, skewnorm
 from scipy.spatial.transform import Rotation as R
 import seaborn as sns
+import copy
 
 class Fabric:
-    def __init__(self, params, output_filename = 'euler_angles.csv', plot = False):
+    def __init__(self, params, output_filename = 'euler_angles.txt', plot = False):
         """
         Initialize the object. 
         
         :param params: A dictionary of the input parameters. 
         :type params: dict 
-        :param output_filename: The name of the CSV file that will contain the 
-            Euler angles from the given parameters. Default is 'euler_angles.csv'
+        :param output_filename: The name of the text file that will contain the 
+            Euler angles from the given parameters. Default is 'euler_angles.txt'
         :type output_fielname: str
         :param plot: Generate a plot. If plotting is suppressed (False), it can 
             be plotted later using the class function 'projection_plot'
         
         """
-        self.output_filename = 'euler_angles.csv'
-        self.strikes = np.array([0]) 
-        self.dips = np.array([0]) 
+        self.output_filename = output_filename
+        self.trends = np.array([0]) 
+        self.plunges = np.array([0]) 
         self.density = None 
         self.xedges = None 
         self.yedges = None 
@@ -43,10 +44,9 @@ class Fabric:
         Build the object. 
         '''
         self.custom_cmap()
-        self.generate_strikes_dips()
-        self.strike_dip_density()
-        self.bunge_compute()
-    
+        self.generate_trends_plunges()
+        self.bunge_compute() 
+
     def custom_cmap(self, n_colors = 100):
         '''
         Compute a custom colormap for the density plot.
@@ -60,34 +60,34 @@ class Fabric:
         self.cmap.set_under('white', 1.)
     
     # --------------------------------------------------------------------------
-    def strike_dip_to_rotation_matrix(self, strike, dip): 
+    def trend_plunge_to_rotation_matrix(self, trend, plunge): 
         '''
-        Compute the rotation matrix from a strike and dip pair. 
+        Compute the rotation matrix from a trend and plunge pair. 
         
-        :param strike: The strike value in degrees 
-        :type strike: float 
-        :param dip: The dip value in degrees  
-        :type dip: float 
+        :param trend: The trend value in degrees 
+        :type trend: float 
+        :param plunge: The plunge value in degrees  
+        :type plunge: float 
         
         :return: rotation_matrix
         :rtype: np.ndarray
         '''
-        # Convert strike and dip to radians
-        strike_rad = np.radians(strike)
-        dip_rad = np.radians(dip)
+        # Convert trend and plunge to radians
+        trend_rad = np.radians(trend)
+        plunge_rad = np.radians(plunge)
         
-        # Rotation matrix for strike (rotation around Z-axis)
+        # Rotation matrix for trend (rotation around Z-axis)
         Rz = np.array([
-            [np.cos(strike_rad), -np.sin(strike_rad), 0],
-            [np.sin(strike_rad), np.cos(strike_rad), 0],
+            [np.cos(trend_rad), -np.sin(trend_rad), 0],
+            [np.sin(trend_rad), np.cos(trend_rad), 0],
             [0, 0, 1]
         ])
         
-        # Rotation matrix for dip (rotation around X-axis)
+        # Rotation matrix for plunge (rotation around X-axis)
         Rx = np.array([
             [1, 0, 0],
-            [0, np.cos(dip_rad), -np.sin(dip_rad)],
-            [0, np.sin(dip_rad), np.cos(dip_rad)]
+            [0, np.cos(plunge_rad), -np.sin(plunge_rad)],
+            [0, np.sin(plunge_rad), np.cos(plunge_rad)]
         ])
     
         # Combined rotation matrix
@@ -120,67 +120,67 @@ class Fabric:
         return phi1, Phi, phi2
     
     # ------------------------------------------------------------------------------
-    # Function to generate strikes and dips based on a specified distribution
-    def generate_strikes_dips(self):
+    # Function to generate trends and plunges based on a specified distribution
+    def generate_trends_plunges(self):
         """
-        Create a set of strikes and dips according to a distribution. 
+        Create a set of trends and plunges according to a distribution. 
         """        
         n = len(self.params['npts'])
         for ind in range(n):
             if self.params['distribution'] == 'normal':
-                self.strikes = np.hstack((
-                    self.strikes,
+                self.trends = np.hstack((
+                    self.trends,
                     skewnorm.rvs(
-                        a=self.params['skew_strike'][ind], 
-                        loc=self.params['strike'][ind], 
-                        scale=self.params['strike_std'][ind], 
+                        a=self.params['skew_trend'][ind], 
+                        loc=self.params['trend'][ind], 
+                        scale=self.params['trend_std'][ind], 
                         size=self.params['npts'][ind]
                     )
                 ))
-                self.dips = np.hstack((
-                    self.dips, 
+                self.plunges = np.hstack((
+                    self.plunges, 
                     skewnorm.rvs(
-                        a=self.params['skew_dip'][ind], 
-                        loc=self.params['dip'][ind], 
-                        scale=self.params['dip_std'][ind], 
+                        a=self.params['skew_plunge'][ind], 
+                        loc=self.params['plunge'][ind], 
+                        scale=self.params['plunge_std'][ind], 
                         size=self.params['npts'][ind]
                     )
                 ))
             elif self.params['distribution'] == 'uniform':
-                self.strikes = np.hstack((
-                    self.strikes,
+                self.trends = np.hstack((
+                    self.trends,
                     np.random.uniform(
-                        self.params['strike_low'][ind], 
-                        self.params['strike_high'][ind], 
+                        self.params['trend_low'][ind], 
+                        self.params['trend_high'][ind], 
                         self.params['npts'][ind]
                     )
                 ))
-                self.dips = np.hstack((
-                    self.strikes,
+                self.plunges = np.hstack((
+                    self.trends,
                     np.random.uniform(
-                        self.params['dip_low'][ind], 
-                        self.params['dip_high'][ind], 
+                        self.params['plunge_low'][ind], 
+                        self.params['plunge_high'][ind], 
                         self.params['npts'][ind]
                     )
                 ))
             elif self.params['distribution'] == 'poisson':
-                self.strikes = np.hstack((
-                    self.strikes,
+                self.trends = np.hstack((
+                    self.trends,
                     poisson.rvs(
-                        mu = self.params['lambda_strike'][ind], 
+                        mu = self.params['lambda_trend'][ind], 
                         size = self.params['npts'][ind]
                     )
                 ))
-                self.dips = np.hstack((
-                    self.strikes,
+                self.plunges = np.hstack((
+                    self.trends,
                     poisson.rvs(
-                        mu = self.params['lambda_dip'][ind], 
+                        mu = self.params['lambda_plunge'][ind], 
                         size = self.params['npts'][ind]
                     )
                 ))
         
-        self.strikes = self.strikes[1:]
-        self.dips = self.dips[1:]
+        self.trends = self.trends[1:]
+        self.plunges = self.plunges[1:]
     
 
     # --------------------------------------------------------------------------
@@ -200,7 +200,7 @@ class Fabric:
         self.fig, self.ax = mplstereonet.subplots(figsize = self.figsize)
         
         self.cax = self.ax.density_contourf(
-            self.strikes, self.dips, levels = self.contour_levels,
+            self.trends, self.plunges, levels = self.contour_levels,
             measurement = 'poles', 
             cmap = self.cmap,
             sigma = density_sigma,
@@ -208,7 +208,7 @@ class Fabric:
             vmin = 1
         )
         self.ax.pole(
-            self.strikes, self.dips, 
+            self.trends, self.plunges, 
             '.', c = '#050505', markersize = self.marker_size, 
             alpha = self.alpha 
         )
@@ -231,16 +231,20 @@ class Fabric:
     # --------------------------------------------------------------------------
     def bunge_compute(self):
         """
-        Compute the euler angles for the z-x-z transform (Bunge's notation)
+        Compute the euler angles for the z-x-z transform (Bunge's notation). A 
+        space delimited file will be produced from the output. 
         """
-        n = len(self.strikes)
+        n = len(self.trends)
         euler_zxz = np.zeros([n, 3])
         for ind in range(n):
-            rotmat = self.strike_dip_to_rotation_matrix(self.strikes[ind], self.dips[ind])
+            rotmat = self.trend_plunge_to_rotation_matrix(self.trends[ind], self.plunges[ind])
             euler_zxz[ind,:] = self.rotation_matrix_to_euler_angles(rotmat)
         
         self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
-        self.euler_angles.to_csv(self.output_filename)
+        # Write the space delimited text file. 
+        self.euler_angles.to_csv(
+            self.output_filename, index = False, header = True, sep = " "
+        )
         
         if self.plot:
             self.projection_plot()
@@ -263,92 +267,92 @@ if __name__ == "__main__":
         help = """The number of points in the distribution. """
     )
     parser.add_argument(
-        '-s', '--strike', nargs = '+', type = float, required = False, 
+        '-s', '--trend', nargs = '+', type = float, required = False, 
         default = [0], 
-        help = """The strike mean(s) of the distribution (conditionally 
+        help = """The trend mean(s) of the distribution (conditionally 
         optional). Bimodal and multimodal distributions require multiple 
         arguments. If the distribution is uniform, then this value becomes the 
-        low strike limit to the distribution. Default is 0."""
+        low trend limit to the distribution. Default is 0."""
     )
     parser.add_argument(
-        '-S', '--strike2', nargs = 1, type = float, required = False,
+        '-S', '--trend2', nargs = 1, type = float, required = False,
         default = [360],
-        help = """The high limit of the strike for the uniform distribution or 
-        the standard deviation of the strike(s) for a normal distribution.
+        help = """The high limit of the trend for the uniform distribution or 
+        the standard deviation of the trend(s) for a normal distribution.
         Default is 360."""
     )
     parser.add_argument(
-        '-d', '--dip', nargs = '+', type = float, required = False, 
+        '-d', '--plunge', nargs = '+', type = float, required = False, 
         default = [0],
-        help = """The dip means(s) of the distribution (conditionally optional). 
+        help = """The plunge means(s) of the distribution (conditionally optional). 
         Bimodal and multimodal distributions require multiple arguments. 
         Default is 0.""" 
     )
     parser.add_argument(
-        '-D', '--dip2', nargs = 1, type = float, required = False,
+        '-D', '--plunge2', nargs = 1, type = float, required = False,
         default = [90],
-        help = """The high limit of the dip for the uniform distribution or the
-        standard deviation of the dip(s) for a normal distribution. 
+        help = """The high limit of the plunge for the uniform distribution or the
+        standard deviation of the plunge(s) for a normal distribution. 
         Default is 90."""
     )
     parser.add_argument(
-        '-k', '--strike_skewness_strike', nargs = '+', type = float, 
+        '-k', '--trend_skewness_trend', nargs = '+', type = float, 
         required = False, default = [0], help = """The skewness of the 
-        distribution of strike(s). Default is 0."""
+        distribution of trend(s). Default is 0."""
     )
     parser.add_argument(
-        '-K', '--dip_skewness', nargs = '+', type = float, required = False, 
+        '-K', '--plunge_skewness', nargs = '+', type = float, required = False, 
         default = [0], 
-        help = """The skewness of the distribution of dip(s). Default is 0."""
+        help = """The skewness of the distribution of plunge(s). Default is 0."""
     ) 
     parser.add_argument(
-        '-l', '--lambda_strike', nargs = '+', type = float, required = False, 
+        '-l', '--lambda_trend', nargs = '+', type = float, required = False, 
         default = [180],
         help = """The lambda parameter for the Poisson distribution of the 
-        strike. Default is 180."""
+        trend. Default is 180."""
     )
     parser.add_argument(
-        '-L', '--lambda_dip', nargs = '+', type = float, required = False, 
+        '-L', '--lambda_plunge', nargs = '+', type = float, required = False, 
         default = [45],
-        help = """The lambda parameter for the Poisson distribution of the dip. 
+        help = """The lambda parameter for the Poisson distribution of the plunge. 
         Default is 45."""
     )
 
     parser.add_argument('-P', '--plot', action = 'store_true', required = False,
-        help = """Flag to plot the stereonet of strikes and dips."""
+        help = """Flag to plot the stereonet of trends and plunges."""
     )
     
     args = parser.parse_args()
     distribution = args.distribution_type[0]
     npts = args.npts
-    strike = args.strike 
-    dip = args.dip 
-    strike2 = args.strike2
-    dip2 = args.dip2
-    skew_strike = args.skewness_strike 
-    skew_dip = args.skewness_dip
-    lambda_strike = args.lambda_strike 
-    lambda_dip = args.lambda_dip 
+    trend = args.trend 
+    plunge = args.plunge 
+    trend2 = args.trend2
+    plunge2 = args.plunge2
+    skew_trend = args.skewness_trend 
+    skew_plunge = args.skewness_plunge
+    lambda_trend = args.lambda_trend 
+    lambda_plunge = args.lambda_plunge 
     plot = args.plot 
     params = {
         'distribution':distribution,
         'npts': npts
     }
     if distribution == 'normal':
-        params['strike'] = strike 
-        params['strike_std'] = strike2 
-        params['dip'] = dip 
-        params['dip_std'] = dip2
-        params['skew_strike'] = skew_strike 
-        params['skew_dip'] = skew_dip
+        params['trend'] = trend 
+        params['trend_std'] = trend2 
+        params['plunge'] = plunge 
+        params['plunge_std'] = plunge2
+        params['skew_trend'] = skew_trend 
+        params['skew_plunge'] = skew_plunge
     elif distribution == 'uniform':
-        params['strike_low'] = strike 
-        params['strike_high'] = strike2 
-        params['dip_low'] = dip 
-        params['dip_high'] = dip2 
+        params['trend_low'] = trend 
+        params['trend_high'] = trend2 
+        params['plunge_low'] = plunge 
+        params['plunge_high'] = plunge2 
     elif distribution == 'poisson':
-        params['lambda_strike'] = lambda_strike 
-        params['lambda_dip'] = lambda_dip
+        params['lambda_trend'] = lambda_trend 
+        params['lambda_plunge'] = lambda_plunge
     else:
         raise ValueError("Unsupported distribution type")  
     

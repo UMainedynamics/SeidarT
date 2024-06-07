@@ -9,8 +9,8 @@ Submodules
 
    seidart.routines.arraybuild
    seidart.routines.definitions
+   seidart.routines.fabricsynth
    seidart.routines.materials
-   seidart.routines.orientation_tensor
    seidart.routines.prjbuild
    seidart.routines.prjrun
    seidart.routines.sourcefunction

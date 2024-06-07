@@ -3,12 +3,12 @@ import pandas as pd
 from seidart.routines.definitions import * 
 from seidart.routines import prjrun, sourcefunction 
 from seidart.routines.arraybuild import Array
-from seidart.simulations import CommonOffset
+from seidart.simulations.common_offset import CommonOffset
 from glob2 import glob
 import os
 
 import numpy as np
-from sklearn.cluster import DBSCAN
+# from sklearn.cluster import DBSCAN
 import numpy as np
 from scipy.optimize import minimize
 

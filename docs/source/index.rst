@@ -26,8 +26,6 @@ Welcome to SeidarT's documentation!
    initialize_project 
    project_file
    anisotropic_materials
-   .. running_model
-   .. display_outputs 
 
 .. _recipes:
 
@@ -46,7 +44,7 @@ Welcome to SeidarT's documentation!
    CLI.md
    prjbuild
    sourcefunction
-   prjrun 
+   prjrun
    arraybuild
    im2anim
    
@@ -68,7 +66,7 @@ Welcome to SeidarT's documentation!
    seidart.visualization.imgen
    seidart.visualization.im2anim
    SIMULATIONS.md
-   seidart.simulations.commond_offset
+   seidart.simulations.common_offset
 
 
 .. toctree::

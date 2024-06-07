@@ -6,7 +6,7 @@
 <link rel="search" title="Search" href="search.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>seidart.simulations.multioffset module - SeidarT documentation v2.0.1</title>
+        <title>seidart.simulations.multioffset module - SeidarT documentation v2.0.2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.0.1</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v2.0.2</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -136,7 +136,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.0.1</span>
+  <span class="sidebar-brand-text">SeidarT documentation v2.0.2</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -194,6 +194,7 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -231,14 +232,94 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="seidart-simulations-multioffset-module">
-<h1>seidart.simulations.multioffset module<a class="headerlink" href="#seidart-simulations-multioffset-module" title="Link to this heading">#</a></h1>
+          <section id="module-seidart.simulations.multioffset">
+<span id="seidart-simulations-multioffset-module"></span><h1>seidart.simulations.multioffset module<a class="headerlink" href="#module-seidart.simulations.multioffset" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.LandStreamer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.simulations.multioffset.</span></span><span class="sig-name descname"><span class="pre">LandStreamer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.LandStreamer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="seidart.simulations.common_offset.html#seidart.simulations.common_offset.CommonOffset" title="seidart.simulations.common_offset.CommonOffset"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommonOffset</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.LandStreamer.masw">
+<span class="sig-name descname"><span class="pre">masw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.LandStreamer.masw" title="Link to this definition">#</a></dt>
+<dd><p>Perform Multichannel Analysis of Surface Waves (MASW) on the given data.</p>
+<p>Parameters:
+data (np.array): The seismic data to analyze. This should be a 2D array where each row is a channel and each column is a time point.
+sampling_rate (float): The sampling rate of the data in Hz.</p>
+<p>Returns:
+dispersion_curve (np.array): The estimated dispersion curve. This is a 2D array where the first column is frequency and the second column is velocity.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.LandStreamer.pick_dispersion_curves">
+<span class="sig-name descname"><span class="pre">pick_dispersion_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dispersion_curve</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.LandStreamer.pick_dispersion_curves" title="Link to this definition">#</a></dt>
+<dd><p>Use DBSCAN to pick the dispersion curve(s) from the MASW output.</p>
+<p>Parameters:
+dispersion_curve (np.array): The MASW output. This should be a 2D array where the first column is frequency and the second column is velocity.
+eps (float): The maximum distance between two samples for them to be considered as in the same neighborhood.
+min_samples (int): The number of samples in a neighborhood for a point to be considered as a core point.</p>
+<p>Returns:
+labels (np.array): The labels of the clusters. Noise points are given the label -1.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.LandStreamer.tikhonov_inversion">
+<span class="sig-name descname"><span class="pre">tikhonov_inversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dispersion_curve</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.LandStreamer.tikhonov_inversion" title="Link to this definition">#</a></dt>
+<dd><p>Use Tikhonov regularization to estimate the velocity model from the dispersion curve.</p>
+<p>Parameters:
+dispersion_curve (np.array): The dispersion curve. This should be a 2D array where the first column is frequency and the second column is velocity.
+alpha (float): The regularization parameter.</p>
+<p>Returns:
+velocity_model (np.array): The estimated velocity model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.MultiOffset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.simulations.multioffset.</span></span><span class="sig-name descname"><span class="pre">MultiOffset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.MultiOffset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="seidart.simulations.common_offset.html#seidart.simulations.common_offset.CommonOffset" title="seidart.simulations.common_offset.CommonOffset"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommonOffset</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.MultiOffset.compute_nmo_correction">
+<span class="sig-name descname"><span class="pre">compute_nmo_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offsets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.MultiOffset.compute_nmo_correction" title="Link to this definition">#</a></dt>
+<dd><p>Use an ensemble method to compute the normal moveout (NMO) correction of seismic data.</p>
+<p>Parameters:
+data (np.array): The seismic data to correct. This should be a 2D array where each row is a trace and each column is a time sample.
+dt (float): The sampling interval in seconds.
+offsets (np.array): The offsets of the traces in meters.
+velocities (np.array): The NMO velocities in m/s.
+n_estimators (int): The number of base estimators in the ensemble.</p>
+<p>Returns:
+corrected_data (np.array): The NMO corrected data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.MultiOffset.multioffset_run">
+<span class="sig-name descname"><span class="pre">multioffset_run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.MultiOffset.multioffset_run" title="Link to this definition">#</a></dt>
+<dd><p>Simulate a multi-offset radar survey. The outputs for each source location are saved in a m-by-n-by-p where m is the length of the time series, n is the number of source locations, and p is the number of receivers.</p>
+<p>The receiver file and source file must be equal length. The number of survey points is going to be the number of source locations minus the number of receivers in the streamer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.multioffset.MultiOffset.plot_nmo_performance_metrics">
+<span class="sig-name descname"><span class="pre">plot_nmo_performance_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offsets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators_values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.multioffset.MultiOffset.plot_nmo_performance_metrics" title="Link to this definition">#</a></dt>
+<dd><p>Plot the performance metrics of the compute_nmo_correction function.</p>
+<p>Parameters:
+data (np.array): The seismic data to correct. This should be a 2D array where each row is a trace and each column is a time sample.
+dt (float): The sampling interval in seconds.
+offsets (np.array): The offsets of the traces in meters.
+velocities (np.array): The NMO velocities in m/s.
+ground_truth (np.array): The ground truth data to compare the corrected data to.
+n_estimators_values (list of int): The values of n_estimators to calculate the performance metrics for.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -266,8 +347,38 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">seidart.simulations.multioffset module</a><ul>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.LandStreamer"><code class="docutils literal notranslate"><span class="pre">LandStreamer</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.LandStreamer.masw"><code class="docutils literal notranslate"><span class="pre">LandStreamer.masw()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.LandStreamer.pick_dispersion_curves"><code class="docutils literal notranslate"><span class="pre">LandStreamer.pick_dispersion_curves()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.LandStreamer.tikhonov_inversion"><code class="docutils literal notranslate"><span class="pre">LandStreamer.tikhonov_inversion()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.MultiOffset"><code class="docutils literal notranslate"><span class="pre">MultiOffset</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.MultiOffset.compute_nmo_correction"><code class="docutils literal notranslate"><span class="pre">MultiOffset.compute_nmo_correction()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.MultiOffset.multioffset_run"><code class="docutils literal notranslate"><span class="pre">MultiOffset.multioffset_run()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.multioffset.MultiOffset.plot_nmo_performance_metrics"><code class="docutils literal notranslate"><span class="pre">MultiOffset.plot_nmo_performance_metrics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

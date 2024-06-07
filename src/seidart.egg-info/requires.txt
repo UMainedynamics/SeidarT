@@ -6,3 +6,4 @@ mplstereonet
 pyevtk
 glob2
 dill
+seaborn

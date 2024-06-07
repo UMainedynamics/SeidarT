@@ -18,6 +18,7 @@ dependencies:
   - glob2
   - matplotlib
   - wheel
+  - seaborn
   - pip:
       - mplstereonet
       - seidart

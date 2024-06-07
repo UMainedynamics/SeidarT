@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 4
 
    seidart.simulations.common_offset
+   seidart.simulations.multioffset
 
 Module contents
 ---------------

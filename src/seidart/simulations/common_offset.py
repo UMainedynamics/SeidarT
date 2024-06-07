@@ -25,7 +25,7 @@ class CommonOffset(Array):
             single_precision: bool = True,
             is_complex: bool = False,
             status_check: bool = False
-        ): -> None:
+        ):
         """
         Initialize the CommonOffset object. A receiver file must be provided 
         that coincides with the source file.

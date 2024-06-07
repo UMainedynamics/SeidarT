@@ -220,6 +220,7 @@ def get_seismic(
         )
 
         if anisotropic[ind] and material_name[ind] == 'ice1h':
+            print('Computing the stiffness for anisotropic material ice1h.')
             euler = read_ang(angfile[ind])
             p = len(euler[:,0])
 
@@ -246,6 +247,7 @@ def get_seismic(
             # Calculate the hill average 
             C = (cvoigt + creuss)/2
         elif not anisotropic[ind] and material_name[ind] == 'ice1h':
+            print('Computing the homogeneous stiffness coefficients.')
             C = ice_stiffness(temp[ind], 0.1)
         else:
             material_limits = isotropic_materials[ material_name[ind] ]
@@ -743,15 +745,14 @@ def snow_conductivity(
     return(conductivity)
 
 # -----------------------------------------------------------------------------
-def read_ang(filepath: str, delimiter = " ") -> np.ndarray:
+def read_ang(filepath: str) -> np.ndarray:
     """
-    Reads Euler angles from a .ang file, typically associated with 
-    EBSD (Electron Backscatter Diffraction) data.
+    Reads Euler angles from a space delimited .ang file, typically associated 
+    with EBSD (Electron Backscatter Diffraction) data. Synthetic data can be 
+    built with the fabricsynth module.
 
     :param filepath: The path to the .ang file.
     :type filepath: str
-    :param delimiter: The delimiter for the input file
-    :type delimiter: str
     :return: An array of Euler angles extracted from the file.
     :rtype: np.ndarray
 
@@ -761,13 +762,8 @@ def read_ang(filepath: str, delimiter = " ") -> np.ndarray:
         related to EBSD measurements.
     """
 
-    
     # Load the file in as a data frame
-    # if delimiter = ",":
-    #     euler = pd.read_csv(filepath).to_numpy()
-    # else:
-    #     euler = np.genfromtxt(filepath, delimiter = delimiter)
-    euler = pd.read_table(filepath, delimiter = delimiter).to_numpy()
+    euler = pd.read_table(filepath, delimiter = " ").to_numpy()
     
     # take only the euler angles...for now
     if euler.shape[0] > 3 :

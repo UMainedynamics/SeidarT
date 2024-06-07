@@ -28,7 +28,19 @@ def build_animation(
     '''
     This function builds a gif from the set of images output of the FDTD modeling. 
     The images can be in csv or unformatted Fortran binary, however, the program 
-    runs faster to use the latter. 
+    runs faster to use the latter. For electromagnetic simulations, plottype can
+    be:
+    
+        'magnitude', 
+        'phase' (complex only), 
+        'energy_density (complex only)'
+    
+    For seismic simulations, plottype can be:
+    
+        'magnitude',
+        'quiver'
+    
+
     
     :param prjfile: The full file path for the project file.
     :type prjfile: str
@@ -53,20 +65,6 @@ def build_animation(
                      'magnitude' and 'quiver' for seismic.
     :type plottype: str, optional
     :return: None
-
-        EM
-        --    
-            'magnitude', 
-            'phase' (complex only), 
-            'energy_density (complex only)'
-        Seismic
-        -------
-            'magnitude',
-            'quiver'
-    
-    Returns
-    -------
-    None
     '''
     # Check if the .dat files are still around
     files = glob(channel + '*.dat')

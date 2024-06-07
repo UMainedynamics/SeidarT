@@ -17,10 +17,17 @@ class Array:
             receiver_file: str,
             receiver_indices: bool = False, 
             single_precision: bool = True,
-            is_complex: bool = False
+            is_complex: bool = False,
+            csvfile: str = None, 
+            csvfile_c: str = None,       
         ):
         """
         Initializes the Array object with project settings and receiver details.
+        This will build a set of time series for each specified receiver from 
+        the receiver file, or alternatively, a previously built CSV file can be 
+        loaded. The save function produces both a CSV and Pickle (.pkl) file. 
+        Loading the pickle file will restore the object and all of the variables
+        within it. 
         
         :param channel: The data channel to be analyzed.
         :type channel: str
@@ -36,6 +43,14 @@ class Array:
         :type single_precision: bool
         :param is_complex: Treat the data as complex if True.
         :type is_complex: bool
+        :param csvfile: The CSV file containing the set of receiver time series.
+            Either csvfile or csvfile_c can be provided, however, when calling 
+            functions like sectionplot, if only csvfile_c is provided, then the 
+            plot_complex flag must be set to True. 
+        :type csvfile: str
+        :param csvfile_c: The CSV file containing the complex valued set of 
+            receiver time series. 
+        :type csvfile_c:
         """
         self.prjfile = prjfile 
         self.channel = channel
@@ -46,6 +61,8 @@ class Array:
         self.stream = None
         self.gain = None
         self.exaggeration = 0.5
+        self.csvfile = csvfile
+        self.csvfile_c = csvfile_c
         self.build()
     
     # -------------------------------------------------------------------------
@@ -70,9 +87,10 @@ class Array:
             self.dt = self.electromag.dt
             self.gain = self.electromag.time_steps
         
-         
-        # __, self.receivers_xyz = self.loadxyz()
+        
+        # Load the receiver file as a numpy array
         self.loadxyz()
+        # Add the source locations into their respective variables. 
         if self.channel == 'Vx' or self.channel == 'Vy' or self.channel == 'Vz':
             if self.domain.dim == '2.0':
                 self.source = np.array(
@@ -100,9 +118,19 @@ class Array:
                     ]
                 )
         
-        # Load the time series for all receivers
-        self.getrcx()
-    
+        if self.csvfile or self.csvfile_c:
+            if self.csvfile:
+                self.timeseries = pd.read_csv(
+                    self.csvfile, header = None
+                ).to_numpy()
+            if self.csvfile_c:
+                self.timeseries = pd.read_csv(
+                    self.csvfile_c, header = None
+                ).to_numpy()
+        else:
+            # Load the time series for all receivers
+            self.getrcx()
+        
     # -------------------------------------------------------------------------
     def loadxyz(self):
         """
@@ -332,7 +360,7 @@ class Array:
             figure_size: Tuple[float, float] = (8, 5),
             **kwargs
         ):
-        '''
+        """
         Plot an individual receiver from the list of the receiver files. Use 
         indices in the Python reference frame with the first component being 0. 
         
@@ -350,7 +378,9 @@ class Array:
         :param **kwargs: Additional plotting parameters as defined in 
             matplotlib.pyplot.plot. 
         :type **kwargs: dict
-        '''
+        
+        """
+        
         default_plotspec = {
             'linewidth': 2,
             'linestyle': '-',
@@ -394,19 +424,23 @@ class Array:
         plt.show()
         
     # -------------------------------------------------------------------------
-    def save(self, save_object = True):
+    def save(self, save_object = True, output_basefile = None):
         """
         Save the object as a pickle formatted file and the numpy array of 
         receiver time series to a CSV.
         
         """
-        filename = '-'.join( 
-            [
-                self.prjfile.split('.')[:-1][0],
-                self.channel, 
-                '-'.join(self.source.astype(str))
-            ]
-        )
+        if output_basefile:
+            filename = output_basefile
+        else:
+            filename = '-'.join( 
+                [
+                    self.prjfile.split('.')[:-1][0],
+                    self.channel, 
+                    '-'.join(self.source.astype(str))
+                ]
+            )
+        
         csvfilename = filename + '.csv'
         pklfilename = filename + '.pkl'
         

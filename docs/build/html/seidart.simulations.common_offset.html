@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" />
+<link rel="search" title="Search" href="search.html" /><link rel="next" title="Creating a png file" href="png-creation.html" /><link rel="prev" title="Simulations Module" href="SIMULATIONS.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>seidart.simulations.common_offset module - SeidarT documentation v2.0.1</title>
+        <title>seidart.simulations.common_offset module - SeidarT documentation v2.0.2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.0.1</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v2.0.2</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -136,7 +136,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.0.1</span>
+  <span class="sidebar-brand-text">SeidarT documentation v2.0.2</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -181,7 +181,7 @@
 <li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Standard Routines <span class="raw-html-md"><a name="standard-routines"></a></span></a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
@@ -194,6 +194,7 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.simulations.common_offset module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -231,14 +232,51 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="seidart-simulations-common-offset-module">
-<h1>seidart.simulations.common_offset module<a class="headerlink" href="#seidart-simulations-common-offset-module" title="Link to this heading">#</a></h1>
+          <section id="module-seidart.simulations.common_offset">
+<span id="seidart-simulations-common-offset-module"></span><h1>seidart.simulations.common_offset module<a class="headerlink" href="#module-seidart.simulations.common_offset" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.simulations.common_offset.CommonOffset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.simulations.common_offset.</span></span><span class="sig-name descname"><span class="pre">CommonOffset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.common_offset.CommonOffset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="seidart.routines.arraybuild.html#seidart.routines.arraybuild.Array" title="seidart.routines.arraybuild.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a></p>
+<p>Utilize the Array class to build a common offset image from a .prj file and
+a source location file. If offsets are not provided then a receiver file
+must be provided that coincides with the source file.</p>
+<p>The</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.common_offset.CommonOffset.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.simulations.common_offset.CommonOffset.build" title="Link to this definition">#</a></dt>
+<dd><p>Constructs domain and models based on project file and sets up source
+and receiver configurations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.common_offset.CommonOffset.co_run">
+<span class="sig-name descname"><span class="pre">co_run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.simulations.common_offset.CommonOffset.co_run" title="Link to this definition">#</a></dt>
+<dd><p>Run the electromagnetic or seismic model and extract the receiver
+time series</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seismic</strong> (<em>bool</em>) – If True, run the seismic model. If False, run the
+electromagnetic model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.simulations.common_offset.CommonOffset.source_receiver_xyz">
+<span class="sig-name descname"><span class="pre">source_receiver_xyz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.simulations.common_offset.CommonOffset.source_receiver_xyz" title="Link to this definition">#</a></dt>
+<dd><p>Loads and sorts receiver and source locations from a file and adjusts them
+according to the domain and CPML layer.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -246,8 +284,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="png-creation.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Creating a png file</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="SIMULATIONS.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Simulations Module</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -266,8 +322,32 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">seidart.simulations.common_offset module</a><ul>
+<li><a class="reference internal" href="#seidart.simulations.common_offset.CommonOffset"><code class="docutils literal notranslate"><span class="pre">CommonOffset</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.simulations.common_offset.CommonOffset.build"><code class="docutils literal notranslate"><span class="pre">CommonOffset.build()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.common_offset.CommonOffset.co_run"><code class="docutils literal notranslate"><span class="pre">CommonOffset.co_run()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.simulations.common_offset.CommonOffset.source_receiver_xyz"><code class="docutils literal notranslate"><span class="pre">CommonOffset.source_receiver_xyz()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

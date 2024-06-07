@@ -29,7 +29,8 @@ SeidarT package binaries are publicly availble on the `PyPi repository <https://
 
 
 .. ============================================================================
-"Auto" installation
+
+"Auto" installation  
 ^^^^^^^^^^^^^^^^^^^
 
 For Windows users, see the VM setup. Unix/Linux users can download the tarball `with this link <https://github.com/UMainedynamics/SeidarT/blob/main/install.tar.xz?raw=1>`_. 
@@ -41,6 +42,7 @@ Extract the *install* directory from the *install.tar.gz* which includes an inst
 Documentation for managing conda environments with Miniconda or Anaconda can be found `here <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. The full Anaconda release has a GUI called Navigator for managing environments. This can be found on the `webpage <https://docs.anaconda.com/free/navigator/tutorials/manage-environments/>`_.  
 
 .. -----------------------------------------------------------------------------
+
 VM Install 
 ^^^^^^^^^^
 
@@ -58,6 +60,7 @@ For users that would like to build a VM with more control, different preferences
     Windows offers the Windows Subsystem for Linux (WSL) which allows users to run a Linux environment without the need for a separate virtual machine or dual boot. `Setup and Install <https://learn.microsoft.com/en-us/windows/wsl/install>`_ of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared. If using WSL follow the auto-install or the manual install directions. 
 
 .. -----------------------------------------------------------------------------
+
 Manual installation
 ^^^^^^^^^^^^^^^^^^^
 
@@ -87,19 +90,20 @@ will install dependencies, build wheels based on your OS, and install SeidarT in
     
     git pull origin main 
 
-
-
 .. =============================================================================
+
 Hardware Requirements
 ---------------------
 
 *SeidarT* was tested and developed on a quad core 5th gen i7 processor with 16 Gb of RAM without any burden on the system so a typical modern laptop is sufficient for many application. When running models with large domains or a high number of time steps, the computational load is obviously increased, however the storage requirements become more significant. It can be easy to fill up 10's of Gb of storage, but an external drive can resolve that problem. The Apple M-chips may have compatability issues with particular types of software and Python packages, but we have maintained a relatively simple design along with leveraging some of the most commonly used Python packages which should help to mitigate any issues with computing on an M-chip. 
 
 .. =============================================================================
+
 Operating System requirements
 -----------------------------
 
 All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development. 
 
 .. =============================================================================
+
 Upgrading Versions

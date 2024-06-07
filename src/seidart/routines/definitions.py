@@ -9,7 +9,7 @@ from typing import Optional
 from subprocess import call
 from scipy.io import FortranFile
 import glob2
-
+import copy
 
 __all__ = [
     'read_dat',
@@ -32,7 +32,6 @@ __all__ = [
     'Material',
     'Model',
     'AnimatedGif'
-    # Add any other public names here
 ]
 
 # =============================================================================
@@ -210,6 +209,7 @@ class Material:
                 self.material_flag = True
             else:
                 print('No .ANG file specified for anisotropic material')
+    
 
 # -----------------------------------------------------------------------------
 class Model:
@@ -430,7 +430,11 @@ def read_dat(
     Read data from an unformatted Fortran binary file and return it as a numpy 
     array. This function supports reading data in single or double precision, 
     and can handle complex data.
-
+    
+    The domain parameter is expected to be an object with attributes 
+        `dim`, `nx`, `ny`, and `nz`.
+    These are used to determine the shape of the returned numpy array.
+    
     :param fn: The filename of the data file to read.
     :type fn: str
     :param channel: Specifies the data channel ('Ex', 'Ey', 'Ez', etc.) 
@@ -447,11 +451,9 @@ def read_dat(
     :return: The data read from the file, reshaped according to the 
         domain dimensions.
     :rtype: np.ndarray
-
-    The domain parameter is expected to be an object with attributes 
-        `dim`, `nx`, `ny`, and `nz`.
-    These are used to determine the shape of the returned numpy array.
+    
     """
+    
     if single:
         dtype = np.float32 
     else:
