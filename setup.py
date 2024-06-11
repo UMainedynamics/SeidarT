@@ -7,7 +7,7 @@ def configuration(parent_package='', top_path=None):
     # Define Fortran extensions
     fortran_sources = [
         'src/seidart/fortran/cpmlfdtd.f95',
-        'src/seidart/fortran/orientsynth.f95'
+        # 'src/seidart/fortran/orientsynth.f95'
     ]
     
     config.add_extension(
@@ -15,18 +15,18 @@ def configuration(parent_package='', top_path=None):
         sources=fortran_sources[0],
         # extra_f90_compile_args=['m64'],
     )
-    config.add_extension(
-        name='seidart.fortran.orientsynth',
-        sources = fortran_sources[1],
-        # extra_f90_compile_args=['m64'],
-    )
+    # config.add_extension(
+    #     name='seidart.fortran.orientsynth',
+    #     sources = fortran_sources[1],
+    #     # extra_f90_compile_args=['m64'],
+    # )
     
     return config
 
 if __name__ == "__main__":
     setup(
         name='seidart',
-        version='2.0.3',
+        version='2.0.4',
         packages=[
             'seidart', 
             'seidart.fortran', 
@@ -43,7 +43,6 @@ if __name__ == "__main__":
                 'sourcefunction=seidart.routines.sourcefunction:main',
                 'rcxdisplay=seidart.visualization.rcxdisplay:main',
                 'im2anim=seidart.visualiztion.im2anim:build_animation',
-                'orientsynth=seidart.fortran.orientsynth'
             ]
         },
         install_requires=[

@@ -1076,49 +1076,49 @@ module cpmlfdtd
             enddo
         
             do j = 1,NZ-1
-            do i = 1,NX-1
-    
-            deltarho = ( 2*rho(i,j) + rho(i+1,j) + rho(i,j+1) )/4
-            value_dsigmaxz_dx = (sigmaxz(i+1,j) - sigmaxz(i,j)) / DX
-            value_dsigmazz_dz = (sigmazz(i,j+1) - sigmazz(i,j)) / DZ
-    
-            memory_dsigmaxz_dx(i,j) = b_x_half(i) * memory_dsigmaxz_dx(i,j) + &
-                        a_x_half(i) * value_dsigmaxz_dx
-            memory_dsigmazz_dz(i,j) = b_z_half(j) * memory_dsigmazz_dz(i,j) + &
-                        a_z_half(j) * value_dsigmazz_dz
-    
-            value_dsigmaxz_dx = value_dsigmaxz_dx / K_x_half(i) + memory_dsigmaxz_dx(i,j)
-            value_dsigmazz_dz = value_dsigmazz_dz / K_z_half(j) + memory_dsigmazz_dz(i,j)
-    
-            vz(i,j) = vz(i,j)*(1 - gamma_z(i,j) ) + (value_dsigmaxz_dx + value_dsigmazz_dz) * DT / deltarho
-    
+                do i = 1,NX-1
+        
+                    deltarho = ( 2*rho(i,j) + rho(i+1,j) + rho(i,j+1) )/4
+                    value_dsigmaxz_dx = (sigmaxz(i+1,j) - sigmaxz(i,j)) / DX
+                    value_dsigmazz_dz = (sigmazz(i,j+1) - sigmazz(i,j)) / DZ
+            
+                    memory_dsigmaxz_dx(i,j) = b_x_half(i) * memory_dsigmaxz_dx(i,j) + &
+                                a_x_half(i) * value_dsigmaxz_dx
+                    memory_dsigmazz_dz(i,j) = b_z_half(j) * memory_dsigmazz_dz(i,j) + &
+                                a_z_half(j) * value_dsigmazz_dz
+            
+                    value_dsigmaxz_dx = value_dsigmaxz_dx / K_x_half(i) + memory_dsigmaxz_dx(i,j)
+                    value_dsigmazz_dz = value_dsigmazz_dz / K_z_half(j) + memory_dsigmazz_dz(i,j)
+            
+                    vz(i,j) = vz(i,j)*(1 - gamma_z(i,j) ) + (value_dsigmaxz_dx + value_dsigmazz_dz) * DT / deltarho
+        
+                enddo
             enddo
-        enddo
     
-        ! Add the source term
-        vx(isource,jsource) = vx(isource,jsource) + srcx(it) * DT / rho(isource,jsource)
-        vz(isource,jsource) = vz(isource,jsource) + srcz(it) * DT / rho(isource,jsource)
-    
-        ! Dirichlet conditions (rigid boundaries) on the edges or at the 
-        ! bottom of the PML layers
-        vx(1,:) = 0.d0
-        vx(NX,:) = 0.d0
-    
-        vx(:,1) = 0.d0
-        vx(:,NZ) = 0.d0
-    
-        vz(1,:) = 0.d0
-        vz(NX,:) = 0.d0
-    
-        vz(:,1) = 0.d0
-        vz(:,NZ) = 0.d0
-    
-        ! print maximum of norm of velocity
-        velocnorm = maxval(sqrt(vx**2 + vz**2))
-        if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
-    
-        call write_image2(vx, nx, nz, src, it, 'Vx', SINGLE)
-        call write_image2(vz, nx, nz, src, it, 'Vz', SINGLE)
+            ! Add the source term
+            vx(isource,jsource) = vx(isource,jsource) + srcx(it) * DT / rho(isource,jsource)
+            vz(isource,jsource) = vz(isource,jsource) + srcz(it) * DT / rho(isource,jsource)
+        
+            ! Dirichlet conditions (rigid boundaries) on the edges or at the 
+            ! bottom of the PML layers
+            vx(1,:) = 0.d0
+            vx(NX,:) = 0.d0
+        
+            vx(:,1) = 0.d0
+            vx(:,NZ) = 0.d0
+        
+            vz(1,:) = 0.d0
+            vz(NX,:) = 0.d0
+        
+            vz(:,1) = 0.d0
+            vz(:,NZ) = 0.d0
+        
+            ! print maximum of norm of velocity
+            velocnorm = maxval(sqrt(vx**2 + vz**2))
+            if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
+        
+            call write_image2(vx, nx, nz, src, it, 'Vx', SINGLE)
+            call write_image2(vz, nx, nz, src, it, 'Vz', SINGLE)
     
         enddo   ! end of time loop
     end subroutine seismic2
@@ -1675,7 +1675,7 @@ module cpmlfdtd
             velocnorm = maxval( sqrt(vx**2 + vy**2 + vz**2) )
             ! print *,'Time step # ',it,' out of ',NSTEP
             ! print *,'Time: ',(it-1)*DT,' seconds'
-            print *,'Max vals for vx, vy, vz: ', maxval(vx), maxval(vy), maxval(vz)
+            ! print *,'Max vals for vx, vy, vz: ', maxval(vx), maxval(vy), maxval(vz)
 
             if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
 
