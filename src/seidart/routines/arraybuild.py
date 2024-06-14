@@ -81,11 +81,11 @@ class Array:
         if self.channel in ['Vx','Vy','Vz']:
             self.is_seismic = True
             self.dt = self.seismic.dt 
-            self.gain = self.seismic.time_steps
+            self.gain = int(self.seismic.time_steps)
         else:
             self.is_seismic = False
             self.dt = self.electromag.dt
-            self.gain = self.electromag.time_steps
+            self.gain = int(self.electromag.time_steps)
         
         
         # Load the receiver file as a numpy array
@@ -143,7 +143,7 @@ class Array:
         :type source_file: bool 
 
         """
-        xyz = pd.read_csv(self.receiver_file)
+        
         
         # We need to make sure the recievers are ordered correctly and the 
         # absorbing boundary is corrected for
@@ -156,6 +156,8 @@ class Array:
         if self.domain.dim == 2.5:
             self.domain.ny = self.domain.ny + 2*cpml
         
+        # Load the receiver file
+        xyz = pd.read_csv(self.receiver_file)
         xyz = xyz.to_numpy() 
         
         if xyz.shape[1] == 1:

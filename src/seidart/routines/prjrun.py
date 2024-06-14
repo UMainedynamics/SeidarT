@@ -99,7 +99,6 @@ def status_check(
         # compute them
         # Assign the materials to their respective corners
         material.sort_material_list()
-        
         if modelclass.is_seismic:
             print('Computing the stiffness coefficients.')
             tensor = material.functions.get_seismic(

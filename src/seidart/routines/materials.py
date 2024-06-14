@@ -230,7 +230,8 @@ def get_seismic(
             
             # Assume a constant pressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
-            C = ice_stiffness(temp[ind], 0.1)
+            pressure = 0.1
+            C = ice_stiffness(temp[ind], pressure)
             S = np.linalg.inv(C)
 
             for k in range(0, p):
@@ -239,9 +240,10 @@ def get_seismic(
                 N = np.linalg.inv(M)
                 cvoigt = cvoigt + ( np.matmul( M, np.matmul(C, M.T) ) )
                 creuss = creuss + ( np.matmul( N, np.matmul(S, N.T) ) )
-
-            cvoigt = cvoigt/p
-            creuss = creuss/p 
+            
+            # Normalize the Voigt and Reuss estimates
+            cvoigt /= p
+            creuss /= p 
             creuss = np.linalg.inv(creuss) 
 
             # Calculate the hill average 
@@ -256,11 +258,11 @@ def get_seismic(
         tensor[ind, :] = (
             ind, 
             C[0,0], C[0,1], C[0,2], C[0,3], C[0,4], C[0,5],
-            C[1,1], C[1,2], C[1,3], C[1,4], C[1,5],
-            C[2,2], C[2,3], C[2,4], C[2,5],
-            C[3,3], C[3,4], C[3,5],
-            C[4,4], C[4,5],
-            C[5,5], 
+                    C[1,1], C[1,2], C[1,3], C[1,4], C[1,5],
+                            C[2,2], C[2,3], C[2,4], C[2,5],
+                                    C[3,3], C[3,4], C[3,5],
+                                            C[4,4], C[4,5],
+                                                    C[5,5], 
             density
         )
 
@@ -590,7 +592,8 @@ def ice_stiffness(
     C[1,0] = C[0,1]
     C[2,0] = C[0,2]
     C[1,2] = C[0,2]
-    C[2,1] = C[1,2]
+    # C[2,1] = C[1,2]
+    C[2,1] = C[0,2]
     C[4,4] = C[3,3]
     C[5,5] = (C[0,0] - C[0,1] )/2
     
@@ -815,12 +818,14 @@ def rotator_zxz(eul: np.ndarray) -> np.ndarray:
     B[1,:] = [ np.sin( eul[2] ), np.cos( eul[2] ), 0.0 ]
     B[2,:] = [ 0.0, 0.0, 1.0 ]
 
-    R = np.matmul(D, C)
-    R = np.matmul(R, B)
+    R = np.matmul(D, np.matmul(C, B) )
+
 
     return(R)
 
 # -----------------------------------------------------------------------------
+import numpy as np
+
 def bond(R: np.ndarray) -> np.ndarray:
     """
     Calculates the 6x6 Bond transformation matrix from a 3x3 rotation matrix, 
@@ -829,41 +834,41 @@ def bond(R: np.ndarray) -> np.ndarray:
 
     :param R: The 3x3 rotation matrix.
     :type R: np.ndarray
-    :return: The 6x6 Bond transformation matrix.
-    :rtype: np.ndarray
+    :return M: The 6x6 Bond transformation matrix.
+    :rtype M: np.ndarray
     """
 
-    # From the euler rotation matrix, compute the 6-by-6 bond matrix
+    # Initialize the 6x6 Bond matrix
     M = np.zeros([6,6])
+
+    # Fill the Bond matrix according to the transformation rules
     M[0,:] = [ 
         R[0,0]**2, R[0,1]**2, R[0,2]**2, 
         2*R[0,1]*R[0,2], 2*R[0,2]*R[0,0], 2*R[0,0]*R[0,1] 
     ]
     M[1,:] = [ 
         R[1,0]**2, R[1,1]**2, R[1,2]**2, 
-        2*R[1,1]*R[1,2], 2*R[1,2]*R[1,0], 2*R[1,0] * R[1,1] 
+        2*R[1,1]*R[1,2], 2*R[1,2]*R[1,0], 2*R[1,0]*R[1,1] 
     ]
     M[2,:] = [ 
         R[2,0]**2, R[2,1]**2, R[2,2]**2, 
-        2*R[2,1]*R[2,2], 2*R[2,2]*R[2,0], 2*R[2,0] * R[2,1] 
+        2*R[2,1]*R[2,2], 2*R[2,2]*R[2,0], 2*R[2,0]*R[2,1] 
     ]
     M[3,:] = [ 
-        R[1,0]* R[2,0], R[1,1] * R[2,1], 
-        R[1,2] * R[2,2], R[1,1] * R[2,2] + R[1,2]*R[2,1], 
-        R[1,0]*R[2,2] + R[1,2]*R[2,0], R[1,1]*R[2,0] + R[1,0]*R[2,1] 
+        R[1,0]*R[2,0], R[1,1]*R[2,1], R[1,2]*R[2,2], 
+        R[1,1]*R[2,2] + R[1,2]*R[2,1], R[1,2]*R[2,0] + R[1,0]*R[2,2], R[1,0]*R[2,1] + R[1,1]*R[2,0] 
     ]
     M[4,:] = [ 
-        R[2,0]* R[0,0], R[2,1] * R[0,1], 
-        R[2,2] * R[0,2], R[0,1] * R[2,2] + R[0,2]*R[2,1], 
-        R[0,2]*R[2,0] + R[0,0]*R[2,2], R[0,0]*R[2,1] + R[0,1]*R[2,0] 
+        R[2,0]*R[0,0], R[2,1]*R[0,1], R[2,2]*R[0,2], 
+        R[2,1]*R[0,2] + R[2,2]*R[0,1], R[2,2]*R[0,0] + R[2,0]*R[0,2], R[2,0]*R[0,1] + R[2,1]*R[0,0] 
     ]
     M[5,:] = [ 
-        R[0,0]* R[1,0], R[0,1] * R[1,1], 
-        R[0,2] * R[1,2], R[0,1] * R[1,2] + R[0,2]*R[1,1], 
-        R[0,2]*R[1,0] + R[0,0]*R[1,2], R[0,0]*R[1,1] + R[0,1]*R[1,0] 
+        R[0,0]*R[1,0], R[0,1]*R[1,1], R[0,2]*R[1,2], 
+        R[0,1]*R[1,2] + R[0,2]*R[1,1], R[0,2]*R[1,0] + R[0,0]*R[1,2], R[0,0]*R[1,1] + R[0,1]*R[1,0] 
     ]
 
-    return(M)
+    return M
+
     
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
