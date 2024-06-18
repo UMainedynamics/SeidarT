@@ -222,8 +222,15 @@ def cpmlcompute(
             ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) )
         alpha_max = 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, k_max, dist, N-1, domain.cpml, modelclass.dt
+            sig_max, alpha_max, k_max, dist, N, modelclass.dt
         )
+        print([sig_max, alpha_max])
+        print('sigma')
+        print(sigma[0:domain.cpml+1])
+        print('alpha')
+        print(alpha[0:domain.cpml+1])
+        print('kappa')
+        print(kappa[0:domain.cpml+1])
 
     # Save the results to a fortran binary
     if half:
@@ -246,7 +253,6 @@ def cpml_parameters(
         kappa_max: float, 
         distance, 
         N: int, 
-        cpml_thickness: int, 
         dt: float
     ):
     """
@@ -258,7 +264,7 @@ def cpml_parameters(
     bcoeff = np.zeros([N])
 
     # Compute in the x, and z directions
-    for ind in range(0, cpml_thickness):
+    for ind in range(0, len(dist)):
         # From 0
         sigma[ind] = sig_max * (distance[ind]**NP)
         kappa[ind] = 1.0 + (k_max - 1.0) * distance[ind]**NP

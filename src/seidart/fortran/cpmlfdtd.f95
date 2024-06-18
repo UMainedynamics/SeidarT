@@ -1840,9 +1840,9 @@ module cpmlfdtd
 
         ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx-1) :: K_x,alpha_x,a_x,b_x, &
+        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz-1) :: K_z,alpha_z,a_z,b_z, &
+        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
                                         
         logical :: SINGLE
@@ -2112,9 +2112,9 @@ module cpmlfdtd
 
         ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx-1) :: K_x,alpha_x,a_x,b_x, &
+        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz-1) :: K_z,alpha_z,a_z,b_z, &
+        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
                                         
         ! Boolean flag to save as double precision or single precision 
