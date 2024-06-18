@@ -279,7 +279,13 @@ class Model:
         self.attenuation_fadjust = None
         self.exit_status = 0
         self.is_seismic = None
-
+        self.kappa_max = np.zeros([3])
+        self.sig_max = np.zeros([3])
+        self.alpha_max = np.zeros([3]) 
+        self.kappa_max_half = np.zeros([3])
+        self.sig_max_half = np.zeros([3])
+        self.alpha_max_half = np.zeros([3]) 
+        
     
     def tensor_check(self) -> None:
         """
@@ -908,9 +914,11 @@ def prepme(
     model_object.theta = float(model_object.theta)
     model_object.x = float(model_object.x)
     model_object.z = float(model_object.z)
-    if complex_tensor:
-        model_object.tensor_coefficients = model_object.tensor_coefficients.astype(complex)
-    else:
+    # We don't want to get rid of the complex coefficients if they are there, but we need 
+    # make sure that we are only using the real components if we aren't solving for the complex
+    # equations
+    model_object.tensor_coefficients_original = model_object.tensor_coefficients.copy()
+    if not complex_tensor:
         model_object.tensor_coefficients = model_object.tensor_coefficients.astype(float)
     
     # Put source and domain parameters in correct order

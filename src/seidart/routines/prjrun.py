@@ -11,13 +11,16 @@ from seidart.routines.definitions import *
 # Modeling modules
 from seidart.fortran.cpmlfdtd import cpmlfdtd
 
-# Global Constants
+# Global Constants. These can be changed for control over the cpml parameters
 clight = 2.99792458e8  # Speed of light in vacuum (m/s)
-NP = 2  # Numerical parameter for CPML
+alpha_max = 0.05
+sig_opt_scalar = 1.2
+NP = 3  # Numerical parameter for CPML
 NPA = 2  # Additional numerical parameter for CPML
 k_max = 1.1e1  # Max value for CPML parameter
 eps0 = 8.85418782e-12  # Permittivity of free space
 mu0 = 4.0 * np.pi * 1.0e-7  # Permeability of free space
+mu_r = 1.0
 Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
 # ============================ Create the objects =============================
@@ -111,6 +114,16 @@ def status_check(
                 material_name = material.material
             )
             modelclass.tensor_coefficients = tensor
+            # Before we append the coefficients to the text file let's round the 
+            # stiffness tensor to the second decimal
+            tensor = np.round(tensor, 2)
+            # We need to compute dt from the Courant number. We can use the 
+            # maximum tensor value, and the maximum density even if they don't 
+            # correspond to the same material.
+            ind = np.where(tensor.max() == tensor)
+            max_rho = tensor[ ind[0][0], -1]
+            modelclass.dt = np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
+            append_coefficients(prjfile, tensor, CP = 'C', dt = modelclass.dt)
         else:
             print('Computing the permittivity and conductivity coefficients.')
             
@@ -118,25 +131,12 @@ def status_check(
                 material, modelclass
             )
             modelclass.tensor_coefficients = tensor
-        
-        # Before we append the coefficients to the text file let's round to the second decimal
-        tensor = np.round(tensor, 2)
-        if modelclass.is_seismic:
-            ind = np.where(tensor.max() == tensor)
-            max_rho = tensor[ ind[0][0], -1]
-        
-        # We're going to find the lines marked 'C' or 'P' and input the values there
-
-        if modelclass.is_seismic:
-            modelclass.dt = np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
-            append_coefficients(prjfile, tensor, CP = 'C', dt = modelclass.dt)
-        else:
             modelclass.dt = np.min([domain.dx, domain.dz]) / \
                 (2.0 * clight/ \
                     np.sqrt(np.min(
                         [
-                            tensor[:,1].astype(float).min(), 
-                            tensor[:,4].astype(float).min()
+                            tensor[:,1].real.astype(float).min(), 
+                            tensor[:,4].real.astype(float).min()
                         ]
                     )) 
                 )
@@ -159,7 +159,6 @@ def cpmlcompute(
         domain: Domain, 
         direction: str, 
         half: bool = False, 
-        seismic: bool = True
     ) -> None:
     """
     Computes CPML parameters for a given direction and updates model/domain.
@@ -168,13 +167,12 @@ def cpmlcompute(
     :param domain: The domain class instance to update.
     :param direction: Direction to compute CPML ('x', 'y', or 'z').
     :param half: Flag to compute half CPML parameters. Defaults to False.
-    :param seismic: Flag indicating if the model is seismic. Defaults to True.
     :type modelclass: Model
     :type domain: Domain
     :type direction: str
     :type half: bool
-    :type seismic: bool
     """
+    global NP, NPA, sig_opt_scalar, k_max
 
     # For 2D models, we don't need to compute the cpml in the y-direction
     if domain.dim == 2 and direction == 'y':
@@ -205,40 +203,27 @@ def cpmlcompute(
     dist = dx * np.arange(0, domain.cpml)
     if half:
         dist = dist + dx/2 
-
     dist = dx*domain.cpml - dist
     dist = dist/(dx*domain.cpml)
 
-    quasi_cp_max = 0.7* deltamin / (2.0 * modelclass.dt)
-    alpha_max = np.pi*modelclass.f0
+    # Compute the maximum sigma, and alpha values for the CPML.  
     if modelclass.is_seismic:
+        alpha_max = np.pi*modelclass.f0
+        quasi_cp_max = 0.7 * deltamin / (2.0 * modelclass.dt)
         sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
+         # This seems to work well even at higher frequencies
+        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
+            sig_max, alpha_max, k_max, dist, N, domain.cpml, modelclass.dt
+        )
     else:
-        sig_max = 0.7 * (NP+1) / (dx * np.sqrt(mu0/eps0) )
-
-    kappa = np.ones([N])
-    alpha = np.zeros([N])
-    sigma = np.zeros([N])
-    acoeff = np.zeros([N])
-    bcoeff = np.zeros([N])
-
-    # Compute in the x, and z directions
-    for ind in range(0, domain.cpml):
-        # From 0
-        sigma[ind] = sig_max*dist[ind]**NP
-        kappa[ind] = 1.0 + (k_max - 1.0) * dist[ind]**NP
-        alpha[ind] = alpha_max * (1 - dist[ind])**NPA
-        sigma[-(ind+1)] = sig_max*dist[ind]**NP
-        kappa[-(ind+1)] = 1 + (k_max - 1) * dist[ind]**NP
-        alpha[-(ind+1)] = alpha_max * (1 - dist[ind])**NPA
-        bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * modelclass.dt)
-        bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * modelclass.dt)
-
-    # Compute the a-coefficients 
-    alpha[np.where(alpha < 0.0)] = 0.0
-    indices = np.where(np.abs(sigma) > 1.0e-6)
-    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
-            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+        # We will use the maximum permittivity coefficient and assume that the 
+        # magnetic permeability is 1. We can use a different value
+        sig_max = sig_opt_scalar * \
+            ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) )
+        alpha_max = 2 * np.pi * eps0 * modelclass.f0 
+        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
+            sig_max, alpha_max, k_max, dist, N-1, domain.cpml, modelclass.dt
+        )
 
     # Save the results to a fortran binary
     if half:
@@ -253,6 +238,373 @@ def cpmlcompute(
         alpha.tofile('alpha' + direction + '_cpml.dat')
         acoeff.tofile('acoef' + direction + '_cpml.dat')
         bcoeff.tofile('bcoef' + direction + '_cpml.dat')
+        
+# -----------------------------------------------------------------------------
+def cpml_parameters(
+        sig_max: float, 
+        alpha_max: float, 
+        kappa_max: float, 
+        distance, 
+        N: int, 
+        cpml_thickness: int, 
+        dt: float
+    ):
+    """
+    """
+    kappa = np.ones([N])
+    alpha = np.zeros([N])
+    sigma = np.zeros([N])
+    acoeff = np.zeros([N])
+    bcoeff = np.zeros([N])
+
+    # Compute in the x, and z directions
+    for ind in range(0, cpml_thickness):
+        # From 0
+        sigma[ind] = sig_max * (distance[ind]**NP)
+        kappa[ind] = 1.0 + (k_max - 1.0) * distance[ind]**NP
+        alpha[ind] = alpha_max * (1 - distance[ind])**NPA
+        sigma[-(ind+1)] = sig_max*distance[ind]**NP
+        kappa[-(ind+1)] = 1 + (k_max - 1) * distance[ind]**NP
+        alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
+        bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * dt)
+        bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * dt)
+
+    # Compute the a-coefficients 
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
+            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+
+    return sigma, kappa, alpha, acoeff, bcoeff
+
+# -----------------------------------------------------------------------------
+def ecpml_parameters2(domain, modelclass, dist, direction):
+    """
+    Compute the boundary values for variable permittivity and conductivity values at
+    the boundary. 
+    """
+    global mu0, NP, NPA
+
+    nx = domain.nx + 2 * domain.cpml 
+    nz = domain.nz + 2 * domain.cpml 
+    
+    if direction == 'x':
+        perm_ind = 1
+        cond_ind = 7
+        nx -= 1
+    if direction == 'z':
+        perm_ind = 6
+        cond_ind = 12
+        nz -= 1
+    
+    sigma = np.zeros([nx, nz])
+    alpha = sigma.copy() 
+    kappa = np.ones([nx, nz])
+    acoeff = sigma.copy() 
+    bcoeff = sigma.copy() 
+
+    m,n = domain.geometry.shape
+
+    for ii in range(0, domain.cpml):
+        for jj in range(domain.cpml, nz-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[domain.geometry[0,jj-domain.cpml]][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0 and cond1 == 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0 and cond2 == 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            alpha_max1 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
+            alpha_max2 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
+            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+
+            #!!! This is for testing 
+            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            
+            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
+            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
+            k_max1 = 5.0
+            k_max2 = 5.0
+            #!!!
+            sigma[ii,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[-(ii+1),jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[ii,jj] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[-(ii+1),jj] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[ii,jj] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),jj] = 1 + (k_max2 - 1) * dist[ii]**NP
+
+            bcoeff[ii,jj] = np.exp( 
+                -( (sigma[ii,jj] / kappa[ii,jj]) + alpha[ii,jj] ) * (modelclass.dt/eps0)
+            )
+            bcoeff[-(ii+1),jj] = np.exp( 
+                -( (sigma[-(ii+1),jj] / kappa[-(ii+1),jj] + alpha[-(ii+1),jj]) * (modelclass.dt/eps0) )
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][cond_ind].real
+
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0 and cond2 == 0.0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0 and cond2 == 0.0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag            
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+
+            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+
+            #!!! This is for testing 
+            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            
+            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
+            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
+            k_max1 = 5.0
+            k_max2 = 5.0
+            #!!!
+            sigma[jj,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[jj,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[jj,ii] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[jj,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[jj,ii] = 1.0 + (k_max - 1.0) * dist[ii]**NP
+            kappa[jj,-(ii+1)] = 1 + (k_max - 1) * dist[ii]**NP
+
+            bcoeff[jj,ii] = np.exp( 
+                -(sigma[jj,ii] / kappa[jj,ii] + alpha[jj,ii]) * modelclass.dt
+            )
+            bcoeff[jj,-(ii+1)] = np.exp( 
+                -(sigma[jj,-(ii+1)] / kappa[jj,-(ii+1)] + alpha[jj,-(ii+1)]) * modelclass.dt
+            )
+
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1.0) / \
+        (kappa[indices] * sigma[indices] + kappa[indices]**2 * alpha[indices] )
+
+    return sigma, alpha, kappa, acoeff, bcoeff
+ 
+# -----------------------------------------------------------------------------
+def ecpml_parameters3(domain, modelclass, dist, direction):
+    """
+    """
+    global mu0, NP, NPA
+    nx = domain.nx + 2 * domain.cpml 
+    ny = domain.ny + 2 * domain.cpml
+    nz = domain.nz + 2 * domain.cpml
+    if direction == 'x':
+        perm_ind = 1
+        cond_ind = 7
+        nx -= 1
+    if direction == 'y':
+        perm_ind = 4
+        cond_ind = 10
+        ny -= 1
+    if direction == 'z':
+        perm_ind = 6
+        cond_ind = 12
+        nz -= 1
+    
+    sigma = np.zeros([nx, ny, nz])
+    alpha = sigma.copy() 
+    kappa = np.ones([nx, ny, nz])
+    acoeff = sigma.copy() 
+    bcoeff = sigma.copy()
+
+    m,n = domain.geometry.shape
+
+    for ii in range(0, domain.cpml):
+        for jj in range(domain.cpml, nz-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[
+                domain.geometry[-1,jj-domain.cpml]
+            ][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[
+                domain.geometry[-1,jj-domain.cpml]
+            ][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+
+            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+
+            sigma[ii,:,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[-(ii+1),:,jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[ii,:,jj] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[-(ii+1),:,jj] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[ii,:,jj] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),:,jj] = 1 + (k_max2 - 1) * dist[ii]**NP
+
+            bcoeff[ii,:,jj] = np.exp( 
+                -(sigma[ii,:,jj] / kappa[ii,:,jj] + alpha[ii,:,jj]) * modelclass.dt
+            )
+            bcoeff[-(ii+1),:,jj] = np.exp( 
+                -(sigma[-(ii+1),:,jj] / kappa[-(ii+1),:,jj] + alpha[-(ii+1),:,jj]) * modelclass.dt
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,0]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,0]
+            ][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,-1]
+            ][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,-1]
+            ][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm2.real) )
+
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+            
+            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+
+            sigma[jj,:,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[jj,:,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[jj,:,ii] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[jj,:,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[jj,:,ii] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
+            kappa[jj,:,-(ii+1)] = 1 + (k_max2 - 1) * dist[ii]**NP
+
+            bcoeff[jj,ii] = np.exp( 
+                -(sigma[jj,:,ii] / kappa[jj,:,ii] + alpha[jj,:,ii]) * modelclass.dt
+            )
+            bcoeff[jj,:,-(ii+1)] = np.exp( 
+                -(sigma[jj,:,-(ii+1)] / kappa[jj,:,-(ii+1)] + alpha[jj,:,-(ii+1)]) * modelclass.dt
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            for kk in range(domain.cpml, nz-domain.cpml):
+                perm = modelclass.tensor_coefficients_original[
+                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
+                ][perm_ind]
+                cond = modelclass.tensor_coefficients_original[
+                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
+                ][cond_ind].real
+                if cond > 0:
+                    sig_max = cond
+                elif perm.imag > 0:
+                    sig_max = eps0 * modelclass.f0 * np.sqrt(perm).imag
+                else:
+                    sig_max =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm.real) )
+
+                # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+                if perm.imag == 0.0:
+                    alpha_max = 0.02
+                else:
+                    alpha_max = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+
+                k_max = 1 + (alpha_max / modelclass.f0) * np.sqrt(mu0 * perm.real)
+                sigma[jj,ii,kk] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+                sigma[jj,-(ii+1),kk] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+                alpha[jj,ii,kk] = alpha_max1 * (1 - dist[ii])**NPA
+                alpha[jj,-(ii+1),kk] = alpha_max2 * (1 - dist[ii])**NPA
+                kappa[jj,ii,kk] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
+                kappa[jj,-(ii+1),kk] = 1 + (k_max2 - 1) * dist[ii]**NP
+
+                bcoeff[jj,ii,kk] = np.exp( 
+                    -(sigma[ii,jj] / kappa[ii,jj] + alpha[ii,jj]) * modelclass.dt
+                )
+                bcoeff[jj,-(ii+1),kk] = np.exp( 
+                    -(sigma[jj,-(ii+1),kk] / kappa[jj,-(ii+1),kk] + alpha[jj,-(ii+1),kk]) * modelclass.dt
+                )
+
+    
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
+        (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+
+    return sigma, alpha, kappa, acoeff, bcoeff
 
 # ================================== SEISMIC ==================================
 def runseismic(
@@ -280,8 +632,8 @@ def runseismic(
     print(direction)
     print('computing cpml')
     for d in direction:
-        cpmlcompute(modelclass, domain, d, seismic = True)
-        cpmlcompute(modelclass, domain, d, half = True, seismic = True)
+        cpmlcompute(modelclass, domain, d)
+        cpmlcompute(modelclass, domain, d, half = True)
     
     # We need to set a density gradient at air interfaces because high
     # density gradients lead to numerical instability
@@ -305,8 +657,6 @@ def runseismic(
         domain.geometry + 1,
         modelclass.attenuation_coefficients,
         domain.cpml,
-        # domain.nx, 
-        # domain.nz,
         domain.cpml_attenuation
     )
     
@@ -365,9 +715,10 @@ def runelectromag(
     # Compute CPML
     print(direction)
     print('computing cpml')
+
     for d in direction:
-        cpmlcompute(modelclass, domain, d, seismic = False)
-        cpmlcompute(modelclass, domain, d, half = True, seismic = False)
+        cpmlcompute(modelclass, domain, d)
+        cpmlcompute(modelclass, domain, d, half = True)
     
     if use_complex_equations:
         cpmlfdtd.permittivity_write_c(

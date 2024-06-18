@@ -46,13 +46,41 @@ module cpmlfdtd
         implicit none
 
         integer,parameter :: dp = kind(0.d0)
-        character(len=*) :: filename
-        real(kind=dp),dimension(:) :: image_data
+        character(len=*),intent(in) :: filename
+        real(kind=dp),dimension(:),intent(out) :: image_data
 
         open(unit = 13, form="unformatted", file = trim(filename), access='stream')
         read(13) image_data
         close(unit = 13)
     end subroutine loadcpml
+    
+    !==========================================================================
+    ! subroutine loadcpml2(filename, image_data)
+
+    !     implicit none
+
+    !     integer,parameter :: dp = kind(0.d0)
+    !     character(len=*),intent(in) :: filename
+    !     real(kind=dp),dimension(:,:),intent(out) :: image_data
+
+    !     open(unit = 13, form="unformatted", file = trim(filename), access='stream')
+    !     read(13) image_data
+    !     close(unit = 13)
+    ! end subroutine loadcpml2
+    
+    !==========================================================================
+    ! subroutine loadcpml3(filename, image_data)
+
+    !     implicit none
+
+    !     integer,parameter :: dp = kind(0.d0)
+    !     character(len=*),intent(in) :: filename
+    !     real(kind=dp),dimension(:,:,:),intent(out) :: image_data
+
+    !     open(unit = 13, form="unformatted", file = trim(filename), access='stream')
+    !     read(13) image_data
+    !     close(unit = 13)
+    ! end subroutine loadcpml3
     
     !==========================================================================
     subroutine permittivity_write(im, mlist, npoints_pml, nx, nz) 
@@ -855,7 +883,7 @@ module cpmlfdtd
             real(kind=dp), dimension(nx) :: K_x, alpha_x, a_x, b_x, &
                                         K_x_half, alpha_x_half, &
                                         a_x_half, b_x_half
-            real(kind=dp), dimension(nz) ::K_z, alpha_z, a_z, b_z, &
+            real(kind=dp), dimension(nz) :: K_z, alpha_z, a_z, b_z, &
                                         K_z_half, alpha_z_half, &
                                         a_z_half, b_z_half
         
@@ -986,31 +1014,31 @@ module cpmlfdtd
             do j = 2,NZ
                 do i = 1,NX-1
         
-                value_dvx_dx = (vx(i+1,j) - vx(i,j)) / DX
-                value_dvz_dz = (vz(i,j) - vz(i,j-1)) / DZ
-                value_dvz_dx = (vz(i+1,j) - vz(i,j)) / DX
-                value_dvx_dz = (vx(i,j) - vx(i,j-1)) / DZ
+                    value_dvx_dx = (vx(i+1,j) - vx(i,j)) / DX
+                    value_dvz_dz = (vz(i,j) - vz(i,j-1)) / DZ
+                    value_dvz_dx = (vz(i+1,j) - vz(i,j)) / DX
+                    value_dvx_dz = (vx(i,j) - vx(i,j-1)) / DZ
 
-                memory_dvx_dx(i,j) = b_x_half(j) * memory_dvx_dx(i,j) + &
-                                        a_x_half(i) * value_dvx_dx
-                memory_dvz_dz(i,j) = b_z(j) * memory_dvz_dz(i,j) + &
-                                        a_z(j) * value_dvz_dz
-                memory_dvx_dz(i,j) = b_z_half(j) * memory_dvx_dz(i,j) + &
-                                        a_z_half(j) * value_dvx_dz 
-                memory_dvz_dx(i,j) = b_x(i) * memory_dvz_dx(i,j) + &
-                                        a_x(i) * value_dvz_dx
+                    memory_dvx_dx(i,j) = b_x_half(j) * memory_dvx_dx(i,j) + &
+                                            a_x_half(i) * value_dvx_dx
+                    memory_dvz_dz(i,j) = b_z(j) * memory_dvz_dz(i,j) + &
+                                            a_z(j) * value_dvz_dz
+                    memory_dvx_dz(i,j) = b_z_half(j) * memory_dvx_dz(i,j) + &
+                                            a_z_half(j) * value_dvx_dz 
+                    memory_dvz_dx(i,j) = b_x(i) * memory_dvz_dx(i,j) + &
+                                            a_x(i) * value_dvz_dx
 
-                value_dvx_dx = value_dvx_dx / K_x_half(i) + memory_dvx_dx(i,j)
-                value_dvz_dz = value_dvz_dz / K_z(j) + memory_dvz_dz(i,j)
-                value_dvz_dx = value_dvz_dx / K_x(i) + memory_dvz_dx(i,j)
-                value_dvx_dz = value_dvx_dz / K_z_half(j) + memory_dvx_dz(i,j)
-                
-                sigmaxx(i,j) = sigmaxx(i,j) + &
-                    ( ( ( c11(i+1,j) + 2*c11(i,j) + c11(i,j-1) )/4) * value_dvx_dx + &
-                    ( ( c13(i+1,j) + 2*c13(i,j) + c13(i,j-1) )/4) * value_dvz_dz + &
-                    ( ( c15(i+1,j) + 2*c15(i,j) + c15(i,j-1) )/4) * &
-                            (value_dvz_dx + value_dvx_dz) ) * DT
-                sigmazz(i,j) = sigmazz(i,j) + &
+                    value_dvx_dx = value_dvx_dx / K_x_half(i) + memory_dvx_dx(i,j)
+                    value_dvz_dz = value_dvz_dz / K_z(j) + memory_dvz_dz(i,j)
+                    value_dvz_dx = value_dvz_dx / K_x(i) + memory_dvz_dx(i,j)
+                    value_dvx_dz = value_dvx_dz / K_z_half(j) + memory_dvx_dz(i,j)
+                    
+                    sigmaxx(i,j) = sigmaxx(i,j) + &
+                        ( ( ( c11(i+1,j) + 2*c11(i,j) + c11(i,j-1) )/4) * value_dvx_dx + &
+                        ( ( c13(i+1,j) + 2*c13(i,j) + c13(i,j-1) )/4) * value_dvz_dz + &
+                        ( ( c15(i+1,j) + 2*c15(i,j) + c15(i,j-1) )/4) * &
+                                (value_dvz_dx + value_dvx_dz) ) * DT
+                    sigmazz(i,j) = sigmazz(i,j) + &
                     ( ( ( c13(i+1,j) + 2*c13(i,j) + c13(i,j-1) )/4) * value_dvx_dx + &
                     ( ( c33(i+1,j) + 2*c33(i,j) + c33(i,j-1) )/4) * value_dvz_dz + &
                     ( ( c35(i+1,j) + 2*c35(i,j) + c35(i,j-1) )/4) * &
@@ -1812,9 +1840,9 @@ module cpmlfdtd
 
         ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
+        real(kind=dp), dimension(nx-1) :: K_x,alpha_x,a_x,b_x, &
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
+        real(kind=dp), dimension(nz-1) :: K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
                                         
         logical :: SINGLE
@@ -2084,9 +2112,9 @@ module cpmlfdtd
 
         ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
+        real(kind=dp), dimension(nx-1) :: K_x,alpha_x,a_x,b_x, &
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
+        real(kind=dp), dimension(nz-1) :: K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
                                         
         ! Boolean flag to save as double precision or single precision 
@@ -2386,11 +2414,11 @@ module cpmlfdtd
         ! -------------------------------- PML parameters 
 
         ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
+        real(kind=dp),dimension(nx-1) ::  K_x,alpha_x,a_x,b_x, & 
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
+        real(kind=dp),dimension(ny-1) ::  K_y,alpha_y,a_y,b_y, &
                                         K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
+        real(kind=dp),dimension(nz-1) ::  K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
 
         ! integer :: npml_x,npml_y, npml_z
@@ -2604,12 +2632,14 @@ module cpmlfdtd
                     
                         ! Values needed for the magnetic field updates
                         dEx_dz = ( Ex(i,j,k) - Ex(i,j,k+1) )/dz
-                        memory_dEx_dz(i,j,k) = b_z(k) * memory_dEx_dz(i,j,k) + a_z(k) * dEx_dz
+                        memory_dEx_dz(i,j,k) = b_z(k) * memory_dEx_dz(i,j,k) + &
+                            a_z(k) * dEx_dz
                         dEx_dz = dEx_dz/ K_z(k) + memory_dEx_dz(i,j,k)
 
                         ! The rest of the equation needed for agnetic field updates
                         dEz_dx = ( Ez(i+1,j,k) - Ez(i,j,k) )/dx
-                        memory_dEz_dx(i,j,k) = b_x(i) * memory_dEz_dx(i,j,k) + a_x(i) * dEz_dx
+                        memory_dEz_dx(i,j,k) = b_x(i) * memory_dEz_dx(i,j,k) + &
+                            a_x(i) * dEz_dx
                         dEz_dx = dEz_dx/ K_x(i) + memory_dEz_dx(i,j,k)
 
                         ! Now update the Magnetic field
@@ -2644,7 +2674,7 @@ module cpmlfdtd
             !--------------------------------------------------------
             ! compute electric field and update memory variables for C-PML
             !--------------------------------------------------------
-                ! Compute the differences in the x-direction
+            ! Compute the differences in the x-direction
             do k = 2,nz-1
                 do i = 1,nx-1
                     do j = 2,ny-1  
@@ -2863,11 +2893,11 @@ module cpmlfdtd
         ! -------------------------------- PML parameters 
 
         ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
+        real(kind=dp),dimension(nx-1) ::  K_x,alpha_x,a_x,b_x, & 
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
+        real(kind=dp),dimension(ny-1) ::  K_y,alpha_y,a_y,b_y, &
                                         K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
+        real(kind=dp),dimension(nz-1) ::  K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
 
         ! integer :: npml_x,npml_y, npml_z
@@ -3167,7 +3197,7 @@ module cpmlfdtd
                 enddo
             enddo 
 
-                ! Compute the differences in the z-direction
+            ! Compute the differences in the z-direction
             do k = 1,nz-1
                 do i = 2,nx-1  
                     do j = 2,ny-1

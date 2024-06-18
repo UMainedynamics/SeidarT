@@ -312,7 +312,8 @@ def get_perm(
             permittivity = snow_permittivity(
                 temperature = material.temp[ind],
                 lwc = material.lwc[ind], 
-                porosity = material.porosity[ind]
+                porosity = material.porosity[ind],
+                center_frequency = modelclass.f0
             )
             conductivity = snow_conductivity(
                 permittivity = permittivity, frequency = modelclass.f0
@@ -650,6 +651,7 @@ def snow_permittivity(
         temperature: float = 0., 
         lwc: float = 0., 
         porosity: float = 50.,
+        center_frequency: float = 1e7,
         method: str = "shivola-tiuri"
     ) -> np.ndarray:
     """
@@ -699,7 +701,15 @@ def snow_permittivity(
         perm = 77.66 - 103.3 * (1 - (300/(T)) )
     
     # Compute the complex part
-    complex_permittivity = 0.8*lwc + 0.72*(lwc**2)
+    if lwc > 0:
+        complex_permittivity = 0.8*lwc + 0.72*(lwc**2)
+    else:
+        # The complex permittivity tensor for ice is anisotropic, but we will
+        # assume snow is homogeneous and use the mean of the complex 
+        # permittivity
+        eps_i = np.diag(ice_permittivity(temperature, 917, center_frequency).imag).mean()
+        complex_permittivity = eps_i * (0.52 * rho_d + 0.62 * rho_d**2)
+    
     permittivity = np.eye(3,3) * complex(perm, complex_permittivity)
 
     return(permittivity)

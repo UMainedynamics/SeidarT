@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "seidart"
-version = "2.0.4"
+version = "2.0.5"
 license = {file = "LICENSE.txt"}
 description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
 requires-python = ">=3.11"
@@ -46,7 +46,6 @@ arraybuild = "seidart.routines.arraybuild:main"
 sourcefunction = "seidart.routines.sourcefunction:main"
 rcxdisplay = "seidart.visualization.rcxdisplay:main"
 im2anim = "seidart.visualization.im2anim:build_animation"
-# orientsynth = "seidart.fortran.orientsynth"
 
 # Optionals
 [project.urls]
