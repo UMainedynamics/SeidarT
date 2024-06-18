@@ -6,7 +6,7 @@
 <link rel="search" title="Search" href="search.html" /><link rel="next" title="seidart.routines.prjrun module" href="seidart.routines.prjrun.html" /><link rel="prev" title="seidart.routines.prjbuild module" href="seidart.routines.prjbuild.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>seidart.routines.sourcefunction module - SeidarT documentation v2.0.2</title>
+        <title>seidart.routines.sourcefunction module - SeidarT documentation v2.0.5</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.0.2</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v2.0.5</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.0.2</span>
+  <span class="sidebar-brand-text">SeidarT documentation v2.0.5</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,7 +242,7 @@
 <span id="seidart-routines-sourcefunction-module"></span><h1>seidart.routines.sourcefunction module<a class="headerlink" href="#module-seidart.routines.sourcefunction" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.main">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.main" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.main" title="Link to this definition">#</a></dt>
 <dd><p>Main function to generate and optionally plot a source function based on
 input parameters.</p>
 <dl class="field-list simple">
@@ -251,8 +251,6 @@ input parameters.</p>
 <li><p><strong>prjfile</strong> (<em>str</em>) – Path to the project file.</p></li>
 <li><p><strong>source_type</strong> (<em>str</em>) – Type of the source function to generate.</p></li>
 <li><p><strong>factor</strong> (<em>float</em>) – Amplitude scaling factor for the source.</p></li>
-<li><p><strong>model_type</strong> (<em>str</em>) – Specifies the model type (‘s’ for seismic, ‘e’ for
-electromagnetic).</p></li>
 <li><p><strong>multimodal</strong> (<em>bool</em>) – Indicates if a multimodal source should be generated.
 Defaults to False.</p></li>
 <li><p><strong>make_plot</strong> (<em>bool</em>) – Whether to plot the generated source function. Defaults
@@ -306,7 +304,7 @@ frequencies.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.sourcefunction">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">sourcefunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="seidart.routines.definitions.html#seidart.routines.definitions.Model" title="seidart.routines.definitions.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.sourcefunction" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">sourcefunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="seidart.routines.definitions.html#seidart.routines.definitions.Model" title="seidart.routines.definitions.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.sourcefunction" title="Link to this definition">#</a></dt>
 <dd><p>Generates a source function based on the provided model class and parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -315,8 +313,6 @@ frequencies.</p>
 orientation.</p></li>
 <li><p><strong>factor</strong> (<em>float</em>) – Amplitude scaling factor for the source.</p></li>
 <li><p><strong>source_type</strong> (<em>str</em>) – The type of source to generate.</p></li>
-<li><p><strong>model_type</strong> (<em>str</em>) – Specifies whether the source is for a seismic (‘s’) or
-electromagnetic (‘e’) model.</p></li>
 <li><p><strong>multimodal</strong> (<em>bool</em>) – Whether to generate a multimodal source. Defaults to False.</p></li>
 </ul>
 </dd>
