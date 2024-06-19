@@ -6,7 +6,7 @@
 <link rel="search" title="Search" href="search.html" /><link rel="next" title="Visualization Modules" href="VISUALIZATION.html" /><link rel="prev" title="seidart.routines.arraybuild module" href="seidart.routines.arraybuild.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>seidart.routines.fabricsynth module - SeidarT documentation v2.0.5</title>
+        <title>seidart.routines.fabricsynth module - SeidarT documentation v2.1.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -125,7 +125,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.0.5</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v2.1.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -148,7 +148,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.0.5</span>
+  <span class="sidebar-brand-text">SeidarT documentation v2.1.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,7 +242,7 @@
 <span id="seidart-routines-fabricsynth-module"></span><h1>seidart.routines.fabricsynth module<a class="headerlink" href="#module-seidart.routines.fabricsynth" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.routines.fabricsynth.</span></span><span class="sig-name descname"><span class="pre">Fabric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euler_angles.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.routines.fabricsynth.</span></span><span class="sig-name descname"><span class="pre">Fabric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euler_angles.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.build">
@@ -253,7 +253,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.bunge_compute">
 <span class="sig-name descname"><span class="pre">bunge_compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.bunge_compute" title="Link to this definition">#</a></dt>
-<dd><p>Compute the euler angles for the z-x-z transform (Bunge’s notation)</p>
+<dd><p>Compute the euler angles for the z-x-z transform (Bunge’s notation). A
+space delimited file will be produced from the output.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -269,9 +270,9 @@ colormap. Default is 100.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.generate_strikes_dips">
-<span class="sig-name descname"><span class="pre">generate_strikes_dips</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.generate_strikes_dips" title="Link to this definition">#</a></dt>
-<dd><p>Create a set of strikes and dips according to a distribution.</p>
+<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.generate_trends_plunges">
+<span class="sig-name descname"><span class="pre">generate_trends_plunges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.generate_trends_plunges" title="Link to this definition">#</a></dt>
+<dd><p>Create a set of trends and plunges according to a distribution.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -301,14 +302,14 @@ Default is 3.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.strike_dip_to_rotation_matrix">
-<span class="sig-name descname"><span class="pre">strike_dip_to_rotation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dip</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.strike_dip_to_rotation_matrix" title="Link to this definition">#</a></dt>
-<dd><p>Compute the rotation matrix from a strike and dip pair.</p>
+<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix">
+<span class="sig-name descname"><span class="pre">trend_plunge_to_rotation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plunge</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix" title="Link to this definition">#</a></dt>
+<dd><p>Compute the rotation matrix from a trend and plunge pair.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>strike</strong> (<em>float</em>) – The strike value in degrees</p></li>
-<li><p><strong>dip</strong> (<em>float</em>) – The dip value in degrees</p></li>
+<li><p><strong>trend</strong> (<em>float</em>) – The trend value in degrees</p></li>
+<li><p><strong>plunge</strong> (<em>float</em>) – The plunge value in degrees</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -384,10 +385,10 @@ Default is 3.</p>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.build"><code class="docutils literal notranslate"><span class="pre">Fabric.build()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.bunge_compute"><code class="docutils literal notranslate"><span class="pre">Fabric.bunge_compute()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.custom_cmap"><code class="docutils literal notranslate"><span class="pre">Fabric.custom_cmap()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.generate_strikes_dips"><code class="docutils literal notranslate"><span class="pre">Fabric.generate_strikes_dips()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.generate_trends_plunges"><code class="docutils literal notranslate"><span class="pre">Fabric.generate_trends_plunges()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.projection_plot"><code class="docutils literal notranslate"><span class="pre">Fabric.projection_plot()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.rotation_matrix_to_euler_angles"><code class="docutils literal notranslate"><span class="pre">Fabric.rotation_matrix_to_euler_angles()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.strike_dip_to_rotation_matrix"><code class="docutils literal notranslate"><span class="pre">Fabric.strike_dip_to_rotation_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix"><code class="docutils literal notranslate"><span class="pre">Fabric.trend_plunge_to_rotation_matrix()</span></code></a></li>
 </ul>
 </li>
 </ul>

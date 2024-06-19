@@ -2045,39 +2045,6 @@ module cpmlfdtd
     ! =========================================================================
     ! FORWARD AND BACKWARD DIFFERENCE SCHEME
     subroutine electromag2(nx, nz, dx, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
-
-        ! 2D elastic finite-difference code in velocity and stress formulation
-        ! with Convolutional-PML (C-PML) absorbing conditions for an anisotropic medium
-
-        ! Dimitri Komatitsch, University of Pau, France, April 2007.
-        ! Anisotropic implementation by Roland Martin and Dimitri Komatitsch, University of Pau, France, April 2007.
-
-        ! The second-order staggered-grid formulation of Madariaga (1976) and Virieux (1986) is used:
-        !
-        !            ^ y
-        !            |
-        !            |
-        !
-        !            +-------------------+
-        !            |                   |
-        !            |                   |
-        !            |                   |
-        !            |                   |
-        !            |        v_y        |
-        !   sigma_xy +---------+         |
-        !            |         |         |
-        !            |         |         |
-        !            |         |         |
-        !            |         |         |
-        !            |         |         |
-        !            +---------+---------+  ---> x
-        !           v_x    sigma_xx
-        !                  sigma_yy
-        !
-        ! IMPORTANT : all our CPML codes work fine in single precision as well (which is significantly faster).
-        !             If you want you can thus force automatic conversion to single precision at compile time
-        !             or change all the declarations and constants in the code from real(kind=dp) to single.
-        !
         ! INPUT
         !   im (INTEGER)
         !   nx, nz (INTEGER)
@@ -2086,8 +2053,6 @@ module cpmlfdtd
         !   npoints_pml (INTEGER) - the thickness of the pml
         !   rcx (INTEGER) - the x and y indices for an array of recievers
         !
-
-
         implicit none
 
         integer,parameter :: dp=kind(0.d0)
@@ -2104,7 +2069,6 @@ module cpmlfdtd
                                         sig11, sig13, sig33, &
                                         epsilonx, epsilonz, &
                                         sigmax, sigmaz
-
 
         ! time step in seconds. decreasing the time step improves the pml attenuation
         ! but it should be inversely proportional to the center frequency of the 
@@ -2142,7 +2106,6 @@ module cpmlfdtd
         real(kind=dp), dimension(nx, nz) :: caEx, cbEx
         real(kind=dp), dimension(nx, nz) :: caEz, cbEz
         real(kind=dp) :: daHy, dbHy
-
         real(kind=dp) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
 
         ! arrays for the memory variables
@@ -2155,7 +2118,6 @@ module cpmlfdtd
         ! angle of source force clockwise with respect to vertical (Y) axis
         ! character(len=6) :: src_type
         integer :: i,j, it
-
         real(kind=dp) :: velocnorm
 
         ! -------------------------------- PML parameters 
@@ -2204,7 +2166,6 @@ module cpmlfdtd
         sigmaz(:,:) = sig13 + sig33 
 
         ! We need to change sigma to dsigma, same for epsilon
-
         caEx(:,:) = ( 1.0d0 - sigmax * dt / ( 2.0d0 * epsilonx ) ) / &
                     ( 1.0d0 + sigmax * dt / (2.0d0 * epsilonx ) )
         cbEx(:,:) = (dt / epsilonx ) / ( 1.0d0 + sigmax * dt / ( 2.0d0 * epsilonx ) )
@@ -2212,7 +2173,6 @@ module cpmlfdtd
         caEz(:,:) = ( 1.0d0 - sigmaz * dt / ( 2.0d0 * epsilonz ) ) / &
                     ( 1.0d0 + sigmaz * dt / (2.0d0 * epsilonz ) )
         cbEz(:,:) = (dt / epsilonz ) / ( 1.0d0 + sigmaz * dt / ( 2.0d0 * epsilonz ) )
-
         daHy = dt/(4.0d0*mu0*mu)
         dbHy = dt/mu0 !dt/(mu*mu*dx*(1+daHy) ) 
         daHy = 1.0d0 ! (1-daHy)/(1+daHy) ! 
@@ -2222,7 +2182,6 @@ module cpmlfdtd
         call loadsource('electromagneticsourcez.dat', nstep, srcz)
 
         ! ----------------------------------------------------------------------
-
         ! Initialize CPML damping variables
         K_x(:) = 1.0d0
         K_x_half(:) = 1.0d0
@@ -2239,7 +2198,6 @@ module cpmlfdtd
         alpha_z_half(:) = 0.0d0
         a_z(:) = 0.0d0
         a_z_half(:) = 0.0d0
-
 
         call loadcpml('kappax_cpml.dat', K_x)
         call loadcpml('alphax_cpml.dat', alpha_x)
@@ -2261,7 +2219,6 @@ module cpmlfdtd
         call loadcpml('acoefz_half_cpml.dat', a_z_half)
         call loadcpml('bcoefz_half_cpml.dat', b_z_half)
 
-
         ! initialize arrays
         Ex(:,:) = 0.0d0
         Ez(:,:) = 0.0d0
@@ -2270,21 +2227,18 @@ module cpmlfdtd
         ! PML
         memory_dEx_dz(:,:) = 0.0d0
         memory_dEz_dx(:,:) = 0.0d0
-
         memory_dHy_dx(:,:) = 0.0d0
         memory_dHy_dz(:,:) = 0.0d0
 
         !---
         !---  beginning of time loop
         !---
-
         do it = 1,NSTEP
-        
             !--------------------------------------------------------
             ! compute magnetic field and update memory variables for C-PML
             !--------------------------------------------------------
-            do j = 2,nz-1  
-                do i = 2,nx-1
+            do j = 1,nz-1  
+                do i = 1,nx-1
                 
                     ! Values needed for the magnetic field updates
                     value_dEx_dz = ( Ex(i,j+1) - Ex(i,j) )/dz
@@ -2305,7 +2259,6 @@ module cpmlfdtd
             !--------------------------------------------------------
             ! compute electric field and update memory variables for C-PML
             !--------------------------------------------------------
-            
             ! Compute the differences in the y-direction
             do j = 2,nz-1
                 do i = 1,nx-1
@@ -2333,27 +2286,25 @@ module cpmlfdtd
                 enddo
             enddo
 
-
             !----------------------------------------------------------------------------
-
             Ex(isource,jsource) = Ex(isource,jsource) + srcx(it) * DT / eps11(isource,jsource)
             Ez(isource,jsource) = Ez(isource,jsource) + srcz(it) * DT / eps33(isource,jsource) 
             
             ! Dirichlet conditions (rigid boundaries) on the edges or at the bottom of the PML layers
             Ex(1,:) = 0.d0
-            Ex(nx-1,:) = 0.d0
+            Ex(nx,:) = 0.d0
             Ex(:,1) = 0.d0
             Ex(:,nz) = 0.d0
 
             Ez(1,:) = 0.d0
             Ez(nx,:) = 0.d0
             Ez(:,1) = 0.d0
-            Ez(:,nz-1) = 0.d0
+            Ez(:,nz) = 0.d0
 
             Hy(1,:) = 0.d0
-            Hy(nx-1,:) = 0.d0
+            Hy(nx,:) = 0.d0
             Hy(:,1) = 0.d0
-            Hy(:,nz-1) = 0.d0
+            Hy(:,nz) = 0.d0
 
             ! print maximum of norm of velocity
             velocnorm = maxval(sqrt(Ex**2 + Ez**2))

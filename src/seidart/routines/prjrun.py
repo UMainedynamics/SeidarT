@@ -11,19 +11,25 @@ from seidart.routines.definitions import *
 # Modeling modules
 from seidart.fortran.cpmlfdtd import cpmlfdtd
 
-# Global Constants. These can be changed for control over the cpml parameters
+# ------------------------------ Global Constants ------------------------------
+# Physics
+# -------
 clight = 2.99792458e8  # Speed of light in vacuum (m/s)
-sig_opt_scalar = 1.2
-alpha_max_scalar = 1.0
-NP = 3  # Numerical parameter for CPML
-NPA = 3  # Additional numerical parameter for CPML
-k_max = 5  # Max value for CPML parameter
 eps0 = 8.85418782e-12  # Permittivity of free space
 mu0 = 4.0 * np.pi * 1.0e-7  # Permeability of free space
 mu_r = 1.0
+
+# These can be changed for control over the cpml parameters
+#CPML
+#----
+sig_opt_scalar = 1.2
+alpha_max_scalar = 1.0
+NP = 2  # Numerical parameter for CPML
+NPA = 2  # Additional numerical parameter for CPML
+kappa_max = 5  # Max value for CPML parameter
 Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
-# ============================ Create the objects =============================
+# ============================ Create the objects ==============================
 # Let's initiate the domain and check to make sure everything is good to go
 def domain_initialization(
         prjfile: str
@@ -172,7 +178,7 @@ def cpmlcompute(
     :type direction: str
     :type half: bool
     """
-    global NP, NPA, sig_opt_scalar, k_max
+    global NP, NPA, sig_opt_scalar, kappa_max
 
     # For 2D models, we don't need to compute the cpml in the y-direction
     if domain.dim == 2 and direction == 'y':
@@ -213,7 +219,7 @@ def cpmlcompute(
         sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
          # This seems to work well even at higher frequencies
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, k_max, dist, N, domain.cpml, modelclass.dt
+            sig_max, alpha_max, kappa_max, dist, N, domain.cpml, modelclass.dt
         )
     else:
         # We will use the maximum permittivity coefficient and assume that the 
@@ -222,15 +228,8 @@ def cpmlcompute(
             ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) )
         alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, k_max, dist, N, modelclass.dt
+            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
         )
-        print([sig_max, alpha_max])
-        print('sigma')
-        print(sigma[0:domain.cpml+1])
-        print('alpha')
-        print(alpha[0:domain.cpml+1])
-        print('kappa')
-        print(kappa[0:domain.cpml+1])
 
     # Save the results to a fortran binary
     if half:
@@ -267,11 +266,11 @@ def cpml_parameters(
     for ind in range(0, len(distance)):
         # From 0
         sigma[ind] = sig_max * (distance[ind]**NP)
-        kappa[ind] = 1.0 + (k_max - 1.0) * distance[ind]**NP
+        kappa[ind] = 1.0 + (kappa_max - 1.0) * distance[ind]**NP
         alpha[ind] = alpha_max * (1 - distance[ind])**NPA
         # From the end 
         sigma[-(ind+1)] = sig_max*distance[ind]**NP
-        kappa[-(ind+1)] = 1 + (k_max - 1) * distance[ind]**NP
+        kappa[-(ind+1)] = 1 + (kappa_max - 1) * distance[ind]**NP
         alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
         
         bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
@@ -339,8 +338,8 @@ def ecpml_parameters2(domain, modelclass, dist, direction):
             # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
             alpha_max1 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
             alpha_max2 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
-            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
 
             #!!! This is for testing 
             sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
@@ -348,15 +347,15 @@ def ecpml_parameters2(domain, modelclass, dist, direction):
             
             alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
             alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
-            k_max1 = 5.0
-            k_max2 = 5.0
+            kappa_max1 = 5.0
+            kappa_max2 = 5.0
             #!!!
             sigma[ii,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
             sigma[-(ii+1),jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
             alpha[ii,jj] = alpha_max1 * (1 - dist[ii])**NPA
             alpha[-(ii+1),jj] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[ii,jj] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
-            kappa[-(ii+1),jj] = 1 + (k_max2 - 1) * dist[ii]**NP
+            kappa[ii,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
 
             bcoeff[ii,jj] = np.exp( 
                 -( (sigma[ii,jj] / kappa[ii,jj]) + alpha[ii,jj] ) * (modelclass.dt/eps0)
@@ -397,8 +396,8 @@ def ecpml_parameters2(domain, modelclass, dist, direction):
             else:
                 alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
 
-            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
 
             #!!! This is for testing 
             sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
@@ -406,15 +405,15 @@ def ecpml_parameters2(domain, modelclass, dist, direction):
             
             alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
             alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
-            k_max1 = 5.0
-            k_max2 = 5.0
+            kappa_max1 = 5.0
+            kappa_max2 = 5.0
             #!!!
             sigma[jj,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
             sigma[jj,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
             alpha[jj,ii] = alpha_max1 * (1 - dist[ii])**NPA
             alpha[jj,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[jj,ii] = 1.0 + (k_max - 1.0) * dist[ii]**NP
-            kappa[jj,-(ii+1)] = 1 + (k_max - 1) * dist[ii]**NP
+            kappa[jj,ii] = 1.0 + (kappa_max - 1.0) * dist[ii]**NP
+            kappa[jj,-(ii+1)] = 1 + (kappa_max - 1) * dist[ii]**NP
 
             bcoeff[jj,ii] = np.exp( 
                 -(sigma[jj,ii] / kappa[jj,ii] + alpha[jj,ii]) * modelclass.dt
@@ -498,15 +497,15 @@ def ecpml_parameters3(domain, modelclass, dist, direction):
             else:
                 alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
 
-            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
 
             sigma[ii,:,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
             sigma[-(ii+1),:,jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
             alpha[ii,:,jj] = alpha_max1 * (1 - dist[ii])**NPA
             alpha[-(ii+1),:,jj] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[ii,:,jj] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
-            kappa[-(ii+1),:,jj] = 1 + (k_max2 - 1) * dist[ii]**NP
+            kappa[ii,:,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),:,jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
 
             bcoeff[ii,:,jj] = np.exp( 
                 -(sigma[ii,:,jj] / kappa[ii,:,jj] + alpha[ii,:,jj]) * modelclass.dt
@@ -553,15 +552,15 @@ def ecpml_parameters3(domain, modelclass, dist, direction):
             else:
                 alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
             
-            k_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            k_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
 
             sigma[jj,:,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
             sigma[jj,:,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
             alpha[jj,:,ii] = alpha_max1 * (1 - dist[ii])**NPA
             alpha[jj,:,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[jj,:,ii] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
-            kappa[jj,:,-(ii+1)] = 1 + (k_max2 - 1) * dist[ii]**NP
+            kappa[jj,:,ii] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[jj,:,-(ii+1)] = 1 + (kappa_max2 - 1) * dist[ii]**NP
 
             bcoeff[jj,ii] = np.exp( 
                 -(sigma[jj,:,ii] / kappa[jj,:,ii] + alpha[jj,:,ii]) * modelclass.dt
@@ -592,13 +591,13 @@ def ecpml_parameters3(domain, modelclass, dist, direction):
                     alpha_max = modelclass.f0 * np.sqrt(perm1).imag / 2
 
 
-                k_max = 1 + (alpha_max / modelclass.f0) * np.sqrt(mu0 * perm.real)
+                kappa_max = 1 + (alpha_max / modelclass.f0) * np.sqrt(mu0 * perm.real)
                 sigma[jj,ii,kk] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
                 sigma[jj,-(ii+1),kk] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
                 alpha[jj,ii,kk] = alpha_max1 * (1 - dist[ii])**NPA
                 alpha[jj,-(ii+1),kk] = alpha_max2 * (1 - dist[ii])**NPA
-                kappa[jj,ii,kk] = 1.0 + (k_max1 - 1.0) * dist[ii]**NP
-                kappa[jj,-(ii+1),kk] = 1 + (k_max2 - 1) * dist[ii]**NP
+                kappa[jj,ii,kk] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+                kappa[jj,-(ii+1),kk] = 1 + (kappa_max2 - 1) * dist[ii]**NP
 
                 bcoeff[jj,ii,kk] = np.exp( 
                     -(sigma[ii,jj] / kappa[ii,jj] + alpha[ii,jj]) * modelclass.dt
