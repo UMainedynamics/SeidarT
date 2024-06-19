@@ -13,11 +13,11 @@ from seidart.fortran.cpmlfdtd import cpmlfdtd
 
 # Global Constants. These can be changed for control over the cpml parameters
 clight = 2.99792458e8  # Speed of light in vacuum (m/s)
-alpha_max = 0.05
 sig_opt_scalar = 1.2
+alpha_max_scalar = 1.0
 NP = 3  # Numerical parameter for CPML
-NPA = 2  # Additional numerical parameter for CPML
-k_max = 1.1e1  # Max value for CPML parameter
+NPA = 3  # Additional numerical parameter for CPML
+k_max = 5  # Max value for CPML parameter
 eps0 = 8.85418782e-12  # Permittivity of free space
 mu0 = 4.0 * np.pi * 1.0e-7  # Permeability of free space
 mu_r = 1.0
@@ -220,7 +220,7 @@ def cpmlcompute(
         # magnetic permeability is 1. We can use a different value
         sig_max = sig_opt_scalar * \
             ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) )
-        alpha_max = 2 * np.pi * eps0 * modelclass.f0 
+        alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
             sig_max, alpha_max, k_max, dist, N, modelclass.dt
         )
@@ -264,16 +264,19 @@ def cpml_parameters(
     bcoeff = np.zeros([N])
 
     # Compute in the x, and z directions
-    for ind in range(0, len(dist)):
+    for ind in range(0, len(distance)):
         # From 0
         sigma[ind] = sig_max * (distance[ind]**NP)
         kappa[ind] = 1.0 + (k_max - 1.0) * distance[ind]**NP
         alpha[ind] = alpha_max * (1 - distance[ind])**NPA
+        # From the end 
         sigma[-(ind+1)] = sig_max*distance[ind]**NP
         kappa[-(ind+1)] = 1 + (k_max - 1) * distance[ind]**NP
         alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
-        bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * dt)
-        bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * dt)
+        
+        bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
+        bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * (dt/eps0) )
+        
 
     # Compute the a-coefficients 
     alpha[np.where(alpha < 0.0)] = 0.0
