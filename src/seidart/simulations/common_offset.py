@@ -153,7 +153,7 @@ class CommonOffset(Array):
 
         """
         self.timevec, self.fx, self.fy, self.fz, self.srcfn = sourcefunction(
-            self.electromag, 1e7, 'gaus1', 'e'
+            self.electromag, 1e7, 'gaus1'
         )
         n = len(self.source_xyz)
         self.co_image = np.zeros([len(self.timevec), n])
