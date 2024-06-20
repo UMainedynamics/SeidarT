@@ -104,22 +104,21 @@ class FDTDImage:
         Retrieves project values and initializes domain parameters.
         """
         # Let's initiate the domain
-        
         self.domain.cpml = int(self.domain.cpml)
         self.domain.nx = int(self.domain.nx) + 2*self.domain.cpml
         self.domain.nz = int(self.domain.nz) + 2*self.domain.cpml
         self.dx = float(self.domain.dx)
         self.dz = float(self.domain.dz)
-        # The EM code uses a slightly different mesh
-        if self.channel == 'Ex':
-            self.nx = self.domain.nx - 1
-            self.nz = self.domain.nz
-        elif self.channel == 'Ez':
-            self.nz = self.domain.nz - 1
-            self.nx = self.domain.nx
-        else:
-            self.nz = self.domain.nz 
-            self.nx = self.domain.nx
+        # # The EM code uses a slightly different mesh
+        # if self.channel == 'Ex':
+        #     self.nx = self.domain.nx
+        #     self.nz = self.domain.nz
+        # elif self.channel == 'Ez':
+        #     self.nz = self.domain.nz - 1
+        #     self.nx = self.domain.nx
+        # else:
+        self.nz = self.domain.nz 
+        self.nx = self.domain.nx
         
         self.extent = (
             -self.domain.cpml, 

@@ -2361,9 +2361,9 @@ module cpmlfdtd
         real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
 
         ! main arrays
-        complex(kind=dp), dimension(nx-1,nz) :: Ex
-        complex(kind=dp), dimension(nx,nz-1) :: Ez
-        complex(kind=dp), dimension(nx-1,nz-1) :: Hy
+        complex(kind=dp), dimension(nx,nz) :: Ex
+        complex(kind=dp), dimension(nx,nz) :: Ez
+        complex(kind=dp), dimension(nx,nz) :: Hy
 
         ! we will compute the coefficients for the finite difference scheme 
         complex(kind=dp), dimension(nx, nz) :: caEx, cbEx
@@ -2385,9 +2385,9 @@ module cpmlfdtd
 
         ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx-1) :: K_x,alpha_x,a_x,b_x, &
+        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz-1) :: K_z,alpha_z,a_z,b_z, &
+        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
                                         
         ! Boolean flag to save as double precision or single precision 
@@ -2568,19 +2568,19 @@ module cpmlfdtd
             
             ! Dirichlet conditions (rigid boundaries) on the edges or at the bottom of the PML layers
             Ex(1,:) = complex(0.0d0, 0.0d0)
-            Ex(nx-1,:) = complex(0.0d0, 0.0d0)
+            Ex(nx,:) = complex(0.0d0, 0.0d0)
             Ex(:,1) = complex(0.0d0, 0.0d0)
             Ex(:,nz) = complex(0.0d0, 0.0d0)
 
             Ez(1,:) = complex(0.0d0, 0.0d0)
             Ez(nx,:) = complex(0.0d0, 0.0d0)
             Ez(:,1) = complex(0.0d0, 0.0d0)
-            Ez(:,nz-1) = complex(0.0d0, 0.0d0)
+            Ez(:,nz) = complex(0.0d0, 0.0d0)
 
             Hy(1,:) = complex(0.0d0, 0.0d0)
-            Hy(nx-1,:) = complex(0.0d0, 0.0d0)
+            Hy(nx,:) = complex(0.0d0, 0.0d0)
             Hy(:,1) = complex(0.0d0, 0.0d0)
-            Hy(:,nz-1) = complex(0.0d0, 0.0d0)
+            Hy(:,nz) = complex(0.0d0, 0.0d0)
 
             ! print maximum of norm of velocity
             velocnorm = maxval(abs(sqrt(Ex**2 + Ez**2)))
@@ -2588,8 +2588,8 @@ module cpmlfdtd
             ! print *,'Max vals for Ex, Ey, Ez: ', maxval(REAL(Ex)), maxval(REAL(Ez))
 
 
-            call write_image2c(Ex, nx-1, nz, src, it, 'Ex', SINGLE)
-            call write_image2c(Ez, nx, nz-1, src, it, 'Ez', SINGLE)
+            call write_image2c(Ex, nx, nz, src, it, 'Ex', SINGLE)
+            call write_image2c(Ez, nx, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
 
@@ -2642,12 +2642,12 @@ module cpmlfdtd
         real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.0d+25
 
         ! main arrays
-        real(kind=dp), dimension(nx-1,ny,nz) :: Ex
-        real(kind=dp), dimension(nx,ny-1,nz) :: Ey
-        real(kind=dp), dimension(nx,ny,nz-1) :: Ez
-        real(kind=dp), dimension(nx,ny-1,nz-1) :: Hx
-        real(kind=dp), dimension(nx-1,ny,nz-1) :: Hy
-        real(kind=dp), dimension(nx-1,ny-1,nz) :: Hz
+        real(kind=dp), dimension(nx,ny,nz) :: Ex
+        real(kind=dp), dimension(nx,ny,nz) :: Ey
+        real(kind=dp), dimension(nx,ny,nz) :: Ez
+        real(kind=dp), dimension(nx,ny,nz) :: Hx
+        real(kind=dp), dimension(nx,ny,nz) :: Hy
+        real(kind=dp), dimension(nx,ny,nz) :: Hz
 
 
         ! we will compute the coefficients for the finite difference scheme 
@@ -2687,11 +2687,11 @@ module cpmlfdtd
         ! -------------------------------- PML parameters 
 
         ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx-1) ::  K_x,alpha_x,a_x,b_x, & 
+        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny-1) ::  K_y,alpha_y,a_y,b_y, &
+        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
                                         K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz-1) ::  K_z,alpha_z,a_z,b_z, &
+        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
 
         ! integer :: npml_x,npml_y, npml_z
@@ -3021,7 +3021,7 @@ module cpmlfdtd
             Ex(1,:,:) = 0.0d0
             Ex(:,1,:) = 0.0d0
             Ex(:,:,1) = 0.0d0
-            Ex(nx-1,:,:) = 0.0d0
+            Ex(nx,:,:) = 0.0d0
             Ex(:,ny,:) = 0.0d0
             Ex(:,:,nz) = 0.0d0 
 
@@ -3029,7 +3029,7 @@ module cpmlfdtd
             Ey(:,1,:) = 0.0d0
             Ey(:,:,1) = 0.0d0
             Ey(nx,:,:) = 0.0d0
-            Ey(:,ny-1,:) = 0.0d0
+            Ey(:,ny,:) = 0.0d0
             Ey(:,:,nz) = 0.0d0
             
             Ez(1,:,:) = 0.0d0
@@ -3037,38 +3037,38 @@ module cpmlfdtd
             Ez(:,:,1) = 0.0d0
             Ez(nx,:,:) = 0.0d0
             Ez(:,ny,:) = 0.0d0
-            Ez(:,:,nz-1) = 0.0d0
+            Ez(:,:,nz) = 0.0d0
             
             Hx(1,:,:) = 0.0d0
             Hx(:,1,:) = 0.0d0
             Hx(:,:,1) = 0.0d0
             Hx(nx,:,:) = 0.0d0
-            Hx(:,ny-1,:) = 0.0d0
-            Hx(:,:,nz-1) = 0.0d0
+            Hx(:,ny,:) = 0.0d0
+            Hx(:,:,nz) = 0.0d0
 
             Hy(1,:,:) = 0.0d0
             Hy(:,1,:) = 0.0d0
             Hy(:,:,1) = 0.0d0
-            Hy(nx-1,:,:) = 0.0d0
+            Hy(nx,:,:) = 0.0d0
             Hy(:,ny,:) = 0.0d0
-            Hy(:,:,nz-1) = 0.0d0
+            Hy(:,:,nz) = 0.0d0
             
             Hz(1,:,:) = 0.0d0
             Hz(:,1,:) = 0.0d0
             Hz(:,:,1) = 0.0d0
-            Hz(nx-1,:,:) = 0.0d0
-            Hz(:,ny-1,:) = 0.0d0
+            Hz(nx,:,:) = 0.0d0
+            Hz(:,ny,:) = 0.0d0
             Hz(:,:,nz) = 0.0d0
 
             ! check norm of velocity to make sure the solution isn't diverging
             velocnorm = maxval(sqrt(Ex**2.0d0 + Ey**2.0d0 + Ez**2.0d0) )
             if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
-            print *,'Max vals for Ex, Ey, Ez: ', maxval(Ex), maxval(Ey), maxval(Ez)
+            ! print *,'Max vals for Ex, Ey, Ez: ', maxval(Ex), maxval(Ey), maxval(Ez)
 
             ! print *, maxval(Ex), maxval(Ey), maxval(Ez)
-            call write_image3(Ex, nx-1, ny, nz, src, it, 'Ex', SINGLE)
-            call write_image3(Ey, nx, ny-1, nz, src, it, 'Ey', SINGLE)
-            call write_image3(Ez, nx, ny, nz-1, src, it, 'Ez', SINGLE)
+            call write_image3(Ex, nx, ny, nz, src, it, 'Ex', SINGLE)
+            call write_image3(Ey, nx, ny, nz, src, it, 'Ey', SINGLE)
+            call write_image3(Ez, nx, ny, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
 
@@ -3121,12 +3121,12 @@ module cpmlfdtd
         real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.0d+25
 
         ! main arrays
-        complex(kind=dp), dimension(nx-1,ny,nz) :: Ex
-        complex(kind=dp), dimension(nx,ny-1,nz) :: Ey
-        complex(kind=dp), dimension(nx,ny,nz-1) :: Ez
-        complex(kind=dp), dimension(nx,ny-1,nz-1) :: Hx
-        complex(kind=dp), dimension(nx-1,ny,nz-1) :: Hy
-        complex(kind=dp), dimension(nx-1,ny-1,nz) :: Hz
+        complex(kind=dp), dimension(nx,ny,nz) :: Ex
+        complex(kind=dp), dimension(nx,ny,nz) :: Ey
+        complex(kind=dp), dimension(nx,ny,nz) :: Ez
+        complex(kind=dp), dimension(nx,ny,nz) :: Hx
+        complex(kind=dp), dimension(nx,ny,nz) :: Hy
+        complex(kind=dp), dimension(nx,ny,nz) :: Hz
 
 
         ! we will compute the coefficients for the finite difference scheme 
@@ -3166,11 +3166,11 @@ module cpmlfdtd
         ! -------------------------------- PML parameters 
 
         ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx-1) ::  K_x,alpha_x,a_x,b_x, & 
+        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
                                         K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny-1) ::  K_y,alpha_y,a_y,b_y, &
+        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
                                         K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz-1) ::  K_z,alpha_z,a_z,b_z, &
+        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
                                         K_z_half, alpha_z_half,a_z_half,b_z_half
 
         ! integer :: npml_x,npml_y, npml_z
@@ -3505,7 +3505,7 @@ module cpmlfdtd
             Ex(1,:,:) = complex(0.0d0, 0.0d0)
             Ex(:,1,:) = complex(0.0d0, 0.0d0)
             Ex(:,:,1) = complex(0.0d0, 0.0d0)
-            Ex(nx-1,:,:) = complex(0.0d0, 0.0d0)
+            Ex(nx,:,:) = complex(0.0d0, 0.0d0)
             Ex(:,ny,:) = complex(0.0d0, 0.0d0)
             Ex(:,:,nz) = complex(0.0d0, 0.0d0)
 
@@ -3521,27 +3521,27 @@ module cpmlfdtd
             Ez(:,:,1) = complex(0.0d0, 0.0d0)
             Ez(nx,:,:) = complex(0.0d0, 0.0d0)
             Ez(:,ny,:) = complex(0.0d0, 0.0d0)
-            Ez(:,:,nz-1) = complex(0.0d0, 0.0d0)
+            Ez(:,:,nz) = complex(0.0d0, 0.0d0)
             
             Hx(1,:,:) = complex(0.0d0, 0.0d0)
             Hx(:,1,:) = complex(0.0d0, 0.0d0)
             Hx(:,:,1) = complex(0.0d0, 0.0d0)
             Hx(nx,:,:) = complex(0.0d0, 0.0d0)
-            Hx(:,ny-1,:) = complex(0.0d0, 0.0d0)
-            Hx(:,:,nz-1) = complex(0.0d0, 0.0d0)
+            Hx(:,ny,:) = complex(0.0d0, 0.0d0)
+            Hx(:,:,nz) = complex(0.0d0, 0.0d0)
 
             Hy(1,:,:) = complex(0.0d0, 0.0d0)
             Hy(:,1,:) = complex(0.0d0, 0.0d0)
             Hy(:,:,1) = complex(0.0d0, 0.0d0)
-            Hy(nx-1,:,:) = complex(0.0d0, 0.0d0)
+            Hy(nx,:,:) = complex(0.0d0, 0.0d0)
             Hy(:,ny,:) = complex(0.0d0, 0.0d0)
-            Hy(:,:,nz-1) = complex(0.0d0, 0.0d0)
+            Hy(:,:,nz) = complex(0.0d0, 0.0d0)
             
             Hz(1,:,:) = complex(0.0d0, 0.0d0)
             Hz(:,1,:) = complex(0.0d0, 0.0d0)
             Hz(:,:,1) = complex(0.0d0, 0.0d0)
-            Hz(nx-1,:,:) = complex(0.0d0, 0.0d0)
-            Hz(:,ny-1,:) = complex(0.0d0, 0.0d0)
+            Hz(nx,:,:) = complex(0.0d0, 0.0d0)
+            Hz(:,ny,:) = complex(0.0d0, 0.0d0)
             Hz(:,:,nz) = complex(0.0d0, 0.0d0)
 
             ! check norm of velocity to make sure the solution isn't diverging
@@ -3549,9 +3549,9 @@ module cpmlfdtd
             if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
             ! print *,'Max vals for Ex, Ey, Ez: ', maxval(REAL(Ex)), maxval(REAL(Ey)), maxval(REAL(Ez))
 
-            call write_image3c(Ex, nx-1, ny, nz, src, it, 'Ex', SINGLE)
-            call write_image3c(Ey, nx, ny-1, nz, src, it, 'Ey', SINGLE)
-            call write_image3c(Ez, nx, ny, nz-1, src, it, 'Ez', SINGLE)
+            call write_image3c(Ex, nx, ny, nz, src, it, 'Ex', SINGLE)
+            call write_image3c(Ey, nx, ny, nz, src, it, 'Ey', SINGLE)
+            call write_image3c(Ez, nx, ny, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
 

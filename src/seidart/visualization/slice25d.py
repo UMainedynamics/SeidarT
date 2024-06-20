@@ -8,6 +8,9 @@ import numpy as np
 from seidart.visualization.imgen import *
 from seidart.routines.definitions import *
 import argparse
+from glob2 import glob
+from subprocess import call
+import os
 
 
 # !!!!! This could use some better organization of the definition
@@ -15,9 +18,35 @@ import argparse
 # !!!!! This needs to be moved over to FDTDImage in the imgen.py file
 
 # ==================== Create the object and assign inputs ====================
-def slice(prjfile, channel, indslice, num_steps, plane, alpha, delay):
+def slice(
+            prjfile, channel, indslice, num_steps, plane, alpha, delay, is_complex = False
+        ):
     """
-    
+    Create a gif for a given plane of a 2.5D model. The function will create a
+    series of images and then use imagemagick to create a gif.
+
+    :param prjfile: str: The project file path
+    :type prjfile: str
+    :param channel: str: The channel to query
+    :type channel: str
+    :param indslice: int: The index along the plane that we are slicing. This 
+        isn't corrected for the boundary layer. 
+    :type indslice: int
+    :param num_steps: int: The number of time steps between frames
+    :type num_steps: int
+    :param plane: str: Specify what plane to slice (default = 'xy'). The slice is the
+        along the 3rd plane
+    :type plane: str
+    :param alpha: float: (OPTIONAL FLOAT [0,1]) Change the transparency of the model
+        plotted in the background; default = 0.3. Zeros is full transparency, 1 is
+        CIA transparency
+    :type alpha: float
+    :param delay: int: The amount of delay between two frames
+    :type delay: int
+    :param is_complex: bool: If the data is complex
+    :type is_complex: bool
+    :return: None
+
     """
     # We don't need the material values
     domain, material, seismic, electromag = loadproject(
@@ -35,7 +64,7 @@ def slice(prjfile, channel, indslice, num_steps, plane, alpha, delay):
     domain.nz = int(domain.nz) + 2*int(domain.cpml)
 
     # Get the list of files to load
-    all_files = glob.glob(channel + '*.dat')
+    all_files = glob(channel + '*.dat')
     all_files.sort()
 
     m = len(all_files)
@@ -75,15 +104,17 @@ def slice(prjfile, channel, indslice, num_steps, plane, alpha, delay):
         if n == num_steps:
             mag = FDTDImage(prjfile, fn)
             mag.getprjvals()
-            npdat = read_dat(fn,channel,domain, single=True)
+            npdat = read_dat(
+                fn, channel, domain, single=True, is_complex=is_complex
+            )
             if plane == 'xy':
                 npdat = npdat[int(indslice),:,:]
             elif plane == 'xz':
                 npdat = npdat[:,int(indslice),:]
             else:
                 npdat = npdat[:,:,int(indslice)]
-            mag.nx = npdat.shape[1]
-            mag.nz = npdat.shape[0]
+            # mag.nx = npdat.shape[1]
+            # mag.nz = npdat.shape[0]
             mag.sliceplot(npdat, axscale, plane, alpha = alpha)
             mag.addlabels()
             mag.plotfile = 'magnitude.' + fn[:-3] + '.png'
@@ -96,13 +127,11 @@ def slice(prjfile, channel, indslice, num_steps, plane, alpha, delay):
 
     print('Creating the GIF')
     # Use imagemagick via shell command to create the gif
-    shellcommand = 'convert -delay ' + \
-        delay + ' -loop 0 magnitude.' + channel + '*.png ' + \
-            channel + '.gif'
+    shellcommand = f'convert -delay {delay} -loop 0 magnitude.{channel}*.png {channel}.gif'
     call(shellcommand, shell = True)
 
     # Remove the png files 
-    for filepath in glob.glob('magnitude.' + channel + '*.png'):
+    for filepath in glob('magnitude.' + channel + '*.png'):
         os.remove(filepath)
             
 
