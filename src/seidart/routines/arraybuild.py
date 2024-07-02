@@ -183,7 +183,7 @@ class Array:
                         float(self.domain.dz) 
                     ]
                 )
-            xyz.astype(int)
+            xyz.round().astype(int)
         
         self.receiver_xyz = xyz + cpml
     

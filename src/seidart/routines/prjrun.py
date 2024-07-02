@@ -225,7 +225,7 @@ def cpmlcompute(
         # We will use the maximum permittivity coefficient and assume that the 
         # magnetic permeability is 1. We can use a different value
         sig_max = sig_opt_scalar * \
-            ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) )
+            ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
         alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
             sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
