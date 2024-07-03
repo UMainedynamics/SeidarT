@@ -219,7 +219,7 @@ def cpmlcompute(
         sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
          # This seems to work well even at higher frequencies
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, kappa_max, dist, N, domain.cpml, modelclass.dt
+            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
         )
     else:
         # We will use the maximum permittivity coefficient and assume that the 
