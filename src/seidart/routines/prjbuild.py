@@ -76,10 +76,10 @@ def prjbuild(image_file: str, prjfile: str) -> None:
 	# ------ Write domain parameters
 	dim = 'D,dim,2'
 	nx = 'D,nx,' + str(np.shape(im)[0])
-	ny = 'D,ny,n/a'
+	ny = 'D,ny,1'
 	nz = 'D,nz,' + str(np.shape(im)[1])
 	dx = 'D,dx,'
-	dy = 'D,dy,n/a'
+	dy = 'D,dy,1'
 	dz = 'D,dz,'
 	cpml = 'D,cpml,20'
 	nmat = 'D,nmats,' + str(len( np.unique(im) ))
@@ -108,13 +108,13 @@ def prjbuild(image_file: str, prjfile: str) -> None:
 		for x in mat_id:
 			ln = ('M,' + str(x) + ',,' + str(rgb[x,0])  + '/' +
 				str(rgb[x,1]) + '/' + str(rgb[x,2]) +
-				',,,,,,,')
+				',,,,,,')
 			prj.write( ln + new_line)
 		prj.write(new_line)
 	
 	# -------------------------------------------------------------------------
 	# ----- Write the attenuation parameters
-	header = ("# number, Alpha1, Alpha2, Alpha3, fref")
+	header = ("# number, AlphaX, AlphaY, AlphaZ, fref")
 	with open(prjfile, 'a') as prj:
 		i = 0
 		prj.write(header + new_line)
@@ -160,7 +160,7 @@ def prjbuild(image_file: str, prjfile: str) -> None:
 	# -------------------------------------------------------------------------
 	# ----- Write EM Parameters 
 	comm = '# The source parameters for the electromagnetic model'
-	header = '# id, e11, e22, e33, s11, s22, s33'
+	header = '# id, e11, e12, e13, e22, e23, e33, s11, s22, s33'
 	#
 	with open(prjfile, 'a') as prj:
 		i = 0
