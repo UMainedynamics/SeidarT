@@ -54,7 +54,6 @@ class CommonOffset(Array):
         self.receiver_indices = receiver_indices
         self.single_precision = single_precision    
         self.is_complex = is_complex
-        self.gain = 100
         self.exaggeration = 0.5
         self.status_check = status_check 
         self.build()
@@ -71,6 +70,13 @@ class CommonOffset(Array):
             Model(),
             Model()
         )
+        # Let's put a default gain value to not apply any gain to the 
+        if 'E' in self.channel:
+            self.gain = int(self.electromag.time_steps) 
+        else:
+            self.gain = int(self.seismic.time_steps)
+
+
         if self.channel in ['Vx','Vy','Vz']:
             self.is_seismic = True
             self.dt = self.seismic.dt 
@@ -146,10 +152,6 @@ class CommonOffset(Array):
         """
         Run the electromagnetic or seismic model and extract the receiver 
         time series
-
-        :param seismic: If True, run the seismic model. If False, run the 
-            electromagnetic model.
-        :type seismic: bool
 
         """
         self.timevec, self.fx, self.fy, self.fz, self.srcfn = sourcefunction(

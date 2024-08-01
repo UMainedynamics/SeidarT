@@ -55,14 +55,19 @@ class Array:
         self.prjfile = prjfile 
         self.channel = channel
         self.receiver_file = receiver_file
-        self.receiver_indices = receiver_indices
+        self.receiver_indices = receiver_indices # Flag 
+        self.receiver_locations = None # The locations in meters
         self.single_precision = single_precision
         self.is_complex = is_complex
         self.stream = None
         self.gain = None
         self.exaggeration = 0.5
+        self.correction_exponent = 1.0 # Geometric spreading correction parameter
+        self.distances = None
         self.csvfile = csvfile
         self.csvfile_c = csvfile_c
+        self.csvfilename = None
+        self.pklfilename = None
         self.build()
     
     # -------------------------------------------------------------------------
@@ -175,6 +180,7 @@ class Array:
         # cartesian space of the domain, we want to change them to the indices
         # of the 
         if not self.receiver_indices:
+            self.receiver_locations = xyz 
             xyz = xyz / \
                 np.array(
                     [
@@ -184,6 +190,15 @@ class Array:
                     ]
                 )
             xyz.round().astype(int)
+        else: 
+            self.receiver_locations = xyz * \
+                np.array(
+                    [
+                        float(self.domain.dx), 
+                        float(self.domain.dy), 
+                        float(self.domain.dz) 
+                    ]
+                )
         
         self.receiver_xyz = xyz + cpml
     
@@ -288,21 +303,37 @@ class Array:
         self.timeseries = timeseries
     
     # -------------------------------------------------------------------------
+    def srcrcx_distance(self):
+        """
+        
+        """
+        if self.domain.dim == '2.0':
+            rcxs = self.receiver_locations[np.array([0,2])]
+        else: 
+            rcxs = self.receiver_locations
+        self.distances = np.sqrt( np.sum(r - self.source, axis = 1)**2 ) 
+
+    # -------------------------------------------------------------------------
     def sectionplot(
             self, 
-            plot_complex: bool = False
+            plot_complex: bool = False,
+            amplitude_correction: str = None
         ):
         """
         Creates a grayscale section plot of the time series data.
         
         :param plot_complex: Plot the complex part of the solution if True.
         :type plot_complex: bool
+        :param amplitude_correction: Correct the amplitudes for geometric spreading ('GS')or 
+            using an auto gain control function ('AGC'); Default is None
+        :type amplitude_correction: str
+
         """
         if plot_complex:
             # Use complex values 
-            dat = self.timeseries_complex 
+            dat = self.timeseries_complex.copy() 
         else:
-            dat = self.timeseries
+            dat = self.timeseries.copy()
         
         m,n = dat.shape
         
@@ -319,15 +350,22 @@ class Array:
         else:
             timevals = np.round(timelocs*float(self.dt) * mult, 2)
         
-        if self.gain == 0:
-            self.gain = 1
-        
-        if self.gain < m:
+        # Apply any amplitude corrections if specified
+        if amplitude_correction == 'AGC' and self.gain < m:
+            if self.gain == 0:
+                self.gain = 1
+            
             for j in range(0, n):
                 # Subtract the mean value
                 # dat[:,j] = dat[:,j] - np.mean(dat[:,j])
                 dat[:,j] = agc(dat[:,j], self.gain, "mean")
         
+        if amplitude_correction == 'GS':
+            for j in range(0,n):
+                dat[:,j] = correct_geometric_spreading(
+                    dat[:,j], self.distances, self.correction_exponent
+                )
+
         self.fig = plt.figure()#figsize =(n/2,m/2) )
         self.ax = plt.gca()
         
@@ -443,15 +481,16 @@ class Array:
                 ]
             )
         
-        csvfilename = filename + '.csv'
-        pklfilename = filename + '.pkl'
+        self.csvfilename = filename + '.csv'
+        self.pklfilename = filename + '.pkl'
         
         df = pd.DataFrame(self.timeseries)
-        df.to_csv(csvfilename, header = False, index = False)
+        df.to_csv(self.csvfilename, header = False, index = False)
         
         # Pickle the object and save to file
-        with open(pklfilename, 'wb') as file:
+        with open(self.pklfilename, 'wb') as file:
             pickle.dump(self, file)
+        
             
         
         

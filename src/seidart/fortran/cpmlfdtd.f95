@@ -2260,29 +2260,29 @@ module cpmlfdtd
             ! compute electric field and update memory variables for C-PML
             !--------------------------------------------------------
             ! Compute the differences in the y-direction
-            do j = 2,nz-1
-                do i = 1,nx-1
+            do j = 2,nz
+                do i = 1,nx
                     ! Update the Ex field
                     value_dHy_dz = ( Hy(i,j) - Hy(i,j-1) )/dz ! this is nz-1 length vector
-                    memory_dHy_dz(i,j) = b_z_half(j) * memory_dHy_dz(i,j) + a_z_half(j) * value_dHy_dz
-                    value_dHy_dz = value_dHy_dz/K_z_half(j) + memory_dHy_dz(i,j)
+                    memory_dHy_dz(i,j) = b_z(j) * memory_dHy_dz(i,j) + a_z(j) * value_dHy_dz
+                    value_dHy_dz = value_dHy_dz/K_z(j) + memory_dHy_dz(i,j)
 
-                    Ex(i,j) = (( caEx(i,j) + caEx(i,j-1) )/2) * Ex(i,j) + &
-                        (( cbEx(i,j) + cbEx(i,j-1) )/2 ) * value_dHy_dz
-                    ! Ex(i,j) = caEx(i,j) * Ex(i,j) + cbEx(i,j) * value_dHy_dz
+                    ! Ex(i,j) = (( caEx(i,j) + caEx(i,j-1) )/2) * Ex(i,j) + &
+                    !     (( cbEx(i,j) + cbEx(i,j-1) )/2 ) * value_dHy_dz
+                    Ex(i,j) = caEx(i,j) * Ex(i,j) + cbEx(i,j) * value_dHy_dz
                 enddo
             enddo
 
-            do j = 1,nz-1
-                do i = 2,nx-1
+            do j = 1,nz
+                do i = 2,nx
                     ! Update the Ez field
                     value_dHy_dx = ( Hy(i,j) - Hy(i-1,j) )/dx
                     memory_dHy_dx(i,j) = b_x_half(i) * memory_dHy_dx(i,j) + a_x_half(i) * value_dHy_dx
                     value_dHy_dx = value_dHy_dx/K_x_half(i) + memory_dHy_dx(i,j)
                     
-                    Ez(i,j) = (( caEz(i,j) + caEz(i-1,j) )/2) * Ez(i,j) + &
-                        (( cbEz(i,j) + cbEz(i-1,j) )/2) * value_dHy_dx 
-                    ! Ez(i,j) = caEz(i,j) * Ez(i,j) + cbEz(i,j) * value_dHy_dx 
+                    ! Ez(i,j) = (( caEz(i,j) + caEz(i-1,j) )/2) * Ez(i,j) + &
+                    !     (( cbEz(i,j) + cbEz(i-1,j) )/2) * value_dHy_dx 
+                    Ez(i,j) = caEz(i,j) * Ez(i,j) + cbEz(i,j) * value_dHy_dx 
                 enddo
             enddo
 
@@ -2982,9 +2982,10 @@ module cpmlfdtd
                             a_z_half(k) * dHx_dz
                         dHx_dz = dHx_dz/K_z_half(k) + memory_dHx_dz(i,j,k)
 
-                        Ey(i,j,k) = ( ( 4*caEy(i,k) + caEy(i-1,k) + caEy(i,k-1) )/6) * Ey(i,j,k) + & 
-                        ( ( 4*cbEy(i,k) + cbEy(i-1,k) + cbEy(i,k-1) )/6 ) * & 
-                        (dHz_dx + dHx_dz)
+                        ! Ey(i,j,k) = ( ( 4*caEy(i,k) + caEy(i-1,k) + caEy(i,k-1) )/6) * Ey(i,j,k) + & 
+                        ! ( ( 4*cbEy(i,k) + cbEy(i-1,k) + cbEy(i,k-1) )/6 ) * & 
+                        ! (dHz_dx + dHx_dz)
+                        Ey(i,j,k) = caEy(i,k) * Ey(i,j,k) + cbEy(i,k) * (dHz_dx + dHx_dz)
                     enddo
                 enddo
             enddo 

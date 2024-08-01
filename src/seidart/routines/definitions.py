@@ -1288,7 +1288,7 @@ def indvar(
 
     return(x,y,z,t)
 
-# ---------------------------- Processing functions ---------------------------
+# ============================ Processing Functions ============================
 def agc(ts, k, agctype):
     """
     Applies auto-gain control (AGC) normalization to a time series using a 
@@ -1340,3 +1340,61 @@ def agc(ts, k, agctype):
     stat[stat == 0] = 1
     ts = ts/stat
     return ts
+
+# ------------------------------------------------------------------------------
+def correct_geometric_spreading(
+        time_series: np.ndarray, 
+        distances: np.ndarray, 
+        exponent: float = 1.0
+    ) -> np.ndarray:
+    """
+    Corrects a seismic time series for geometric spreading.
+
+    :param time_series: 
+        The seismic time series data. Should be a numpy array of shape (n_samples, n_traces).
+    :type time_series: np.ndarray
+    :param distances: 
+        The distances from the source to each trace. Should be a numpy array of shape (n_traces,).
+    :type distances: np.ndarray
+    :param exponent: 
+        The exponent used in the geometric spreading correction. Defaults to 1.0.
+    :type exponent: float, optional
+
+    :raises ValueError: 
+        If the length of distances does not match the number of traces.
+
+    :return: 
+        The corrected seismic time series. Will be a numpy array of shape (n_samples, n_traces).
+    :rtype: np.ndarray
+
+    **Example usage:**
+
+    .. code-block:: python
+
+        # Example seismic time series (n_samples x n_traces)
+        time_series = np.random.rand(1000, 10)  # Replace with your actual data
+
+        # Example distances (n_traces,)
+        distances = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # Replace with your actual distances
+
+        # Apply geometric spreading correction
+        corrected_time_series = correct_geometric_spreading(time_series, distances)
+
+        print(corrected_time_series)
+    """
+    if len(time_series.shape) == 1:
+        time_series = time_series[:, np.newaxis]
+        
+    n_samples, n_traces = time_series.shape
+    if distances.shape[0] != n_traces:
+        raise ValueError("The length of distances must match the number of traces.")
+
+    # Calculate the geometric spreading correction factor for each trace
+    correction_factors = distances ** exponent
+
+    # Apply the correction to each trace
+    corrected_time_series = time_series / correction_factors
+
+    return corrected_time_series
+
+

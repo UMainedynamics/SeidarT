@@ -14,6 +14,8 @@ __all__ = [
     'porewater_correction',
     'ice_stiffness',
     'ice_permittivity',
+    'ice_density',
+    'tensor2velocities',
     'snow_permittivity',
     'snow_conductivity',
     'read_ang',
@@ -25,7 +27,7 @@ __all__ = [
 # Global constants
 eps0 = 8.85418782e-12 # used for em only
 mu0 = 4.0*np.pi*1.0e-7 # used for em only
-
+c_light = 299792458
 """
 Seismic values can be found in: 
       Acoustics of Porous Media (1992), Bourbie, Coussy, and Zinszner
@@ -94,7 +96,9 @@ def pressure_array(
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Computes the hydrostatic pressure, temperature, and density at each grid 
-    point based on material ID, accounting for porosity and water content.
+    point based on material ID, accounting for porosity and water content. The
+    output units of pressure are in Pascals. Gammon uses kbar to compute the 
+    ice stiffness tensor. 
 
     :param im: An m-by-n array of integer values representing material IDs.
     :param temp: Temperatures at each grid point.
@@ -230,7 +234,7 @@ def get_seismic(
             
             # Assume a constant pressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
-            pressure = 0.1
+            pressure = 0.1 * 1e-1 # in kbar
             C = ice_stiffness(temp[ind], pressure)
             S = np.linalg.inv(C)
 
@@ -566,8 +570,8 @@ def ice_stiffness(
     Computes the stiffness tensor for ice under specified temperature and 
     pressure conditions based on empirical relationships.
 
-    :param temperature: The temperature at which to compute the stiffness tensor.
-    :param pressure: The pressure at which to compute the stiffness tensor.
+    :param temperature: The temperature at which to compute the stiffness tensor. Units are in Celsius
+    :param pressure: The pressure at which to compute the stiffness tensor. Units are in kbar.
     :type temperature: float, optional
     :type pressure: float
     :return: The stiffness tensor for ice.
@@ -601,6 +605,31 @@ def ice_stiffness(
     stiffness = C*1e8
 
     return(stiffness)
+
+# -----------------------------------------------------------------------------
+def ice_density(temperature: float, method: str = None):
+    '''
+    Compute the density of an ice crystal given the temperature.
+
+    :param temperature: The value of the temperature in celsius
+    :type temperature: float
+    :param method: Specify which method to be used. Default is 
+    '''
+    rho_o = 917 # Reference density at 0C
+    alpha = 51.0e-6
+    if method == 'gammon':
+        # This is suitable for warmer ice (i.e. > -20 C)
+        rho = (1/rho_o) * (
+            1+ 1.576e-4*(temperature) - \
+                    2.778e-7*(temperature**2) + \
+                        8.850e-9*(temperature**3) - \
+                            1.778e-10*(temperature**4) 
+            )
+        rho = 1/rho 
+    else:
+        # The reference temperature is 273.15K; 0C
+        rho = rho_o * ( 1 - alpha * temperature)
+    return(rho)
 
 # -----------------------------------------------------------------------------
 def ice_permittivity(
@@ -834,8 +863,6 @@ def rotator_zxz(eul: np.ndarray) -> np.ndarray:
     return(R)
 
 # -----------------------------------------------------------------------------
-import numpy as np
-
 def bond(R: np.ndarray) -> np.ndarray:
     """
     Calculates the 6x6 Bond transformation matrix from a 3x3 rotation matrix, 
@@ -879,7 +906,20 @@ def bond(R: np.ndarray) -> np.ndarray:
 
     return M
 
-    
+# -----------------------------------------------------------------------------
+def tensor2velocities(T: np.ndarray, rho: float, seismic: bool = True):
+    if seismic:
+        vpv = np.sqrt( T[2,2]/rho )
+        vph = np.sqrt( T[0,0]/rho )
+        vsv = np.sqrt( T[3,3]/rho )
+        vsh = np.sqrt( (T[0,0] - T[0,1])/(2*rho) )
+        return vpv, vph, vsv, vsh
+    else:
+        vx = c_light * np.sqrt(1/T[0,0])
+        vy = c_light * np.sqrt(1/T[1,1])
+        vz = c_light * np.sqrt(1/T[2,2])
+        return vx, vy, vz 
+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 # The following is for the complex permittivity calculations that were defined
@@ -921,4 +961,3 @@ def fujita_complex_permittivity(temperature: float, frequency: float) -> float:
     C_val = C_interp(temperature)
     epsilon_val = A_val/frequency + B_val*(frequency**C_val)
     return epsilon_val
-    
