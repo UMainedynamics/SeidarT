@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="im2anim" href="im2anim.html" /><link rel="prev" title="prjrun" href="prjrun.html" />
+<link rel="search" title="Search" href="search.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>arraybuild - SeidarT documentation v2.2.1</title>
+        <title>seidart.simulations.apres module - SeidarT documentation v2.2.1</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -172,12 +172,12 @@
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Command Line Interface</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
@@ -238,94 +238,8 @@
           </label>
         </div>
         <article role="main">
-          <section id="arraybuild">
-<h1>arraybuild<a class="headerlink" href="#arraybuild" title="Link to this heading">#</a></h1>
-<p><em>generates a csv file (receiver_array.csv) with the timeseries in columns</em>
-<em>by receiver</em></p>
-<p><strong>Usage</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arraybuild<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>-p<span class="w"> </span>PROJECTFILE<span class="w"> </span>-r<span class="w"> </span>RCXFILE<span class="w"> </span>-c<span class="w"> </span>CHANNEL<span class="w"> </span>-i<span class="w"> </span>-z<span class="w"> </span>-d<span class="w"> </span>-s<span class="w"> </span>-P<span class="w"> </span>-C<span class="w"> </span>-g<span class="w"> </span>GAIN<span class="w"> </span>-e<span class="w"> </span>EXAGGERATION
-</pre></div>
-</div>
-<p><strong>Inputs</strong></p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code></p>
-<blockquote>
-<div><p>show this help message and exit</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">PROJECTFILE</span></code>, <code class="docutils literal notranslate"><span class="pre">--prjfile</span> <span class="pre">PROJECTFILE</span></code></p>
-<blockquote>
-<div><p>The project file path</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-r</span> <span class="pre">RCXFILE</span></code>, <code class="docutils literal notranslate"><span class="pre">--rcxfile</span> <span class="pre">RCXFILE</span></code></p>
-<blockquote>
-<div><p>The file path for the text file of receiver locations</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">CHANNEL</span></code>, <code class="docutils literal notranslate"><span class="pre">--channel</span> <span class="pre">CHANNEL</span></code></p>
-<blockquote>
-<div><p>The channel to query.</p>
-<div class="line-block">
-<div class="line">For radar: Ex, Ey, or Ez</div>
-<div class="line">For seismic: Vx, Vy, Vz, S1, S2, S3, S4, S5, S6</div>
-<div class="line">S# represents the stress tensor:</div>
-</div>
-<ul class="simple">
-<li><p>S1 - sigma_11</p></li>
-<li><p>S2 - sigma_22</p></li>
-<li><p>S3 - sigma_33</p></li>
-<li><p>S4 - sigma_23</p></li>
-<li><p>S5 - sigma_13</p></li>
-<li><p>S6 - sigma_12</p></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--index</span></code></p>
-<blockquote>
-<div><p>Indicate whether the receiver file contains coordinate
-indices or if these are the locations in meters.
-Default is False (meters)</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-z</span></code>, <code class="docutils literal notranslate"><span class="pre">--is_complex</span></code></p>
-<blockquote>
-<div><p>Flag if the saved model outputs are complex valued.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-d</span></code>, <code class="docutils literal notranslate"><span class="pre">--double_precision</span></code></p>
-<blockquote>
-<div><p>Flag if the saved model outputs are double precision. Values can be both complex and double precision.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-s</span></code>, <code class="docutils literal notranslate"><span class="pre">--save</span></code></p>
-<blockquote>
-<div><p>Flag to save the array object. This will be saved as a .pkl (pickle format) file with the project name, channel, and source location in the filename.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-P</span></code>, <code class="docutils literal notranslate"><span class="pre">--plot</span></code></p>
-<blockquote>
-<div><p>Flag for plot output. This displays a Matplotlib plot that can be saved.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-C</span></code>, <code class="docutils literal notranslate"><span class="pre">--plot_complex</span></code></p>
-<blockquote>
-<div><p>If the model is output, flag if you want to plot the complex values of the time series.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">GAIN</span></code>, <code class="docutils literal notranslate"><span class="pre">--gain</span> <span class="pre">GAIN</span></code></p>
-<blockquote>
-<div><p>Specify the window length for the auto gain control function. A value of 0 or 1 is equivalent to 1-bit normalization and a value of the number of time steps is no gain applied. Defualt is the number of time steps.</p>
-</div></blockquote>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">EXAGGERATION</span></code>, <code class="docutils literal notranslate"><span class="pre">--exaggeration</span> <span class="pre">EXAGGERATION</span></code></p>
-<blockquote>
-<div><p>Specify the float value for the horizontal to vertical ratio. The default value is 0.5.</p>
-</div></blockquote>
-</li>
-</ul>
-<p><strong>Outputs</strong></p>
-<p>CSV of amplitude values for all pixels surveyed (<em>receiver_array.csv</em>)</p>
+          <section id="seidart-simulations-apres-module">
+<h1>seidart.simulations.apres module<a class="headerlink" href="#seidart-simulations-apres-module" title="Link to this heading">#</a></h1>
 </section>
 
         </article>
@@ -333,26 +247,8 @@ Default is False (meters)</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="im2anim.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">im2anim</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="prjrun.html">
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-              <div class="page-info">
-                <div class="context">
-                  <span>Previous</span>
-                </div>
-                
-                <div class="title">prjrun</div>
-                
-              </div>
-            </a>
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
