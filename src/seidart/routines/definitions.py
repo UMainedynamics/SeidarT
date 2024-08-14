@@ -28,10 +28,14 @@ __all__ = [
     'movingsrc',
     'indvar',
     'agc',
+    'correct_geometric_spreading',
+    'exponential_gain',
     'Domain',
     'Material',
     'Model',
-    'AnimatedGif'
+    'AnimatedGif',
+    'kband_check',
+    'parameter_profile_1d',
 ]
 
 # =============================================================================
@@ -284,7 +288,8 @@ class Model:
         self.alpha_max = np.zeros([3]) 
         self.kappa_max_half = np.zeros([3])
         self.sig_max_half = np.zeros([3])
-        self.alpha_max_half = np.zeros([3]) 
+        self.alpha_max_half = np.zeros([3])
+        self.step_limit = None 
         
     
     def tensor_check(self) -> None:
@@ -328,7 +333,7 @@ class Model:
         # if y is specified but not phi
         if self.y and not self.phi:
             self.phi = 0
-
+        
 # -----------------------------------------------------------------------------
 class AnimatedGif:
     """
@@ -423,6 +428,51 @@ class AnimatedGif:
             animation.save(filename, dpi = 300)
         else:
             animation.save(filename, dpi = 300, writer = 'imagemagick')
+
+def kband_check(modelclass, domain):
+    '''
+    Check to make sure the discretization values of the domain satisfy the 
+    wavenumber bandlimiter as described in Volvcan et al. (2024).
+
+    :param modelclass:
+    :type modelclass: Model 
+    :param material: 
+    :type material: Material 
+    :param domain:
+    :type domain: Domain
+    '''
+    
+    if modelclass.is_seismic:
+        velocities = np.zeros([domain.nmats, 4])
+        for ind in range(domain.nmats):
+            velocities[ind,:] = mf.tensor2velocities(
+                modelclass.tensor_coefficients[ind,1:], 
+                modelclass.tensor_coefficients[ind,21], 
+                seismic = True
+            )
+    else: 
+        velocities = np.zeros([domain.nmats, 3])
+        for ind in range(domain.nmats):
+            velocities[ind,:] = mf.tensor2velocities(
+                modelclass.tensor_coefficients[ind,1:7].real, seismic = False
+            )
+    
+    lambda_values = velocities/modelclass.f0
+    step_limit = lambda_values.min()/4 
+    modelclass.step_limit = step_limit 
+    if domain.dim == 2.5:
+        step_max = np.array([domain.dx, domain.dy, domain.dz]).max() 
+    else: 
+        step_max = np.array([domain.dx, domain.dz])
+    
+    if step_max > step_limit:
+        print(
+            f'Wavenumber bandlimit is not met. Reduce maximum spatial step to {step_limit}'
+        )
+    else:
+        print(
+            'Wavenumber bandlimit is satisfied.'
+        )
 
 # -------------------------- Function Definitions -----------------------------
 def read_dat(
@@ -1288,6 +1338,43 @@ def indvar(
 
     return(x,y,z,t)
 
+# ------------------------------------------------------------------------------
+def parameter_profile_1d(
+        domain: Model, material: Material, model: Model, 
+        indice: int, parameter: str = 'velocity'
+    ):
+    """
+    Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
+    directions with respect to z). The available options are:
+        'velocity', 'temperature', 'density', 'lwc'
+
+    Defaults to 'velocity' which returns 4 m-by-1 arrays. All other options will 
+    return 2 m-by-1 arrays. 
+
+    :param domain: The domain object of the model
+    :type domain: Domain
+    :param material: The material object of the model
+    type material: Material
+    :param model: The model object
+    :type model: Model
+    :param indice: Specify the x-indice to pull the 1D profile
+    :type indice: int
+    :param parameter: Specify which parameter to use
+    :type parameter: str
+    """
+
+    profile = domain.geometry[indice,:]
+    n = len(profile)
+    if not material.material:
+        material.sort_material_list() 
+    
+    if parameter == 'temperature':
+        vals = 
+    elif parameter == 'density':
+    elif parameter == 'lwc':
+    elif parameter == ''    
+    return z, vx, vz, vy
+
 # ============================ Processing Functions ============================
 def agc(ts, k, agctype):
     """
@@ -1397,4 +1484,29 @@ def correct_geometric_spreading(
 
     return corrected_time_series
 
+def exponential_gain(time_series: np.ndarray, alpha: float) -> np.ndarray:
+    """
+    Applies an exponential gain to a time series to correct for attenuation.
 
+    :param time_series: 
+        The original time series data. Should be a numpy array of shape (n_samples,).
+    :type time_series: np.ndarray
+    :param alpha: 
+        The attenuation coefficient.
+    :type alpha: float
+
+    :return: 
+        The corrected time series.
+    :rtype: np.ndarray
+
+    """
+    n_samples = time_series.shape[0]
+    time = np.arange(n_samples)
+    
+    # Calculate exponential gain
+    gain = np.exp(alpha * time)
+    
+    # Apply the exponential gain to the time series
+    corrected_time_series = time_series * gain
+
+    return corrected_time_series

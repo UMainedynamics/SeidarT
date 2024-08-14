@@ -59,10 +59,11 @@ class Array:
         self.receiver_locations = None # The locations in meters
         self.single_precision = single_precision
         self.is_complex = is_complex
-        self.stream = None
-        self.gain = None
+        self.stream = None 
+        self.agc_gain_window = None
         self.exaggeration = 0.5
-        self.correction_exponent = 1.0 # Geometric spreading correction parameter
+        self.geometric_correction_exponent = 1.0 # Geometric spreading correction parameter
+        self.alpha_exponent = 1.0 # Exponential gain parameter
         self.distances = None
         self.csvfile = csvfile
         self.csvfile_c = csvfile_c
@@ -86,11 +87,11 @@ class Array:
         if self.channel in ['Vx','Vy','Vz']:
             self.is_seismic = True
             self.dt = self.seismic.dt 
-            self.gain = int(self.seismic.time_steps)
+            self.agc_gain_window = int(self.seismic.time_steps)
         else:
             self.is_seismic = False
             self.dt = self.electromag.dt
-            self.gain = int(self.electromag.time_steps)
+            self.agc_gain_window = int(self.electromag.time_steps)
         
         
         # Load the receiver file as a numpy array
@@ -301,17 +302,29 @@ class Array:
         # Store both of the time series in the array object
         self.timeseries_complex = timeseries_complex
         self.timeseries = timeseries
-    
+        
     # -------------------------------------------------------------------------
     def srcrcx_distance(self):
         """
-        
+        Compute the source and receiver(s) distance 
         """
+        if self.source_xyz.ndim == 1:
+            self.source_xyz = self.source_xyz.reshape(1,3) 
+        
         if self.domain.dim == '2.0':
-            rcxs = self.receiver_locations[np.array([0,2])]
+            self.distances = (
+                self.source_xyz[:,(0,2)]  - \
+                    (self.receiver_xyz_all[:,(0,2)] - self.domain.cpml) * \
+                        np.array([self.domain.dx, self.domain.dz])
+            )**2
         else: 
-            rcxs = self.receiver_locations
-        self.distances = np.sqrt( np.sum(r - self.source, axis = 1)**2 ) 
+            self.distances = (
+                self.source_xyz - \
+                    (self.receiver_xyz_all - self.domain.cpml) * \
+                        np.array([self.domain.dx, self.domain.dy, self.domain.dz])
+            )**2
+        
+        self.distances = np.sqrt(np.sum(self.distances,axis = 1))
 
     # -------------------------------------------------------------------------
     def sectionplot(
@@ -329,6 +342,7 @@ class Array:
         :type amplitude_correction: str
 
         """
+        
         if plot_complex:
             # Use complex values 
             dat = self.timeseries_complex.copy() 
@@ -350,21 +364,30 @@ class Array:
         else:
             timevals = np.round(timelocs*float(self.dt) * mult, 2)
         
+        # ------------------------------
         # Apply any amplitude corrections if specified
-        if amplitude_correction == 'AGC' and self.gain < m:
-            if self.gain == 0:
-                self.gain = 1
+        if amplitude_correction == 'AGC' and self.agc_gain_window < m:
+            if self.agc_gain_window == 0:
+                self.agc_gain_window = 1
             
             for j in range(0, n):
                 # Subtract the mean value
                 # dat[:,j] = dat[:,j] - np.mean(dat[:,j])
-                dat[:,j] = agc(dat[:,j], self.gain, "mean")
-        
+                dat[:,j] = agc(dat[:,j], self.agc_gain_window, "mean")
+            
+            self.agc_corrected_timeseries = dat.copy() 
+        # ------------------------------
         if amplitude_correction == 'GS':
-            for j in range(0,n):
-                dat[:,j] = correct_geometric_spreading(
-                    dat[:,j], self.distances, self.correction_exponent
-                )
+            dat = correct_geometric_spreading(
+                dat, self.distances, self.geometric_correction_exponent
+            )
+            self.gs_corrected_timeseries = dat.copy()
+
+        if amplitude_correction == 'EXP':
+            for j in range(0, n):
+                dat[:,j] = exponential_gain(dat[:,j], self.alpha_exponent)
+            self.exp_corrected_timeseries = dat.copy() 
+
 
         self.fig = plt.figure()#figsize =(n/2,m/2) )
         self.ax = plt.gca()
@@ -543,7 +566,7 @@ def main(
     )
     
     if gain:
-        array.gain = gain
+        array.agc_gain_window = gain
     if exaggeration:
         array.exaggeration = exaggeration
     if save:

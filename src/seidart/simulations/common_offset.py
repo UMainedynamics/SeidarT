@@ -55,7 +55,8 @@ class CommonOffset(Array):
         self.single_precision = single_precision    
         self.is_complex = is_complex
         self.exaggeration = 0.5
-        self.status_check = status_check 
+        self.status_check = status_check
+        self.output_basefile = None
         self.build()
 
     def build(self) -> None:
@@ -215,5 +216,8 @@ class CommonOffset(Array):
             self.timeseries = self.co_image
             self.timeseries_complex = self.co_image_complex
         
-        self.save()
+        if self.output_basefile:
+            self.save(output_basefile = self.output_basefile)
+        else:
+            self.save() 
 

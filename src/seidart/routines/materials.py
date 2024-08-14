@@ -81,11 +81,11 @@ isotropic_materials = {
     "coal":np.array([2200, 2700, 1000, 1400, 5.6, 6.3, 1.0e-8, 1.0e-3]), # This has a water dependency
     "salt":np.array([4500, 5500, 2500, 3100, 5.6, 5.6, 1.0e-7, 1.0e2]) # This is dependent on ions and water content
 }
-# =============================================================================
+# ==============================================================================
 #                                  Functions
-# =============================================================================
+# ==============================================================================
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def pressure_array(
         im: Union[list, np.ndarray], 
         temp: Union[list, np.ndarray], 
@@ -113,7 +113,7 @@ def pressure_array(
     :type dz: Union[list, np.ndarray]
     :type porosity: Union[list, np.ndarray], optional
     :type lwc: Union[list, np.ndarray], optional
-    :return: A tuple containing arrays for temperature, density, and hydrostatic 
+    :return: A tuple containing arrays for temperature, density, and hydrostatic
         pressure at each grid point.
     :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray]
     """
@@ -132,8 +132,12 @@ def pressure_array(
     for j in range(0,n):
         for i in range(0, m):
             temperature[i,j] = temp[ im[i,j] ]
-            density[i,j],_,_ = porewater_correction(temperature[i,j], rho[ im[i,j] ], 
-                porosity[ im[i,j]], lwc[ im[i,j]])
+            density[i,j],_,_ = porewater_correction(
+                temperature[i,j], 
+                rho[ im[i,j] ], 
+                porosity[ im[i,j]], 
+                lwc[ im[i,j]]
+            )
             pressure[i,j] = np.mean(density[0:i,j]) * 9.80665 * i * dz
     
     return(temperature, density, pressure)
@@ -549,8 +553,10 @@ def porewater_correction(
 
     # There are certain limits such as phase changes so let's put practical 
     # limits on this
-    rho_water = np.max( (rho_water, 950) ) # We can't quite accomodate supercooled water density
-    rho_water = np.min( (rho_water, rho_water_correction() )) # beyond the freezing and vaporization temperatures, things get wonky
+    # We can't quite accomodate supercooled water density
+    rho_water = np.max( (rho_water, 950) ) 
+    # beyond the freezing and vaporization temperatures, things get wonky
+    rho_water = np.min( (rho_water, rho_water_correction() )) 
     
     # the water content is the percent of pores that contain water
     grams_air = (1-liquid_water_content/100)*rho_air
@@ -570,8 +576,10 @@ def ice_stiffness(
     Computes the stiffness tensor for ice under specified temperature and 
     pressure conditions based on empirical relationships.
 
-    :param temperature: The temperature at which to compute the stiffness tensor. Units are in Celsius
-    :param pressure: The pressure at which to compute the stiffness tensor. Units are in kbar.
+    :param temperature: The temperature at which to compute the stiffness 
+        tensor. Units are in Celsius.
+    :param pressure: The pressure at which to compute the stiffness tensor. 
+        Units are in kbar.
     :type temperature: float, optional
     :type pressure: float
     :return: The stiffness tensor for ice.
@@ -631,7 +639,7 @@ def ice_density(temperature: float, method: str = None):
         rho = rho_o * ( 1 - alpha * temperature)
     return(rho)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def ice_permittivity(
         temperature: float, 
         density: float, 
@@ -674,7 +682,7 @@ def ice_permittivity(
 
     return(permittivity)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def snow_permittivity(
         density: float = 917., 
         temperature: float = 0., 
@@ -684,14 +692,17 @@ def snow_permittivity(
         method: str = "shivola-tiuri"
     ) -> np.ndarray:
     """
-    Calculates the complex permittivity of snow based on its density, temperature, liquid water content (LWC), 
-    porosity, and the chosen calculation method.
+    Calculates the complex permittivity of snow based on its density, 
+    temperature, liquid water content (LWC), porosity, and the chosen 
+    calculation method.
 
     :param density: Density of the snow in kg/m^3.
     :param temperature: Temperature of the snow in degrees Celsius.
-    :param lwc: Liquid water content of the snow in percentage.
+    :param lwc: Liquid water content of the pore space of the snow in 
+        percentage.
     :param porosity: Porosity of the snow in percentage.
-    :param method: The method to be used for calculating permittivity. Defaults to "shivola-tiuri".
+    :param method: The method to be used for calculating permittivity. Defaults 
+        to "shivola-tiuri".
     :type density: float
     :type temperature: float
     :type lwc: float
@@ -907,7 +918,22 @@ def bond(R: np.ndarray) -> np.ndarray:
     return M
 
 # -----------------------------------------------------------------------------
-def tensor2velocities(T: np.ndarray, rho: float, seismic: bool = True):
+def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
+    if T.shape == (6,):
+        temp = np.zeros([3,3])
+        temp[0,:] = T[0:3] 
+        temp[1,1:] = T[3:5]
+        temp[2,2] = T[5]
+        T = np.triu(temp).T + np.triu(temp, 1)
+    if T.shape == (21,):
+        temp = np.zeros([6,6])
+        temp[0,:] = T[0:6] 
+        temp[1,1:] = T[6:11]
+        temp[2,2:] = T[11:15]
+        temp[3,3:] = T[15:18]
+        temp[4,4:] = T[18:20]
+        temp[5,5] = T[20] 
+        T = np.triu(temp).T + np.triu(temp, 1)     
     if seismic:
         vpv = np.sqrt( T[2,2]/rho )
         vph = np.sqrt( T[0,0]/rho )
