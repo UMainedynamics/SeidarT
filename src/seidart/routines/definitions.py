@@ -171,7 +171,6 @@ class Material:
         """
         self.material = self.material_list[:,1]
         self.temp = self.material_list[:,2].astype(float)
-        # self.attenuation = self.material_list[:,3].astype(float)
         self.rho = self.material_list[:,3].astype(float)
         self.porosity = self.material_list[:,4].astype(float)
         self.lwc = self.material_list[:,5].astype(float)
@@ -1340,13 +1339,13 @@ def indvar(
 
 # ------------------------------------------------------------------------------
 def parameter_profile_1d(
-        domain: Model, material: Material, model: Model, 
+        domain: Domain, material: Material, model: Model, 
         indice: int, parameter: str = 'velocity'
     ):
     """
     Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
     directions with respect to z). The available options are:
-        'velocity', 'temperature', 'density', 'lwc'
+        'velocity', 'temperature', 'density', 'lwc', 'conductivity' (em only)
 
     Defaults to 'velocity' which returns 4 m-by-1 arrays. All other options will 
     return 2 m-by-1 arrays. 
@@ -1365,21 +1364,62 @@ def parameter_profile_1d(
 
     profile = domain.geometry[indice,:]
     n = len(profile)
-    if not material.material:
+    if material.material is None:
         material.sort_material_list() 
     
-    if parameter == 'temperature':
-        vals = 
-    elif parameter == 'density':
-    elif parameter == 'lwc':
-    elif parameter == ''    
-    return z, vx, vz, vy
+    attribute_map = {
+        'temperature': 'temp',
+        'density': 'rho',
+        'lwc': 'lwc',
+        'porosity': 'porosity'
+    }
+
+     
+    if parameter == 'velocity':
+        if model.is_seismic:
+            output_values = np.empty([n, 4])
+            tensor_coefficients = model.tensor_coefficients[:,:-1].astype(float)
+            # T = np.zeros([6,6])
+            for ind in range(n):
+                T = tensor_coefficients[profile[ind],:]
+                rho = material.rho[profile[ind]]
+                output_values[ind,:] = mf.tensor2velocities(
+                    T, rho, seismic = True
+                )
+        else:
+            output_values = np.empty([n, 3])
+            if parameter == 'conductivity':
+                tensor_coefficients = model.tensor_coefficients[:,7].real.astype(float)
+                for ind in range(n):
+                    T = tensor_coefficients[profile[ind],:] 
+                    output_values[ind,:] = T[np.array([0,3,5])]
+            else:
+                tensor_coefficients = model.tensor_coefficients[:,1:7].real.astype(float)
+                # T = np.zeros([3,3])  
+                for ind in range(n):
+                    T = tensor_coefficients[profile[ind],:]
+                    output_values[ind,:] = mf.tensor2velocities(
+                        T, seismic = False
+                    )
+    else:
+        attribute_name = attribute_map.get(parameter)
+        vals = getattr(material, attribute_name, None)
+        output_values = np.empty([n])
+        for ind in range(n):
+            output_values[ind] = vals[profile[ind]]
+
+    z = np.arange(0,n) * domain.dz
+    return z, output_values 
 
 # ============================ Processing Functions ============================
-def agc(ts, k, agctype):
+def agc(ts: np.ndarray, k: int, agctype: str) -> np.ndarray:
     """
     Applies auto-gain control (AGC) normalization to a time series using a 
-    specified window length and type.
+    specified window length and type. This function normalizes the input time 
+    series using a running window approach, with the normalization type 
+    determined by `agctype`. It supports standard deviation ("std"), mean 
+    ("mean"), or median ("median") based normalization. The function modifies 
+    the series to have a uniform amplitude characteristic over time.
 
     :param ts: The input time series as a numpy array.
     :type ts: np.ndarray
@@ -1390,12 +1430,6 @@ def agc(ts, k, agctype):
     :type agctype: str
     :return: The time series after applying AGC normalization.
     :rtype: np.ndarray
-
-    This function normalizes the input time series using a running window 
-    approach, with the normalization type determined by `agctype`. It supports 
-    standard deviation ("std"), mean ("mean"), or median ("median") based 
-    normalization. The function modifies the series to have a uniform amplitude 
-    characteristic over time.
     """
     n = len(ts)
 
@@ -1437,14 +1471,14 @@ def correct_geometric_spreading(
     """
     Corrects a seismic time series for geometric spreading.
 
-    :param time_series: 
-        The seismic time series data. Should be a numpy array of shape (n_samples, n_traces).
+    :param time_series: The seismic time series data. Should be a numpy array of 
+        shape (n_samples, n_traces).
     :type time_series: np.ndarray
-    :param distances: 
-        The distances from the source to each trace. Should be a numpy array of shape (n_traces,).
+    :param distances: The distances from the source to each trace. Should be a 
+        numpy array of shape (n_traces,).
     :type distances: np.ndarray
-    :param exponent: 
-        The exponent used in the geometric spreading correction. Defaults to 1.0.
+    :param exponent: The exponent used in the geometric spreading correction. 
+        Defaults to 1.0.
     :type exponent: float, optional
 
     :raises ValueError: 
@@ -1474,7 +1508,9 @@ def correct_geometric_spreading(
         
     n_samples, n_traces = time_series.shape
     if distances.shape[0] != n_traces:
-        raise ValueError("The length of distances must match the number of traces.")
+        raise ValueError(
+            "The length of distances must match the number of traces."
+        )
 
     # Calculate the geometric spreading correction factor for each trace
     correction_factors = distances ** exponent
@@ -1484,21 +1520,20 @@ def correct_geometric_spreading(
 
     return corrected_time_series
 
+# ------------------------------------------------------------------------------
 def exponential_gain(time_series: np.ndarray, alpha: float) -> np.ndarray:
     """
     Applies an exponential gain to a time series to correct for attenuation.
 
-    :param time_series: 
-        The original time series data. Should be a numpy array of shape (n_samples,).
+    :param time_series: The original time series data. Should be a numpy array 
+        of shape (n_samples,).
     :type time_series: np.ndarray
     :param alpha: 
         The attenuation coefficient.
     :type alpha: float
 
-    :return: 
-        The corrected time series.
+    :return: The corrected time series.
     :rtype: np.ndarray
-
     """
     n_samples = time_series.shape[0]
     time = np.arange(n_samples)

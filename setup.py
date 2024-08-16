@@ -26,7 +26,7 @@ def configuration(parent_package='', top_path=None):
 if __name__ == "__main__":
     setup(
         name='seidart',
-        version='2.2.1',
+        version='2.2.2',
         packages=[
             'seidart', 
             'seidart.fortran', 

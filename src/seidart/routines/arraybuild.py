@@ -325,45 +325,15 @@ class Array:
             )**2
         
         self.distances = np.sqrt(np.sum(self.distances,axis = 1))
-
+    
     # -------------------------------------------------------------------------
-    def sectionplot(
-            self, 
-            plot_complex: bool = False,
-            amplitude_correction: str = None
-        ):
+    def amplitude_correction(self, dat: np.ndarray, correction_type: str = None):
         """
-        Creates a grayscale section plot of the time series data.
         
-        :param plot_complex: Plot the complex part of the solution if True.
-        :type plot_complex: bool
-        :param amplitude_correction: Correct the amplitudes for geometric spreading ('GS')or 
+        :param amplitude_correction_type: Correct the amplitudes for geometric spreading ('GS')or 
             using an auto gain control function ('AGC'); Default is None
-        :type amplitude_correction: str
-
+        :type amplitude_correction_type: str
         """
-        
-        if plot_complex:
-            # Use complex values 
-            dat = self.timeseries_complex.copy() 
-        else:
-            dat = self.timeseries.copy()
-        
-        m,n = dat.shape
-        
-        if self.is_seismic:
-            mult = 1e2
-        else:
-            mult = 1e6
-        
-        timelocs = np.arange(0, m, int(m/10) ) # 10 tick marks along y-axis
-        rcxlocs = np.arange(0, np.max([n, 5]), int(np.max([n, 5])/5) ) # 5 tick marks along x-axis
-        
-        if self.is_seismic:
-            timevals = np.round(timelocs*float(self.dt) * mult, 2)
-        else:
-            timevals = np.round(timelocs*float(self.dt) * mult, 2)
-        
         # ------------------------------
         # Apply any amplitude corrections if specified
         if amplitude_correction == 'AGC' and self.agc_gain_window < m:
@@ -387,30 +357,76 @@ class Array:
             for j in range(0, n):
                 dat[:,j] = exponential_gain(dat[:,j], self.alpha_exponent)
             self.exp_corrected_timeseries = dat.copy() 
-
-
-        self.fig = plt.figure()#figsize =(n/2,m/2) )
-        self.ax = plt.gca()
         
-        self.ax.imshow(dat, cmap = 'Greys', aspect = 'auto')
-        self.ax.set_xlabel(r'Receiver #')
-        self.ax.xaxis.tick_top()
-        self.ax.xaxis.set_label_position('top')
-        self.ax.set_xticks(rcxlocs)
-        self.ax.set_xticklabels(rcxlocs)
-        self.ax.set_ylabel(r'Two-way Travel Time (s)')
-        self.ax.set_yticks(timelocs)
-        self.ax.set_yticklabels(timevals)
+        return dat
+
+    # -------------------------------------------------------------------------
+    def sectionplot(
+            self, 
+            plot_complex: bool = False,
+            amplitude_correction_type: str = None,
+            colormap = 'Greys'
+        ):
+        """
+        Creates a grayscale section plot of the time series data.
         
-        # Other figure handle operations
-        self.ax.set_aspect(aspect = self.exaggeration)
+        :param plot_complex: Plot the complex part of the solution if True.
+        :type plot_complex: bool
+        :param amplitude_correction_type: Correct the amplitudes for geometric 
+            spreading ('GS') or using an auto gain control function ('AGC'); 
+            Default is None.
+        :type amplitude_correction_type: str
+        """
+        
+        if plot_complex:
+            # Use complex values 
+            dat = self.timeseries_complex.copy() 
+        else:
+            dat = self.timeseries.copy()
+        
+        m,n = dat.shape
         
         if self.is_seismic:
-            self.ax.text(0, m + 0.03*m, 'x $10^{-2}$')
+            mult = 1e2
         else:
-            self.ax.text(0, m + 0.03*m, 'x $10^{-6}$')
+            mult = 1e6
         
-        self.ax.update_datalim( ((0,0),(m, n)))
+        timelocs = np.arange(0, m, int(m/10) ) # 10 tick marks along y-axis
+        rcxlocs = np.arange(0, np.max([n, 5]), int(np.max([n, 5])/5) ) # 5 tick marks along x-axis
+        
+        if self.is_seismic:
+            timevals = np.round(timelocs*float(self.dt) * mult, 2)
+        else:
+            timevals = np.round(timelocs*float(self.dt) * mult, 2)
+        
+        # Amplitude correction
+        if amplitude_correction_type:
+            dat = self.amplitude_correction(
+                dat, correction_type = amplitude_correction_type
+            )
+
+        self.fig_section = plt.figure()#figsize =(n/2,m/2) )
+        self.ax_section = plt.gca()
+        
+        self.ax_section.imshow(dat, cmap = 'Greys', aspect = 'auto')
+        self.ax_section.set_xlabel(r'Receiver #')
+        self.ax_section.xaxis.tick_top()
+        self.ax_section.xaxis.set_label_position('top')
+        self.ax_section.set_xticks(rcxlocs)
+        self.ax_section.set_xticklabels(rcxlocs)
+        self.ax_section.set_ylabel(r'Two-way Travel Time (s)')
+        self.ax_section.set_yticks(timelocs)
+        self.ax_section.set_yticklabels(timevals)
+        
+        # Other figure handle operations
+        self.ax_section.set_aspect(aspect = self.exaggeration)
+        
+        if self.is_seismic:
+            self.ax_section.text(0, m + 0.03*m, 'x $10^{-2}$')
+        else:
+            self.ax_section.text(0, m + 0.03*m, 'x $10^{-6}$')
+        
+        self.ax_section.update_datalim( ((0,0),(m, n)))
         plt.show()
     
     # -------------------------------------------------------------------------
@@ -420,6 +436,8 @@ class Array:
             plot_complex: bool = False, 
             plot_background: str = 'none',
             plot_vertical = True,
+            positive_fill_color = None,
+            negative_fill_color = None,
             figure_size: Tuple[float, float] = (8, 5),
             **kwargs
         ):
@@ -461,31 +479,127 @@ class Array:
             
         timevector = np.arange(0, len(dat) ) * self.dt 
         
-        self.wigglefig = plt.figure(facecolor='none', figsize = figure_size )
-        self.wiggleax = plt.gca()
+        self.fig_wiggle = plt.figure(facecolor='none', figsize = figure_size )
+        self.ax_wiggle = plt.gca()
         
         if plot_vertical:
-            self.wiggleax.plot(dat, timevector, **plot_params)
-            self.wiggleax.set_ylabel('Two-way travel time (s)')
+            self.ax_wiggle.plot(dat, timevector, **plot_params)
+            self.ax_wiggle.set_ylabel('Two-way travel time (s)')
             if self.is_seismic:
-                self.wiggleax.set_xlabel('Velocity (m/s)')
+                self.ax_wiggle.set_xlabel('Velocity (m/s)')
             else:
-                self.wiggleax.set_xlabel('Electric Field (V/m)')
-            # self.wiggleax.set_ylim(self.wiggleax.get_ylim()[::-1])
-            self.wiggleax.invert_yaxis() 
+                self.ax_wiggle.set_xlabel('Electric Field (V/m)')
+            # self.ax_wiggle.set_ylim(self.ax_wiggle.get_ylim()[::-1])
+            self.ax_wiggle.invert_yaxis() 
         else:
-            self.wiggleax.plot(timevector, dat, **plot_params)
-            self.wiggleax.set_xlabel('Two-way travel time (s)')
+            self.ax_wiggle.plot(timevector, dat, **plot_params)
+            self.ax_wiggle.set_xlabel('Two-way travel time (s)')
             if self.is_seismic:
-                self.wiggleax.set_ylabel('Velocity (m/s)')
+                self.ax_wiggle.set_ylabel('Velocity (m/s)')
             else:
-                self.wiggleax.set_ylabel('Electric Field (V/m)')
+                self.ax_wiggle.set_ylabel('Electric Field (V/m)')
             
-        self.wiggleax.set_facecolor(plot_background)
+        self.ax_wiggle.set_facecolor(plot_background)
             
         plt.tight_layout()
         plt.show()
+    
+    # -------------------------------------------------------------------------
+    def sectionwiggleplot(
+            self, 
+            receiver_indices: np.ndarray,
+            scaling_factor: float = 1.0,
+            receiver_distance: np.ndarray = None,
+            plot_vertical = False,
+            positive_fill_color = None,
+            negative_fill_color = None,
+            figure_size = Tuple[float, float] = (5,8),
+            amplitude_correction_type = None,
+            yaxis_label: str = 'Source-Receiver Distance (m)',
+            gridded = True
+        )
+        """
+        Plots a seismic or electromagnetic record section using wiggle traces. 
+        This function generates a wiggle plot for the selected receiver traces, 
+        with options for vertical plotting, scaling, and amplitude corrections. 
+        The positive and negative amplitudes can be filled with custom colors.
+
+        :param receiver_indices: An array of indices specifying which receiver 
+            traces to plot.
+        :type receiver_indices: np.ndarray
+        :param scaling_factor: A scaling factor for adjusting the amplitude of 
+            the traces (default is 1.0).
+        :type scaling_factor: float, optional
+        :param receiver_distance: An array specifying the horizontal 
+            (or vertical) positions of the receiver traces. If None, a 
+            sequential index is used (default is None).
+        :type receiver_distance: np.ndarray, optional
+        :param plot_vertical: If True, plots the traces vertically rather than 
+            horizontally (default is False).
+        :type plot_vertical: bool, optional
+        :param positive_fill_color: Color to fill the positive amplitudes of the 
+            traces. Use any valid matplotlib color (default is None).
+        :type positive_fill_color: str, optional
+        :param negative_fill_color: Color to fill the negative amplitudes of the 
+            traces. Use any valid matplotlib color (default is None).
+        :type negative_fill_color: str, optional
+        :param figure_size: Size of the figure in inches (default is (5, 8)).
+        :type figure_size: Tuple[float, float], optional
+        :param amplitude_correction_type: Type of amplitude correction to apply 
+            before plotting. This should be a valid correction type recognized 
+            by the `amplitude_correction` method (default is None).
+        :type amplitude_correction_type: str, optional
+        :param yaxis_label: The label corresponding to the y-axis if not using 
+            source-receiver distance.
+        :type yaxis_label: str
+        :param gridded: Specify if a gridded plot should be created. Grids will 
+            be drawn in vertically for a horizontally oriented graph (default) 
+            and drawn horizontally for a vertically oriented graph. 
+
+        :returns: None
+        :rtype: None
+
+        :notes:
+            - Vertical plotting hasn't yet been implemented 
+            - Receiver distances is generically named and is merely a time shift
+              in the time series so that they are layed out as a section plot. 
+              The traces can be sorted and plotted according to other inputs.  
+        """
+        m,n = dat.shape
+        n_traces_to_plot = len(receiver_indices) 
+        time = np.arange(m)*self.dt 
+
+        if amplitude_correction_type:
+            dat = self.amplitude_correction(
+                dat, correction_type = amplitude_correction_type
+            )
+
+        fig_wiggles, ax_wiggles = plt.subplots(figsize = figure_size)
+
+        for i in range(n_traces_to_plot):
+            indice = trace_indice[i]
+            ax_wiggles.plot(
+                time, dat[:,indice]*scaling_factor + receiver_distance[indice],
+                'k', linewidth = 0.8
+            )
+            if positive_fill_color:
+                ax_wiggles.fill_between(
+                    time, receiver_distance[indice],
+                    dat[:,indice] * scaling_factor + receiver_distance[indice],
+                    where=(dat[:,indice] > 0), color = positive_fill_color
+                )
+            if negative_fill_color:
+                ax_wiggles.fill_between(
+                    time, receiver_distance[indice],
+                    dat[:,indice] * scaling_factor + receiver_distance[indice],
+                    where=(dat[:,indice] < 0), color = positive_fill_color
+                )
         
+        ax_wiggles.invert_yaxis()
+        ax_wiggles.set_xlabel('Time (s)')
+        ax_wiggles.set_ylabel(yaxis_label)
+        plt.show() 
+
     # -------------------------------------------------------------------------
     def save(self, save_object = True, output_basefile = None):
         """
