@@ -628,9 +628,6 @@ class Array:
         with open(self.pklfilename, 'wb') as file:
             pickle.dump(self, file)
         
-            
-        
-        
 # =============================================================================
 # ============================== Main Function ================================
 def main(
