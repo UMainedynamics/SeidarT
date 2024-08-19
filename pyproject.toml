@@ -39,14 +39,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
-[project.entry-points.console_scripts]
-prjbuild = "seidart.routines.prjbuild:main"
-prjrun = "seidart.routines.prjrun:main"
-arraybuild = "seidart.routines.arraybuild:main"
-sourcefunction = "seidart.routines.sourcefunction:main"
-rcxdisplay = "seidart.visualization.rcxdisplay:main"
-im2anim = "seidart.visualization.im2anim:build_animation"
-
 # Optionals
 [project.urls]
 homepage = "https://github.com/UMainedynamics/SeidarT"
