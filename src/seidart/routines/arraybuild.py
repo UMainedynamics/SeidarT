@@ -513,11 +513,11 @@ class Array:
             plot_vertical = False,
             positive_fill_color = None,
             negative_fill_color = None,
-            figure_size = Tuple[float, float] = (5,8),
+            figure_size: Tuple[float, float] = (5,8),
             amplitude_correction_type = None,
             yaxis_label: str = 'Source-Receiver Distance (m)',
             gridded = True
-        )
+        ):
         """
         Plots a seismic or electromagnetic record section using wiggle traces. 
         This function generates a wiggle plot for the selected receiver traces, 

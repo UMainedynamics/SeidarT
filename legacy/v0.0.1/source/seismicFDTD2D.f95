@@ -717,9 +717,8 @@ end subroutine stiffness_write
         enddo
       enddo
 
-      ! add the source (force vector located at a given grid point)
-      a = pi*pi*f0*f0
 
+      ! add the source (force vector located at a given grid point)
       ! Add the source term
       vx(isource,jsource) = vx(isource,jsource) + srcx(it) * DT / rho(i,j)
       vy(isource,jsource) = vy(isource,jsource) + srcy(it) * DT / rho(i,j)

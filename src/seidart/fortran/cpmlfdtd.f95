@@ -628,7 +628,6 @@ module cpmlfdtd
         call material_rw('gamma_y.dat', gamma_y, .FALSE.)
         call material_rw('gamma_z.dat', gamma_z, .FALSE.)
            
-
     end subroutine attenuation_write
     
     !==========================================================================
@@ -1084,7 +1083,8 @@ module cpmlfdtd
             do j = 2,NZ
                 do i = 2,NX
         
-                deltarho = ( 2*rho(i,j) + rho(i-1,j) + rho(i,j-1) )/4
+                deltarho = ( rho(i,j) + rho(i,j+1) + rho(i+1,j) + rho(i+1,j+1) )/4
+
                 value_dsigmaxx_dx = (sigmaxx(i,j) - sigmaxx(i-1,j)) / DX
                 value_dsigmaxz_dz = (sigmaxz(i,j) - sigmaxz(i,j-1)) / DZ
         
@@ -1720,7 +1720,6 @@ module cpmlfdtd
             ! call write_image3(sigmaxz, nx, ny, nz, it, 'S5')
 
         enddo   ! end of time loop
-
     end subroutine seismic25
     
     ! =========================================================================
@@ -2592,8 +2591,6 @@ module cpmlfdtd
             call write_image2c(Ez, nx, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
-
-
     end subroutine electromag2c
 
     ! =========================================================================
@@ -3072,7 +3069,6 @@ module cpmlfdtd
             call write_image3(Ez, nx, ny, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
-
     end subroutine electromag25
 
     ! =========================================================================
@@ -3555,7 +3551,6 @@ module cpmlfdtd
             call write_image3c(Ez, nx, ny, nz, src, it, 'Ez', SINGLE)
 
         enddo   ! end of time loop
-
     end subroutine electromag25c
 
         

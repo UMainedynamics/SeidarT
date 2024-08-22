@@ -208,7 +208,8 @@ def cpmlcompute(
     # original model space. 
     dist = dx * np.arange(0, domain.cpml)
     if half:
-        dist = dist + dx/2 
+        dist = dist + dx/2
+    
     dist = dx*domain.cpml - dist
     dist = dist/(dx*domain.cpml)
 
@@ -219,7 +220,7 @@ def cpmlcompute(
         sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
          # This seems to work well even at higher frequencies
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
+            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt, is_seismic = True
         )
     else:
         # We will use the maximum permittivity coefficient and assume that the 
@@ -252,7 +253,8 @@ def cpml_parameters(
         kappa_max: float, 
         distance, 
         N: int, 
-        dt: float
+        dt: float,
+        is_seismic = False,
     ):
     """
     """
@@ -273,9 +275,13 @@ def cpml_parameters(
         kappa[-(ind+1)] = 1 + (kappa_max - 1) * distance[ind]**NP
         alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
         
-        bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
-        bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * (dt/eps0) )
-        
+        if is_seismic:
+            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * dt)
+            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * dt)
+        else:
+            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
+            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * (dt/eps0) )
+            
 
     # Compute the a-coefficients 
     alpha[np.where(alpha < 0.0)] = 0.0
@@ -619,7 +625,8 @@ def runseismic(
         modelclass: Model, 
         material: Material, 
         domain: Domain, 
-        single_precision: bool = True
+        single_precision: bool = True,
+        air_gradient_integer = 2,
     ) -> None:
     """
     Runs the seismic model using the initialized modelclass, material, and domain.
@@ -637,7 +644,6 @@ def runseismic(
     modelclass, domain = prepme(modelclass, domain, complex_tensor = False)
     direction = ['x', 'y', 'z']
     # Compute CPML
-    print(direction)
     print('computing cpml')
     for d in direction:
         cpmlcompute(modelclass, domain, d)
@@ -645,7 +651,7 @@ def runseismic(
     
     # We need to set a density gradient at air interfaces because high
     # density gradients lead to numerical instability
-    rhograd = airsurf(material, domain, 2)
+    rhograd = airsurf(material, domain, air_gradient_integer)
     # Write the coefficient images to a fortran file
     
     # Create the stiffness .dat files

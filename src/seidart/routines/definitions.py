@@ -445,8 +445,8 @@ def kband_check(modelclass, domain):
         velocities = np.zeros([domain.nmats, 4])
         for ind in range(domain.nmats):
             velocities[ind,:] = mf.tensor2velocities(
-                modelclass.tensor_coefficients[ind,1:], 
-                modelclass.tensor_coefficients[ind,21], 
+                modelclass.tensor_coefficients[ind,1:-1].astype(float), 
+                modelclass.tensor_coefficients[ind,-1].astype(float), 
                 seismic = True
             )
     else: 
@@ -457,12 +457,15 @@ def kband_check(modelclass, domain):
             )
     
     lambda_values = velocities/modelclass.f0
+    # For things such as air and water, there will be zero valued velocities
+    # which will be taken as the step_limit. Remove the zero values.
+    lambda_values = lambda_values[lambda_values > 0]
     step_limit = lambda_values.min()/4 
     modelclass.step_limit = step_limit 
     if domain.dim == 2.5:
         step_max = np.array([domain.dx, domain.dy, domain.dz]).max() 
     else: 
-        step_max = np.array([domain.dx, domain.dz])
+        step_max = np.array([domain.dx, domain.dz]).max()
     
     if step_max > step_limit:
         print(
@@ -470,7 +473,7 @@ def kband_check(modelclass, domain):
         )
     else:
         print(
-            'Wavenumber bandlimit is satisfied.'
+            f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
         )
 
 # -------------------------- Function Definitions -----------------------------
