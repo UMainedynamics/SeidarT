@@ -76,7 +76,16 @@ Create and build the *seidart* environment::
 
     conda env create -f seidart-environment.yml
 
-This will install all dependencies and the latest *seidart* version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  *gcc*>10, *gfortran*, *ghostscript*, *imagemagick*, *numpy*, *pandas*, *matplotlib*, *scipy*, *glob2*, *pyevtk*, *mplstereonet*. Following install of all dependencies,:: 
+This will install all dependencies and the latest *seidart* version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  *gcc*>10, *gfortran*, *ghostscript*, *imagemagick*, *numpy*, *pandas*, *matplotlib*, *scipy*, *glob2*, *pyevtk*, *mplstereonet*. For Linux users, all of these packages can be installed from Anaconda, however for MacOS users, suitable GCC and GFortran versions aren't supported or up to date in Anaconda. If using MacOS you will need to install a few packages via Homebrew::
+
+    xcode-select --install
+    brew install gcc gfortran
+
+Additionally for MacOS users, make sure that the conda environment doesn't default to the older GCC and GFortran versions and instead uses the system wide compiler. To do so remove them from the environment::
+
+    conda remove gfortran gcc 
+
+Following install of all dependencies,:: 
 
     pip install seidart
 
