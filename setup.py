@@ -31,6 +31,11 @@ setup(
     entry_points={
         'console_scripts': [
             'prjbuild=seidart.routines.prjbuild:main',
+            'prjrun=seidart.routines.prjrun:main',
+            'arraybuild=seidart.routines.arraybuild:main',
+            'sourcefunction=seidart.routines.sourcefunction:main',
+            'rcxdisplay=seidart.visualization.rcxdisplay:main',
+            'im2anim=seidart.visualiztion.im2anim:build_animation',
             # other entry points...
         ]
     },
