@@ -28,7 +28,7 @@ setup(
         ),
         # Add more extensions here as needed
     ],
-    cmdclass={'build_ext': CustomBuildExt},
+    # cmdclass={'build_ext': CustomBuildExt},
     entry_points={
         'console_scripts': [
             'prjbuild=seidart.routines.prjbuild:main',
