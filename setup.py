@@ -1,5 +1,6 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import numpy.f2py 
 
 class CustomBuildExt(build_ext):
     def build_extensions(self):
