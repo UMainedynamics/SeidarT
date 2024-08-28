@@ -23,7 +23,7 @@ setup(
         Extension(
             name='seidart.fortran.cpmlfdtd',
             sources=['src/seidart/fortran/cpmlfdtd.f95'],
-            extra_f90_compile_args=['-std=f95'],  # Specify Fortran 95 standard
+            include_dirs=[numpy.get_include()],
         ),
         # Add more extensions here as needed
     ],
