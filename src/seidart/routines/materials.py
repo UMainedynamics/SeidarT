@@ -317,7 +317,7 @@ def get_perm(
             )
             
         elif material.material[ind] == 'snow':
-            permittivity = snow_permittivity(
+            permittivity, rho_d = snow_permittivity(
                 temperature = material.temp[ind],
                 lwc = material.lwc[ind], 
                 porosity = material.porosity[ind],
@@ -752,7 +752,7 @@ def snow_permittivity(
     
     permittivity = np.eye(3,3) * complex(perm, complex_permittivity)
 
-    return(permittivity)
+    return(permittivity, rho_d)
 
 # -----------------------------------------------------------------------------
 def water_permittivity(temperature):

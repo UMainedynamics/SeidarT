@@ -7,6 +7,8 @@ import matplotlib.image as mpimg
 from typing import Tuple
 from seidart.routines.definitions import *
 import dill as pickle
+from scipy.fft import fft2, fftshift
+from matplotlib.colors import TwoSlopeNorm
 
 # =============================================================================
 class Array:
@@ -58,6 +60,7 @@ class Array:
         self.receiver_indices = receiver_indices # Flag 
         self.receiver_locations = None # The locations in meters
         self.single_precision = single_precision
+        self.source_xyz = None 
         self.is_complex = is_complex
         self.stream = None 
         self.agc_gain_window = None
@@ -69,6 +72,7 @@ class Array:
         self.csvfile_c = csvfile_c
         self.csvfilename = None
         self.pklfilename = None
+        self.simulation_type = 'CSG'
         self.build()
     
     # -------------------------------------------------------------------------
@@ -99,11 +103,11 @@ class Array:
         # Add the source locations into their respective variables. 
         if self.channel == 'Vx' or self.channel == 'Vy' or self.channel == 'Vz':
             if self.domain.dim == '2.0':
-                self.source = np.array(
+                self.source_xyz = np.array(
                     [self.seismic.x, self.seismic.z]
                 )
             else:
-                self.source = np.array(
+                self.source_xyz = np.array(
                     [
                         self.seismic.x, 
                         self.seismic.y, 
@@ -112,11 +116,11 @@ class Array:
                 )
         else:
             if self.domain.dim == '2.0':
-                self.source = np.array(
+                self.source_xyz = np.array(
                     [self.electromag.x, self.electromag.z]
                 )
             else:
-                self.source = np.array(
+                self.source_xyz = np.array(
                     [
                         self.electromag.x, 
                         self.electromag.y, 
@@ -143,7 +147,7 @@ class Array:
         Loads and sorts receiver locations from a file and adjusts them 
         according to the domain and CPML layer.  If the source_file flag is 
         True, the source file is loaded instead of the receiver file and saved
-        to the object under source_xyz.
+        to the object under source.
 
         :param source_file: Flag to indicate if the file is a source file.
         :type source_file: bool 
@@ -181,8 +185,7 @@ class Array:
         # cartesian space of the domain, we want to change them to the indices
         # of the 
         if not self.receiver_indices:
-            self.receiver_locations = xyz 
-            xyz = xyz / \
+            self.receiver_locations = xyz / \
                 np.array(
                     [
                         float(self.domain.dx), 
@@ -202,6 +205,9 @@ class Array:
                 )
         
         self.receiver_xyz = xyz + cpml
+        # The following line is to make this compatible with the CommonOffset 
+        # object setup. 
+        self.receiver_xyz_all = self.receiver_xyz.copy()
     
     # -------------------------------------------------------------------------
     def getrcx(self):
@@ -211,7 +217,7 @@ class Array:
         """
         # input rcx as an n-by-2 array integer values for their indices.
         src_ind = (
-            self.source / \
+            self.source_xyz / \
             np.array([self.domain.dx, self.domain.dy, self.domain.dz])
         ).astype(int)
         if self.domain.dim == 2.5:
@@ -222,12 +228,16 @@ class Array:
             all_files = glob(
                 self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '..dat'
             )
-        
+        print(len(self.receiver_xyz))
+        print(self.receiver_xyz.ndim)
         all_files.sort()
         m = len(all_files)
-        if len(self.receiver_xyz.shape) == 1:
+        if len(self.receiver_xyz) == 1:
             n = 1
-            timeseries = np.zeros([m]) 
+            timeseries = np.zeros([m])
+            # Sometimes the 1 row array needs to be
+            if self.receiver_xyz.ndim == 2:
+                self.receiver_xyz = self.receiver_xyz[0]
         else:
             n = len(self.receiver_xyz[:,0])
             timeseries = np.zeros([m,n])   
@@ -239,6 +249,7 @@ class Array:
         
         if self.domain.dim == 2.5:
             for i in range(m):
+                print(i)
                 npdat = read_dat(
                     all_files[i], 
                     self.channel, 
@@ -309,17 +320,19 @@ class Array:
         Compute the source and receiver(s) distance 
         """
         if self.source_xyz.ndim == 1:
-            self.source_xyz = self.source_xyz.reshape(1,3) 
+            source_xyz = self.source_xyz.reshape(1,3)
+        else:
+            source_xyz = self.source_xyz.copy()
         
         if self.domain.dim == '2.0':
             self.distances = (
-                self.source_xyz[:,(0,2)]  - \
+                source_xyz[:,(0,2)]  - \
                     (self.receiver_xyz_all[:,(0,2)] - self.domain.cpml) * \
                         np.array([self.domain.dx, self.domain.dz])
             )**2
         else: 
             self.distances = (
-                self.source_xyz - \
+                source_xyz - \
                     (self.receiver_xyz_all - self.domain.cpml) * \
                         np.array([self.domain.dx, self.domain.dy, self.domain.dz])
             )**2
@@ -335,8 +348,9 @@ class Array:
         :type amplitude_correction_type: str
         """
         # ------------------------------
+        m, n = dat.shape
         # Apply any amplitude corrections if specified
-        if amplitude_correction == 'AGC' and self.agc_gain_window < m:
+        if correction_type == 'AGC' and self.agc_gain_window < m:
             if self.agc_gain_window == 0:
                 self.agc_gain_window = 1
             
@@ -347,13 +361,13 @@ class Array:
             
             self.agc_corrected_timeseries = dat.copy() 
         # ------------------------------
-        if amplitude_correction == 'GS':
+        if correction_type == 'GS':
             dat = correct_geometric_spreading(
                 dat, self.distances, self.geometric_correction_exponent
             )
             self.gs_corrected_timeseries = dat.copy()
 
-        if amplitude_correction == 'EXP':
+        if correction_type == 'EXP':
             for j in range(0, n):
                 dat[:,j] = exponential_gain(dat[:,j], self.alpha_exponent)
             self.exp_corrected_timeseries = dat.copy() 
@@ -365,7 +379,8 @@ class Array:
             self, 
             plot_complex: bool = False,
             amplitude_correction_type: str = None,
-            colormap = 'Greys'
+            colormap: str = 'Greys',
+            figure_size: Tuple[float, float] = (8,8),
         ):
         """
         Creates a grayscale section plot of the time series data.
@@ -376,6 +391,10 @@ class Array:
             spreading ('GS') or using an auto gain control function ('AGC'); 
             Default is None.
         :type amplitude_correction_type: str
+        :param colormap: Specify the colormap to be used in the plot. Default is grey.
+        :type colormap: str 
+        :param figure_size: Specify the figure size.
+        :type figure_size: Tuple 
         """
         
         if plot_complex:
@@ -385,6 +404,7 @@ class Array:
             dat = self.timeseries.copy()
         
         m,n = dat.shape
+        time_max = self.dt * m 
         
         if self.is_seismic:
             mult = 1e2
@@ -404,11 +424,16 @@ class Array:
             dat = self.amplitude_correction(
                 dat, correction_type = amplitude_correction_type
             )
+        
+        norm = TwoSlopeNorm(vmin=-np.max(dat), vmax=np.max(dat), vcenter=0)
 
-        self.fig_section = plt.figure()#figsize =(n/2,m/2) )
+        self.fig_section = plt.figure(figsize = figure_size )
         self.ax_section = plt.gca()
         
-        self.ax_section.imshow(dat, cmap = 'Greys', aspect = 'auto')
+        self.ax_section.imshow(
+            dat, cmap = colormap, aspect = 'auto', norm = norm,
+            extent = [0, n, m, 0]
+        )
         self.ax_section.set_xlabel(r'Receiver #')
         self.ax_section.xaxis.tick_top()
         self.ax_section.xaxis.set_label_position('top')
@@ -426,7 +451,7 @@ class Array:
         else:
             self.ax_section.text(0, m + 0.03*m, 'x $10^{-6}$')
         
-        self.ax_section.update_datalim( ((0,0),(m, n)))
+        # self.ax_section.update_datalim( ((0,0),(m, n)))
         plt.show()
     
     # -------------------------------------------------------------------------
@@ -565,6 +590,7 @@ class Array:
               in the time series so that they are layed out as a section plot. 
               The traces can be sorted and plotted according to other inputs.  
         """
+        dat = self.timeseries.copy()
         m,n = dat.shape
         n_traces_to_plot = len(receiver_indices) 
         time = np.arange(m)*self.dt 
@@ -576,28 +602,102 @@ class Array:
 
         fig_wiggles, ax_wiggles = plt.subplots(figsize = figure_size)
 
-        for i in range(n_traces_to_plot):
-            indice = trace_indice[i]
-            ax_wiggles.plot(
-                time, dat[:,indice]*scaling_factor + receiver_distance[indice],
-                'k', linewidth = 0.8
-            )
-            if positive_fill_color:
-                ax_wiggles.fill_between(
-                    time, receiver_distance[indice],
-                    dat[:,indice] * scaling_factor + receiver_distance[indice],
-                    where=(dat[:,indice] > 0), color = positive_fill_color
+        if plot_vertical:
+            for i in range(n_traces_to_plot):
+                indice = receiver_indices[i]
+                ax_wiggles.plot(
+                    dat[:, indice] * scaling_factor + receiver_distance[indice], 
+                    time,
+                    'k', linewidth=0.8
                 )
-            if negative_fill_color:
-                ax_wiggles.fill_between(
-                    time, receiver_distance[indice],
-                    dat[:,indice] * scaling_factor + receiver_distance[indice],
-                    where=(dat[:,indice] < 0), color = positive_fill_color
+                if positive_fill_color:
+                    ax_wiggles.fill_betweenx(
+                        time, receiver_distance[indice],
+                        dat[:, indice] * scaling_factor + receiver_distance[indice],
+                        where=(dat[:, indice] > 0), color=positive_fill_color
+                    )
+                if negative_fill_color:
+                    ax_wiggles.fill_betweenx(
+                        time, receiver_distance[indice],
+                        dat[:, indice] * scaling_factor + receiver_distance[indice],
+                        where=(dat[:, indice] < 0), color=negative_fill_color
+                    )
+
+            ax_wiggles.invert_yaxis()
+            ax_wiggles.set_ylabel('Time (s)')
+            ax_wiggles.set_xlabel(yaxis_label)
+        else:
+            for i in range(n_traces_to_plot):
+                indice = receiver_indices[i]
+                ax_wiggles.plot(
+                    time, dat[:,indice]*scaling_factor + receiver_distance[indice],
+                    'k', linewidth = 0.8
+                )
+                if positive_fill_color:
+                    ax_wiggles.fill_between(
+                        time, receiver_distance[indice],
+                        dat[:,indice] * scaling_factor + receiver_distance[indice],
+                        where=(dat[:,indice] > 0), color = positive_fill_color
+                    )
+                if negative_fill_color:
+                    ax_wiggles.fill_between(
+                        time, receiver_distance[indice],
+                        dat[:,indice] * scaling_factor + receiver_distance[indice],
+                        where=(dat[:,indice] < 0), color = positive_fill_color
+                    )
+
+            ax_wiggles.invert_yaxis()
+            ax_wiggles.set_xlabel('Time (s)')
+            ax_wiggles.set_ylabel(yaxis_label)
+            if gridded:
+                ax_wiggles.grid(
+                    True, which = 'both', axis = 'x', 
+                    linestyle = '--', color = '#c7c7c7', linewidth = 0.7
                 )
         
-        ax_wiggles.invert_yaxis()
-        ax_wiggles.set_xlabel('Time (s)')
-        ax_wiggles.set_ylabel(yaxis_label)
+        plt.show() 
+
+    # -------------------------------------------------------------------------
+    def fk_analysis(
+            self, 
+            d_rcx: float, 
+            figure_size: Tuple[float,float] = (10,8), 
+            colormap: str = 'viridis',
+            contour_levels: int = 100,
+            frequency_limits: Tuple[float,float] = None,
+            wavenumber_limits: Tuple[float,float] = None,
+        ):
+        """
+        Compute and plot the frequency-wavenumber analysis for an array with 
+        regularly spaced intervals.
+        
+        :param d_rcx: The receiver interval
+        :type d_rcx: float 
+        
+        """
+        m, n = self.timeseries.shape 
+        fk_spectrum = fftshift(fft2(self.timeseries))
+        
+        # Create the frequency and wavenumber vectors then we need to shift the 
+        # frequencies and wavenumbers for plotting 
+        freqs = fftshift(np.fft.fftfreq(m, self.dt))
+        wavenumbers = -fftshift(np.fft.fftfreq(n, d_rcx)) # positive down coordinates means we have to flip the f-k 
+        
+        
+        self.fig_fk, self.ax_fk = plt.subplots(figsize = figure_size)
+        contour = self.ax_fk.contourf(
+            wavenumbers, freqs, np.abs(fk_spectrum), 
+            cmap = colormap, levels = contour_levels,
+        )
+        cbar = self.fig_fk.colorbar(contour, ax = self.ax_fk, label = 'Amplitude')
+        self.ax_fk.set_xlabel(r'Wavenumber (m$^{-1}$)')
+        self.ax_fk.set_ylabel('Frequency (Hz)')
+        if frequency_limits:
+            self.ax_fk.set_ylim(frequency_limits)
+        
+        if wavenumber_limits:
+            self.ax_fk.set_xlim(wavenumber_limits)
+        
         plt.show() 
 
     # -------------------------------------------------------------------------
@@ -614,7 +714,7 @@ class Array:
                 [
                     self.prjfile.split('.')[:-1][0],
                     self.channel, 
-                    '-'.join(self.source.astype(str))
+                    '-'.join(self.source_xyz.astype(str))
                 ]
             )
         
@@ -667,30 +767,6 @@ def main(
     :param plot: Flag to enable plotting.
     :type plot: bool
     """
-    array = Array(
-        channel,
-        prjfile, 
-        receiver_file,
-        rind, 
-        single_precision = single_precision,
-        is_complex = is_complex
-    )
-    
-    if gain:
-        array.agc_gain_window = gain
-    if exaggeration:
-        array.exaggeration = exaggeration
-    if save:
-        array.save()
-    if plot:
-        array.section_plot(plot_complex = plot_complex)
-
-
-
-# =============================================================================
-# ========================== Command Line Arguments ===========================
-# =============================================================================
-if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""This program creates an Array class that can be saved in 
         pickle format. Receiver locations listed in the the specified receiver 
@@ -786,17 +862,31 @@ if __name__ == "__main__":
     plot_complex = args.plot_complex
     plot = args.plot 
     
-    # ==================== Create the object and assign inputs ====================    
-    main(
+    array = Array(
+        channel,
         prjfile, 
-        receiver_file, 
-        channel, 
+        receiver_file,
         rind, 
-        is_complex, 
-        single_precision, 
-        exaggeration, 
-        gain, 
-        plot_complex = plot_complex,
-        plot = plot
+        single_precision = single_precision,
+        is_complex = is_complex
     )
-        
+    
+    if gain:
+        array.agc_gain_window = gain
+    if exaggeration:
+        array.exaggeration = exaggeration
+    if save:
+        array.save()
+    if plot:
+        array.section_plot(plot_complex = plot_complex)
+
+
+
+# =============================================================================
+# ========================== Command Line Arguments ===========================
+# =============================================================================
+if __name__ == "__main__":
+    main()
+    
+    
+    

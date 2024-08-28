@@ -518,30 +518,10 @@ def read_dat(
         dtype = np.float64 
     
     if domain.dim == 2.5:
-        # if channel == 'Ex':
-        #     NX = domain.nz
-        #     NY = domain.ny
-        #     NZ = domain.nx-1
-        # elif channel == 'Ey':
-        #     NX = domain.nz
-        #     NY = domain.ny-1
-        #     NZ = domain.nx
-        # elif channel == 'Ez':
-        #     NX = domain.nz-1
-        #     NY = domain.ny
-        #     NZ = domain.nx
-        # else:
         NX = domain.nz
         NY = domain.ny
         NZ = domain.nx
     else:
-        # if channel == 'Ex':
-        #     NX = domain.nz
-        #     NZ = domain.nx-1
-        # elif channel == 'Ez':
-        #     NX = domain.nz-1
-        #     NZ = domain.nx
-        # else:
         NX = domain.nz
         NZ = domain.nx
     #

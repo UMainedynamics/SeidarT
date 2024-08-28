@@ -71,6 +71,7 @@ def domain_initialization(
     seismic.tensor_check()
     electromag.tensor_check()
 
+    
     # Modify material list and perform final checks
     material.material_list = np.delete(material.material_list, 2, axis=1)
     material.para_check()
@@ -128,7 +129,7 @@ def status_check(
             # correspond to the same material.
             ind = np.where(tensor.max() == tensor)
             max_rho = tensor[ ind[0][0], -1]
-            modelclass.dt = np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
+            modelclass.dt = 0.7 * np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
             append_coefficients(prjfile, tensor, CP = 'C', dt = modelclass.dt)
         else:
             print('Computing the permittivity and conductivity coefficients.')

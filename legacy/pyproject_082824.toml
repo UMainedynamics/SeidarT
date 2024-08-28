@@ -1,11 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "numpy"
-]
+requires = ["setuptools","wheel","numpy"]
 build-backend = "setuptools.build_meta"
-
 
 [project]
 name = "seidart"
@@ -22,8 +17,6 @@ maintainers = [
     { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
 ]
-
-
 dependencies = [
     "numpy",
     "scipy",
@@ -35,6 +28,7 @@ dependencies = [
     "dill",
     "seaborn"
 ]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU Affero General Public License v3",
@@ -46,7 +40,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
-[project.scripts]
+[project.entry-points.console_scripts]
 prjbuild = "seidart.routines.prjbuild:main"
 prjrun = "seidart.routines.prjrun:main"
 arraybuild = "seidart.routines.arraybuild:main"
@@ -68,3 +62,8 @@ packages = [
     "seidart.simulations", 
     "seidart.visualization"
 ]
+
+
+
+
+

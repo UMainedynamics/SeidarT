@@ -46,7 +46,7 @@ class CommonOffset(Array):
         :type status_check: bool 
 
         """
-        # super().__init__(source_file, *args, **kwargs) 
+        # super().__init__(source_file, *args, **kwargs)
         self.source_file = source_file
         self.prjfile = prjfile
         self.channel = channel
@@ -57,6 +57,7 @@ class CommonOffset(Array):
         self.exaggeration = 0.5
         self.status_check = status_check
         self.output_basefile = None
+        self.simulation_type = 'CO'
         self.build()
 
     def build(self) -> None:
@@ -149,6 +150,7 @@ class CommonOffset(Array):
         self.source_xyz = self.source_xyz
         self.receiver_xyz = self.receiver_xyz + cpml
     
+    # -------------------------------------------------------------------------
     def co_run(self) -> None:
         """
         Run the electromagnetic or seismic model and extract the receiver 

@@ -246,16 +246,14 @@ def prjbuild(image_file: str, prjfile: str, file_header = header_comment) -> Non
 		prj.write(new_line)
 
 
-def main(image_file, prjfile):
-	prjbuild(image_file, prjfile)
-
-# -------------------------- Command Line Arguments ---------------------------
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description="""The SeidarT software requires a
-		.PNG image that is used to construct the model domain for seismic and
-		electromagnetic wave propagation. Given the image file, a project file
-		will be constructed which contains all the necessary parameters to be
-		read in to the finite differences time domain modeling schemes.""" )
+def main():
+	# -------------------------- Command Line Arguments ------------------------
+	parser = argparse.ArgumentParser(description="""The SeidarT software 
+        requires a .PNG image that is used to construct the model domain for 
+        seismic and electromagnetic wave propagation. Given the image file, a 
+        project file will be constructed which contains all the necessary 
+        parameters to be read in to the finite differences time domain modeling 
+        schemes.""" )
 	
 	parser.add_argument(
 		'-i','--imagefile', 
@@ -265,15 +263,17 @@ if __name__ == "__main__":
 
 	parser.add_argument(
 		'-p', '--prjfile',
-		nargs=1, type=str, required = False, default = 'jordan_downs.prj',
-		help = """name of output file path with extension .prj and excluding
-		the full path directory"""
+		nargs=1, type=str, required = False, default = 'steven_bernsen_rules.prj',
+		help = """Name of output file path with extension .prj and excluding
+		the full path directory."""
 	)
 
 	# Get the arguments
 	args = parser.parse_args()
 	image_file = ''.join(args.imagefile)
 	prjfile = ''.join(args.prjfile)
-	main(image_file, prjfile)
+	prjbuild(image_file, prjfile)
 
 
+if __name__ == "__main__":
+	main()

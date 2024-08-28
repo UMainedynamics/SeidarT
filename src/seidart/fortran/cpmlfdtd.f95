@@ -1033,15 +1033,13 @@ module cpmlfdtd
                     value_dvx_dz = value_dvx_dz / K_z_half(j) + memory_dvx_dz(i,j)
                     
                     sigmaxx(i,j) = sigmaxx(i,j) + &
-                        ( ( ( c11(i+1,j) + 2*c11(i,j) + c11(i,j-1) )/4) * value_dvx_dx + &
-                        ( ( c13(i+1,j) + 2*c13(i,j) + c13(i,j-1) )/4) * value_dvz_dz + &
-                        ( ( c15(i+1,j) + 2*c15(i,j) + c15(i,j-1) )/4) * &
-                                (value_dvz_dx + value_dvx_dz) ) * DT
+                        (   c11(i,j) * value_dvx_dx + &
+                            c13(i,j) * value_dvz_dz + &
+                            c15(i,j) * (value_dvz_dx + value_dvx_dz) ) * DT
                     sigmazz(i,j) = sigmazz(i,j) + &
-                    ( ( ( c13(i+1,j) + 2*c13(i,j) + c13(i,j-1) )/4) * value_dvx_dx + &
-                    ( ( c33(i+1,j) + 2*c33(i,j) + c33(i,j-1) )/4) * value_dvz_dz + &
-                    ( ( c35(i+1,j) + 2*c35(i,j) + c35(i,j-1) )/4) * &
-                            (value_dvz_dx + value_dvx_dz) ) * DT
+                        (   c13(i,j) * value_dvx_dx + &
+                            c33(i,j) * value_dvz_dz + &
+                            c35(i,j) * (value_dvz_dx + value_dvx_dz) ) * DT
         
                 enddo
             enddo
@@ -1069,10 +1067,9 @@ module cpmlfdtd
                 value_dvx_dz = value_dvx_dz / K_z_half(j) + memory_dvx_dz(i,j)
         
                 sigmaxz(i,j) = sigmaxz(i,j) + &
-                    ( ( (c15(i,j+1) + 2*c15(i,j) + c15(i-1,j))/4) * value_dvx_dx + &
-                    ( (c35(i,j+1) + 2*c35(i,j) + c35(i-1,j))/4) * value_dvz_dz + &
-                    ( (c55(i,j+1) + 2*c55(i,j) + c55(i-1,j))/4) * &
-                            (value_dvz_dx + value_dvx_dz) ) * DT
+                    (   c15(i,j)  * value_dvx_dx + & 
+                        c35(i,j)  * value_dvz_dz + &
+                        c55(i,j) * (value_dvz_dx + value_dvx_dz) ) * DT
         
                 enddo
             enddo
@@ -1424,29 +1421,20 @@ module cpmlfdtd
                         dvy_dz = dvy_dz / K_z(k) + memory_dvy_dz(i,j,k)
 
                         sigmaxx(i,j,k) = sigmaxx(i,j,k) + &
-                        ( ( ( c11(i+1,k) + c11(i,k) + c11(i,k-1) + c11(i+1,k-1))/4 ) * dvx_dx + &
-                        ( ( c12(i+1,k) + c12(i,k) + c12(i,k-1) + c12(i+1,k-1))/4 ) * dvy_dy + &
-                        ( ( c13(i+1,k) + c13(i,k) + c13(i,k-1) + c13(i+1,k-1))/4 ) * dvz_dz + &
-                        ( ( c14(i+1,k) + c14(i,k) + c14(i,k-1) + c14(i+1,k-1))/8 ) * (dvy_dz + dvz_dy) + &
-                        ( ( c15(i+1,k) + c15(i,k) + c15(i,k-1) + c15(i+1,k-1))/8 ) * (dvx_dz + dvz_dx) + &
-                        ( ( c16(i+1,k) + c16(i,k) + c16(i,k-1) + c16(i+1,k-1))/8 ) * (dvx_dy + dvz_dy) ) * dt
+                        (   c11(i,k) * dvx_dx + c12(i,k) * dvy_dy + c13(i,k) * dvz_dz + &
+                            c14(i,k) * (dvy_dz + dvz_dy) + c15(i,k) * (dvx_dz + dvz_dx) + &
+                            c16(i,k) * (dvx_dy + dvz_dy) ) * dt
 
                         ! Full 3D will need a gradient in the y-direction
                         sigmayy(i,j,k) = sigmayy(i,j,k) + &
-                        ( ( ( c12(i+1,k) + c12(i,k) + c12(i,k-1) + c12(i+1,k-1))/4 ) * dvx_dx + &
-                        ( ( c22(i+1,k) + c22(i,k) + c22(i,k-1) + c22(i+1,k-1))/4 ) * dvy_dy + &
-                        ( ( c23(i+1,k) + c23(i,k) + c23(i,k-1) + c23(i+1,k-1))/4 ) * dvz_dz + &
-                        ( ( c24(i+1,k) + c24(i,k) + c24(i,k-1) + c24(i+1,k-1))/8 ) * (dvy_dz + dvz_dy) + &
-                        ( ( c25(i+1,k) + c25(i,k) + c25(i,k-1) + c25(i+1,k-1))/8 ) * (dvx_dz + dvz_dx) + &
-                        ( ( c26(i+1,k) + c26(i,k) + c26(i,k-1) + c26(i+1,k-1))/8 ) * (dvy_dx + dvx_dy) ) * dt
+                        (   c12(i,k) * dvx_dx + c22(i,k) * dvy_dy + c23(i,k) * dvz_dz + &
+                            c24(i,k) * (dvy_dz + dvz_dy) + c25(i,k) * (dvx_dz + dvz_dx) + &
+                            c26(i,k) * (dvy_dx + dvx_dy) ) * dt
 
                         sigmazz(i,j,k) = sigmazz(i,j,k) + &
-                        ( ( ( c13(i+1,k) + c13(i,k) + c13(i,k-1) + c13(i+1,k-1))/4 ) * dvx_dx + &
-                        ( ( c23(i+1,k) + c23(i,k) + c23(i,k-1) + c23(i+1,k-1))/4 ) * dvy_dy + &
-                        ( ( c33(i+1,k) + c33(i,k) + c33(i,k-1) + c33(i+1,k-1))/4 ) * dvz_dz + &
-                        ( ( c34(i+1,k) + c34(i,k) + c34(i,k-1) + c34(i+1,k-1))/8 ) * (dvy_dz + dvz_dy) + &
-                        ( ( c35(i+1,k) + c35(i,k) + c35(i,k-1) + c35(i+1,k-1))/8 ) * (dvx_dz + dvz_dx) + &
-                        ( ( c36(i+1,k) + c36(i,k) + c36(i,k-1) + c36(i+1,k-1))/8 ) * (dvy_dx + dvx_dy) ) * dt
+                        (   c13(i,k) * dvx_dx + c23(i,k) * dvy_dy + c33(i,k) * dvz_dz + &
+                            c34(i,k) * (dvy_dz + dvz_dy) + c35(i,k) * (dvx_dz + dvz_dx) + &
+                            c36(i,k) * (dvy_dx + dvx_dy) ) * dt
 
                     enddo
                 enddo
@@ -1488,12 +1476,9 @@ module cpmlfdtd
                         dvy_dz = dvy_dz / K_z_half(k) + memory_dvy_dz(i,j,k)
 
                         sigmaxy(i,j,k) = sigmaxy(i,j,k) + &
-                        ( ( ( c16(i,k) + c16(i-1,k) + c16(i,k-1) + c16(i-1,k-1))/4 ) * dvx_dx + &
-                        ( ( c26(i,k) + c26(i-1,k) + c26(i,k-1) + c26(i-1,k-1))/4 ) * dvy_dy + &
-                        ( ( c36(i,k) + c36(i-1,k) + c36(i,k-1) + c36(i-1,k-1))/4 ) * dvz_dz + &
-                        ( ( c46(i,k) + c46(i-1,k) + c46(i,k-1) + c46(i-1,k-1))/8 ) * (dvz_dy + dvy_dz) + &
-                        ( ( c56(i,k) + c56(i-1,k) + c56(i,k-1) + c56(i-1,k-1))/8 ) * (dvz_dx + dvx_dz) + &
-                        ( ( c66(i,k) + c66(i-1,k) + c66(i,k-1) + c66(i-1,k-1))/8 ) * (dvy_dx + dvx_dy) ) * dt
+                        (   c16(i,k) * dvx_dx + c26(i,k) * dvy_dy + c36(i,k) * dvz_dz + &
+                            c46(i,k) * (dvz_dy + dvy_dz) + c56(i,k) * (dvz_dx + dvx_dz) + &
+                            c66(i,k) * (dvy_dx + dvx_dy) ) * dt
 
                     enddo
                 enddo
@@ -1535,12 +1520,9 @@ module cpmlfdtd
                         dvy_dz = dvy_dz / K_z_half(k) + memory_dvy_dz(i,j,k)
 
                         sigmaxz(i,j,k) = sigmaxz(i,j,k) + &
-                        ( ( ( c15(i,k+1) + c15(i,k) + c15(i-1,k) + c15(i-1,k+1))/4 ) * dvx_dx + &
-                        ( ( c25(i,k+1) + c25(i,k) + c25(i-1,k) + c25(i-1,k+1))/4 ) * dvy_dy + &
-                        ( ( c35(i,k+1) + c35(i,k) + c35(i-1,k) + c35(i-1,k+1))/4 ) * dvz_dz + &
-                        ( ( c45(i,k+1) + c45(i,k) + c45(i-1,k) + c45(i-1,k+1))/8 ) * ( dvx_dz + dvz_dx) + &
-                        ( ( c55(i,k+1) + c55(i,k) + c55(i-1,k) + c55(i-1,k+1))/8 ) * ( dvx_dz + dvz_dx) + &
-                        ( ( c56(i,k+1) + c56(i,k) + c56(i-1,k) + c56(i-1,k+1))/8 ) * ( dvx_dy + dvy_dx) ) * dt 
+                            (   c15(i,k) * dvx_dx + c25(i,k) * dvy_dy + c35(i,k) * dvz_dz + &
+                                c45(i,k) * ( dvx_dz + dvz_dx) + c55(i,k) * ( dvx_dz + dvz_dx) + &
+                                c56(i,k) * ( dvx_dy + dvy_dx) ) * dt 
 
                     enddo
                 enddo
@@ -1580,12 +1562,9 @@ module cpmlfdtd
                         dvy_dz = dvy_dz / K_z_half(k) + memory_dvy_dz(i,j,k)
 
                         sigmayz(i,j,k) = sigmayz(i,j,k)  + &
-                        ( ( ( c14(i+1,k) + c14(i,k) + c14(i,k+1) + c14(i+1,k+1))/4 ) * dvx_dx + &
-                        ( ( c24(i+1,k) + c24(i,k) + c24(i,k+1) + c24(i+1,k+1))/4 ) * dvy_dy + &
-                        ( ( c34(i+1,k) + c34(i,k) + c34(i,k+1) + c34(i+1,k+1))/4 ) * dvz_dz + &
-                        ( ( c44(i+1,k) + c44(i,k) + c44(i,k+1) + c44(i+1,k+1))/8 ) * ( dvy_dz + dvz_dy) + &
-                        ( ( c45(i+1,k) + c45(i,k) + c45(i,k+1) + c45(i+1,k+1))/8 ) * ( dvx_dz + dvz_dx) + &
-                        ( ( c46(i+1,k) + c46(i,k) + c46(i,k+1) + c46(i+1,k+1))/8 ) * ( dvy_dx + dvx_dy) ) * dt 
+                            (   c14(i,k) * dvx_dx + c24(i,k) * dvy_dy + c34(i,k) * dvz_dz + &
+                                c44(i,k) * ( dvy_dz + dvz_dy) + c45(i,k) * ( dvx_dz + dvz_dx) + &
+                                c46(i,k) * ( dvy_dx + dvx_dy) ) * dt 
                     enddo
                 enddo
             enddo
@@ -1615,8 +1594,8 @@ module cpmlfdtd
                         dsigmaxz_dz = dsigmaxz_dz / K_z(k) + memory_dsigmaxz_dz(i,j,k) 
 
                         vx(i,j,k) = vx(i,j,k) * (1 - gamma_x(i,j) ) + &
-                        (dsigmaxx_dx + dsigmaxy_dy + dsigmaxz_dz) * &
-                        dt / deltarho !rho(i,k)
+                            (dsigmaxx_dx + dsigmaxy_dy + dsigmaxz_dz) * &
+                            dt / deltarho !rho(i,k)
                     enddo
                 enddo
 
@@ -1638,8 +1617,8 @@ module cpmlfdtd
                         dsigmayz_dz = dsigmayz_dz / K_z(k) + memory_dsigmayz_dz(i,j,k)
 
                         vy(i,j,k) = vy(i,j,k) * (1 - gamma_y(i,j) )+ &
-                        (dsigmaxy_dx + dsigmayy_dy + dsigmayz_dz) * &
-                        dt / deltarho !rho(i,k)
+                            (dsigmaxy_dx + dsigmayy_dy + dsigmayz_dz) * &
+                            dt / deltarho !rho(i,k)
                     enddo
                 enddo
             enddo
@@ -1663,8 +1642,8 @@ module cpmlfdtd
                         dsigmazz_dz = dsigmazz_dz / K_z_half(k) + memory_dsigmazz_dz(i,j,k)
 
                         vz(i,j,k) = vz(i,j,k) * (1 - gamma_z(i,j) )+ &
-                        (dsigmaxz_dx + dsigmayz_dy + dsigmazz_dz) * &
-                        dt / deltarho !rho(i,k)
+                            (dsigmaxz_dx + dsigmayz_dy + dsigmazz_dz) * &
+                            dt / deltarho !rho(i,k)
 
                     enddo
                 enddo
