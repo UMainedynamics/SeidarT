@@ -2,13 +2,13 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import numpy.f2py 
 
-class CustomBuildExt(build_ext):
-    def build_extensions(self):
-        # Add the Fortran compiler
-        for ext in self.extensions:
-            if ext.name == 'seidart.fortran.cpmlfdtd':
-                ext.extra_f90_compile_args = ['-std=f95']
-        super().build_extensions()
+# class CustomBuildExt(build_ext):
+#     def build_extensions(self):
+#         # Add the Fortran compiler
+#         for ext in self.extensions:
+#             if ext.name == 'seidart.fortran.cpmlfdtd':
+#                 ext.extra_f90_compile_args = ['-std=f95']
+#         super().build_extensions()
 
 setup(
     name='seidart',
