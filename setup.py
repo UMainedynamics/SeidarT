@@ -41,6 +41,7 @@ def configuration():
             Extension(
                 name='seidart.fortran.cpmlfdtd',
                 sources=['src/seidart/fortran/cpmlfdtd.f95'],
+                extra_f90_compile_args=['-std=f95'],
                 # extra_f90_compile_args=['-m64'],
             ),
             # Uncomment if needed
