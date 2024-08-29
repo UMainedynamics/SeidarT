@@ -1,10 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "numpy"
-]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "wheel", "meson-python"]
+build-backend = "mesonpy"
 
 
 [project]
@@ -22,8 +18,6 @@ maintainers = [
     { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
 ]
-
-
 dependencies = [
     "numpy",
     "scipy",
@@ -46,6 +40,21 @@ classifiers = [
     "Development Status :: 4 - Beta",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = [
+    "seidart",
+    "seidart.fortran", 
+    "seidart.routines", 
+    "seidart.simulations", 
+    "seidart.visualization"
+]
+
+[tool.setuptools.extension]
+# Define Fortran extension
+name = "seidart.fortran.cpmlfdtd"
+sources = ["src/seidart/fortran/cpmlfdtd.f95"]
+
 [project.scripts]
 prjbuild = "seidart.routines.prjbuild:main"
 prjrun = "seidart.routines.prjrun:main"
@@ -59,12 +68,5 @@ im2anim = "seidart.visualization.im2anim:build_animation"
 homepage = "https://github.com/UMainedynamics/SeidarT"
 documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = [
-    "seidart",
-    "seidart.fortran", 
-    "seidart.routines", 
-    "seidart.simulations", 
-    "seidart.visualization"
-]
+# [tool.setuptool_scm]
+# write_to = "seidart/_version.py"

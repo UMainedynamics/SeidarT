@@ -23,7 +23,7 @@ setup(
     ext_modules=[
         Extension(
             name='seidart.fortran.cpmlfdtd',
-            sources=['src/seidart/fortran/cpmlfdtd.f95'],
+            sources=['src/seidart/fortran/cpmlfdtd.f90'],
             include_dirs=[numpy.get_include()],
         ),
     ],

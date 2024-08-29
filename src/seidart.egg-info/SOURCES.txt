@@ -10,8 +10,7 @@ src/seidart.egg-info/entry_points.txt
 src/seidart.egg-info/requires.txt
 src/seidart.egg-info/top_level.txt
 src/seidart/fortran/__init__.py
-src/seidart/fortran/cpmlfdtd.f95
-src/seidart/fortran/orientsynth.f95
+src/seidart/fortran/cpmlfdtd.f90
 src/seidart/routines/__init__.py
 src/seidart/routines/arraybuild.py
 src/seidart/routines/definitions.py
