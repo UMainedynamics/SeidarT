@@ -14,3 +14,4 @@ build/temp.linux-x86_64-cpython-311/
 build/src.linux-x86_64-3.11/seidart/fortran/*
 EXAMPLES/
 dist/
+.pypi_tokens

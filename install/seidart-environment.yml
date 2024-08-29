@@ -19,5 +19,7 @@ dependencies:
   - matplotlib
   - wheel
   - seaborn
+  - meson-python
+  - meson
   - pip:
       - mplstereonet

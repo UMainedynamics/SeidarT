@@ -1,7 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "meson-python"]
+requires = ["setuptools>=61.0", "wheel", "meson-python", "numpy"]
 build-backend = "mesonpy"
-
 
 [project]
 name = "seidart"
@@ -39,6 +38,8 @@ classifiers = [
     "Natural Language :: English",
     "Development Status :: 4 - Beta",
 ]
+homepage = "https://github.com/UMainedynamics/SeidarT"
+documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -64,9 +65,9 @@ rcxdisplay = "seidart.visualization.rcxdisplay:main"
 im2anim = "seidart.visualization.im2anim:build_animation"
 
 # Optionals
-[project.urls]
-homepage = "https://github.com/UMainedynamics/SeidarT"
-documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+# [project.urls]
+# homepage = "https://github.com/UMainedynamics/SeidarT"
+# documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
 # [tool.setuptool_scm]
 # write_to = "seidart/_version.py"

@@ -1,9 +1,0 @@
-numpy
-scipy
-matplotlib
-pandas
-mplstereonet
-pyevtk
-glob2
-dill
-seaborn

@@ -1,12 +1,11 @@
-project('seidart', 'fortran', version : '2.2.3')
+project('seidart', 'fortran', 
+        version : '2.2.3',
+        default_options : ['warning_level=3'])
 
-python = import('python').find_installation('python3')
+py3_mod = import('python3')
+py3_dep = dependency('python3')
 
-# Define the Fortran source files
-seidart_sources = files('src/seidart/fortran/cpmlfdtd.f95')
-
-# Build the Python extension module directly, without creating a separate static library
-python.extension_module('seidart.fortran.cpmlfdtd',
-    sources: seidart_sources,
-    install: true,
+py3_mod.extension_module('seidart',
+    'src/seidart/fortran/cpmlfdtd.f95',
+    dependencies : py3_dep
 )
