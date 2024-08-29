@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "meson-python", "numpy"]
-build-backend = "mesonpy"
+requires = ["setuptools", "wheel", "numpy"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "seidart"
@@ -38,8 +38,6 @@ classifiers = [
     "Natural Language :: English",
     "Development Status :: 4 - Beta",
 ]
-homepage = "https://github.com/UMainedynamics/SeidarT"
-documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -51,10 +49,14 @@ packages = [
     "seidart.visualization"
 ]
 
-[tool.setuptools.extension]
-# Define Fortran extension
-name = "seidart.fortran.cpmlfdtd"
-sources = ["src/seidart/fortran/cpmlfdtd.f95"]
+[tool.setuptools.package-data]
+seidart = ["src/seidart/fortran/*.so"]
+# [tool.setuptools.extension]
+# # Define Fortran extension
+# name = "seidart.fortran.cpmlfdtd"
+# sources = ["src/seidart/fortran/cpmlfdtd.f95"]
+
+
 
 [project.scripts]
 prjbuild = "seidart.routines.prjbuild:main"
@@ -65,9 +67,36 @@ rcxdisplay = "seidart.visualization.rcxdisplay:main"
 im2anim = "seidart.visualization.im2anim:build_animation"
 
 # Optionals
-# [project.urls]
-# homepage = "https://github.com/UMainedynamics/SeidarT"
-# documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+[project.urls]
+homepage = "https://github.com/UMainedynamics/SeidarT"
+documentation = "https://umainedynamics.github.io/SeidarT/index.html"
 
 # [tool.setuptool_scm]
 # write_to = "seidart/_version.py"
+
+# ------------------------------------------------------------------------------
+# Copied from Scipy's pyproject.toml
+# [tool.cibuildwheel.linux]
+# manylinux-x86_64-image = "manylinux2014"
+# manylinux-aarch64-image = "manylinux2014"
+# before-build = "bash {project}/tools/wheels/cibw_before_build_linux.sh {project}"
+
+# [tool.cibuildwheel.linux.environment]
+# # /project will be the $PWD equivalent inside the docker used to build the wheel
+# PKG_CONFIG_PATH = "/project/"
+
+# [tool.cibuildwheel.macos]
+# before-build = "bash {project}/tools/wheels/cibw_before_build_macos.sh {project}"
+
+# [tool.cibuildwheel.macos.environment]
+# PKG_CONFIG_PATH = "{project}"
+
+# [tool.cibuildwheel.windows]
+# before-build = "bash {project}/tools/wheels/cibw_before_build_win.sh {project}"
+# repair-wheel-command = "bash ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+
+# [tool.cibuildwheel.windows.environment]
+# # This does not work because pkg-config does not like backslashes,
+# PKG_CONFIG_PATH = "{project}"
+# # do this instead (which will override this setting)
+# # set CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=PWD.replace('\\', '/')
