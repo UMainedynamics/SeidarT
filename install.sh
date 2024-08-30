@@ -38,6 +38,7 @@ echo Installing SeidarT...
 echo "$install_result" | grep -q "Successfully installed"
 if [ $? -eq 0 ]; then
     echo "seidart installed successfully."
+    rm -rf _skbuild/ dist/
 else
     log_with_timestamp "Failed to install seidart."
     log_with_timestamp "$install_result"
