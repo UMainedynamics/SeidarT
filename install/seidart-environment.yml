@@ -19,6 +19,6 @@ dependencies:
   - matplotlib
   - wheel
   - seaborn
-
+  - scikit-build
   - pip:
       - mplstereonet
