@@ -1,0 +1,7 @@
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/cpmlfdtd_build.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/edit_cache.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/rebuild_cache.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/list_install_components.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/install.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/install/local.dir
+/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/CMakeFiles/install/strip.dir

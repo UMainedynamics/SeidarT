@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy"]
+requires = ["setuptools", "scikit-build", "cmake", "ninja", "wheel", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "seidart"
-version = "2.2.3"
+version = "2.3.0"
 license = {file = "LICENSE.txt"}
 description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
 requires-python = ">=3.11"
@@ -50,7 +50,7 @@ packages = [
 ]
 
 [tool.setuptools.package-data]
-seidart = ["src/seidart/fortran/*.so"]
+seidart = ["fortran/*.so"]
 # [tool.setuptools.extension]
 # # Define Fortran extension
 # name = "seidart.fortran.cpmlfdtd"

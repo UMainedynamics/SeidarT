@@ -42,13 +42,6 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Activate Miniconda
-# echo "Installing Mamba into base environment"
-# source "$HOME/miniconda3/bin/activate"
-
-# # Install Mamba from Conda-Forge
-# conda install mamba -n base -c conda-forge
-# echo "Mamba installed."
 
 # -----------------------------------------------------------------------------
 # Activate conda

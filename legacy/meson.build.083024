@@ -1,0 +1,18 @@
+project('seidart', 'fortran',
+  version: '2.2.3',
+  default_options: ['buildtype=release'])
+
+# Print the prefix to see where Meson is installing files
+message('Install prefix is: ' + get_option('prefix'))
+
+# Source files for the cpmlfdtd module
+srcs = files('src/seidart/fortran/cpmlfdtd.f95')
+
+# Compile the Fortran source files into a shared library
+cpmlfdtd_lib = shared_library('cpmlfdtd', srcs,
+  install: true,
+  version: '2.2.3',
+  # Specify the directory where the shared library should be installed
+  # Typically, Fortran extensions for Python should be installed in the site-packages directory
+  install_dir: join_paths(get_option('prefix'), 'lib', 'python3.11', 'site-packages', 'seidart')
+)
