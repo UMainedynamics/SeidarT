@@ -211,7 +211,7 @@ PYTHON_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.1
 PYTHON_LIBRARY:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/libpython3.11.so
 
 //No help, variable specified on the command line.
-PYTHON_VERSION_STRING:STRING=3.11.9
+PYTHON_VERSION_STRING:STRING=3.11.8
 
 //No help, variable specified on the command line.
 Python3_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python

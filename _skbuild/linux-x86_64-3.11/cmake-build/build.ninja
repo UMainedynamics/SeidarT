@@ -122,8 +122,8 @@ build CMakeFiles/cpmlfdtd_build | ${cmake_ninja_workdir}CMakeFiles/cpmlfdtd_buil
 #############################################
 # Custom command for cpmlfdtd.cpython-311-x86_64-linux-gnu.so
 
-build cpmlfdtd.cpython-311-x86_64-linux-gnu.so | ${cmake_ninja_workdir}cpmlfdtd.cpython-311-x86_64-linux-gnu.so: CUSTOM_COMMAND
-  COMMAND = cd /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build && /home/sisyphus/miniconda3/envs/seidart/bin/python -m numpy.f2py -m cpmlfdtd -c
+build cpmlfdtd.cpython-311-x86_64-linux-gnu.so | ${cmake_ninja_workdir}cpmlfdtd.cpython-311-x86_64-linux-gnu.so: CUSTOM_COMMAND /home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd.f95
+  COMMAND = cd /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build && /home/sisyphus/miniconda3/envs/seidart/bin/python -m numpy.f2py -m cpmlfdtd -c /home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd.f95
   DESC = Generating cpmlfdtd.cpython-311-x86_64-linux-gnu.so
   restat = 1
 

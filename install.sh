@@ -5,9 +5,14 @@ log_with_timestamp() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> install_log.txt
 }
 
+echo Uninstalling SeidarT if it has been installed and removing any previous wheels.
+
 # Uninstall the existing seidart package and clean build directories
 pip uninstall seidart 
+
 rm -rf _skbuild/ dist/ 
+
+echo Building the wheels...
 
 # Build the wheel package
 build_result=$(python setup.py bdist_wheel 2>&1)
@@ -26,6 +31,8 @@ else
     wheel=`ls dist/*.whl`
     install_result=$(pip install "$wheel" 2>&1)
 fi
+
+echo Installing SeidarT...
 
 # Check if installation was successful
 echo "$install_result" | grep -q "Successfully installed"
