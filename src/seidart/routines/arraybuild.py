@@ -228,8 +228,6 @@ class Array:
             all_files = glob(
                 self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '..dat'
             )
-        print(len(self.receiver_xyz))
-        print(self.receiver_xyz.ndim)
         all_files.sort()
         m = len(all_files)
         if len(self.receiver_xyz) == 1:
@@ -249,7 +247,6 @@ class Array:
         
         if self.domain.dim == 2.5:
             for i in range(m):
-                print(i)
                 npdat = read_dat(
                     all_files[i], 
                     self.channel, 

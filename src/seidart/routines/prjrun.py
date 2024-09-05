@@ -728,7 +728,6 @@ def runelectromag(
     )
     direction = ['x', 'y', 'z']
     # Compute CPML
-    print(direction)
     print('computing cpml')
 
     for d in direction:
