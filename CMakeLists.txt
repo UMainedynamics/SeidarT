@@ -8,7 +8,8 @@ set(f2py_module_name "cpmlfdtd")
 set(fortran_src_file "${CMAKE_CURRENT_SOURCE_DIR}/src/seidart/fortran/cpmlfdtd.f95")
 
 # Define the correct output file name
-set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}.cpython-311-x86_64-linux-gnu.so")
+#set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}.cpython-311-x86_64-linux-gnu.so")
+set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_name}.cpython-311-darwin.so")
 
 add_custom_command(
     OUTPUT ${generated_module_file}
