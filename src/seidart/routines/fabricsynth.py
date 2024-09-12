@@ -1,6 +1,7 @@
 import numpy as np 
 import pandas as pd
 import matplotlib.pyplot as plt 
+from matplotlib.colors import ListedColormap, BoundaryNorm
 import mplstereonet 
 from scipy.stats import norm, uniform, poisson, skewnorm
 from scipy.spatial.transform import Rotation as R
@@ -23,7 +24,8 @@ class Fabric:
         """
         self.output_filename = output_filename
         self.trends = np.array([0]) 
-        self.plunges = np.array([0]) 
+        self.plunges = np.array([0])
+        self.orientations = np.array([0])
         self.density = None 
         self.xedges = None 
         self.yedges = None 
@@ -53,14 +55,14 @@ class Fabric:
         
         :param n_colors: The number of colors to be used to compute the 
             colormap. Default is 100.
-        :type n_colors: int 
+        :type n_colors: int
         '''
         palette = sns.color_palette(self.cmap_name, n_colors)
         self.cmap = sns.blend_palette(palette, as_cmap = True)
-        self.cmap.set_under('white', 1.)
+        self.cmap.set_under('white', 1.0)
     
     # --------------------------------------------------------------------------
-    def trend_plunge_to_rotation_matrix(self, trend, plunge): 
+    def trend_plunge_to_rotation_matrix(self, trend, plunge, orientation): 
         '''
         Compute the rotation matrix from a trend and plunge pair. 
         
@@ -68,6 +70,9 @@ class Fabric:
         :type trend: float 
         :param plunge: The plunge value in degrees  
         :type plunge: float 
+        :param orientation: The orientation/rotation angle around the axis of 
+            the plunge.
+        :type orientation: float
         
         :return: rotation_matrix
         :rtype: np.ndarray
@@ -75,23 +80,30 @@ class Fabric:
         # Convert trend and plunge to radians
         trend_rad = np.radians(trend)
         plunge_rad = np.radians(plunge)
+        orient_rad = np.radians(orientation)
         
         # Rotation matrix for trend (rotation around Z-axis)
-        Rz = np.array([
+        Rt = np.array([
             [np.cos(trend_rad), -np.sin(trend_rad), 0],
             [np.sin(trend_rad), np.cos(trend_rad), 0],
             [0, 0, 1]
         ])
         
         # Rotation matrix for plunge (rotation around X-axis)
-        Rx = np.array([
+        Rp = np.array([
             [1, 0, 0],
             [0, np.cos(plunge_rad), -np.sin(plunge_rad)],
             [0, np.sin(plunge_rad), np.cos(plunge_rad)]
         ])
-    
+
+        Ro = np.array([
+            [np.cos(orient_rad), -np.sin(orient_rad), 0],
+            [np.sin(orient_rad), np.cos(orient_rad), 0],
+            [0, 0, 1]
+        ])
+        
         # Combined rotation matrix
-        rotation_matrix = Rz @ Rx
+        rotation_matrix = Rt @ Rp @ Ro
         return rotation_matrix
     
     # --------------------------------------------------------------------------
@@ -146,6 +158,15 @@ class Fabric:
                         size=self.params['npts'][ind]
                     )
                 ))
+                self.orientations = np.hstack((
+                    self.orientations, 
+                    skewnorm.rvs(
+                        a=self.params['skew_orientation'][ind], 
+                        loc=self.params['orientation'][ind], 
+                        scale=self.params['orientation_std'][ind], 
+                        size=self.params['npts'][ind]
+                    )
+                ))
             elif self.params['distribution'] == 'uniform':
                 self.trends = np.hstack((
                     self.trends,
@@ -156,10 +177,18 @@ class Fabric:
                     )
                 ))
                 self.plunges = np.hstack((
-                    self.trends,
+                    self.plunges,
                     np.random.uniform(
                         self.params['plunge_low'][ind], 
                         self.params['plunge_high'][ind], 
+                        self.params['npts'][ind]
+                    )
+                ))
+                self.orientations = np.hstack((
+                    self.orientations,
+                    np.random.uniform(
+                        self.params['orientation_low'][ind], 
+                        self.params['orientation_high'][ind], 
                         self.params['npts'][ind]
                     )
                 ))
@@ -172,19 +201,27 @@ class Fabric:
                     )
                 ))
                 self.plunges = np.hstack((
-                    self.trends,
+                    self.plunges,
                     poisson.rvs(
                         mu = self.params['lambda_plunge'][ind], 
+                        size = self.params['npts'][ind]
+                    )
+                ))
+                self.orientations = np.hstack((
+                    self.orientations,
+                    poisson.rvs(
+                        mu = self.params['lambda_orientation'][ind], 
                         size = self.params['npts'][ind]
                     )
                 ))
         
         self.trends = self.trends[1:]
         self.plunges = self.plunges[1:]
+        self.orientations = self.orientations[1:]
     
 
     # --------------------------------------------------------------------------
-    def projection_plot(self, density_sigma = 3):
+    def projection_plot(self, density_sigma = 3, vmin = 1):
         """
         Create the stereonet plot. The axes and figure inputs are useful when 
         creating subplots since replacing empty axes objects with mplstereonet 
@@ -199,31 +236,30 @@ class Fabric:
         # Plot the data using mplstereonet
         self.fig, self.ax = mplstereonet.subplots(figsize = self.figsize)
         
+
         self.cax = self.ax.density_contourf(
             self.trends, self.plunges, levels = self.contour_levels,
             measurement = 'poles', 
             cmap = self.cmap,
             sigma = density_sigma,
             gridsize = (100,100),
-            vmin = 1
+            vmin = vmin
         )
         self.ax.pole(
             self.trends, self.plunges, 
             '.', c = '#050505', markersize = self.marker_size, 
             alpha = self.alpha 
         )
-        # self.ax.set_azimuth_ticks(np.arange(0, 360, 10) )
-        # self.ax.set_longitude_grid(10)
+        
+        # Customize ticks and grid as needed
         self.ax.set_azimuth_ticklabels([])
         self.ax.set_xticks(np.radians(np.arange(-80, 90, 10)))
         self.ax.set_yticks(np.radians(np.arange(0,360,10)))
         self.ax.set_longitude_grid_ends(90)
         self.ax.set_rotation(0)
         self.ax._polar.set_position(self.ax.get_position() )
-        # self.cax = self.ax.imshow(
-        #     self.density#, extent = self.extent, origin = 'lower', cmap = self.cmap
-        # )
         
+        # Add the colorbar
         self.cbar = self.fig.colorbar(self.cax, shrink = 0.5, location = 'bottom' )
         self.ax.grid()
         plt.show()
@@ -237,7 +273,7 @@ class Fabric:
         n = len(self.trends)
         euler_zxz = np.zeros([n, 3])
         for ind in range(n):
-            rotmat = self.trend_plunge_to_rotation_matrix(self.trends[ind], self.plunges[ind])
+            rotmat = self.trend_plunge_to_rotation_matrix(self.trends[ind], self.plunges[ind], self.orientations[ind])
             euler_zxz[ind,:] = self.rotation_matrix_to_euler_angles(rotmat)
         
         self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
@@ -249,8 +285,11 @@ class Fabric:
         if self.plot:
             self.projection_plot()
 
-# ==============================================================================
-if __name__ == "__main__": 
+# --------------------------------------------------------------------------
+def main():
+    """
+    Main function for console entry point. See help with 'fabricsynth -h'.
+    """
     parser = argparse.ArgumentParser(
         description = """"""
     )
@@ -357,6 +396,10 @@ if __name__ == "__main__":
         raise ValueError("Unsupported distribution type")  
     
     Fabric(params, plot)
+
+# ==============================================================================
+if __name__ == "__main__": 
+    main()
     
 # Example usage
 # distribution = 'bimodal'  # Change to 'normal', 'uniform', 'poisson', or 'bimodal'

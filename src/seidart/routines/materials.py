@@ -256,6 +256,13 @@ def get_seismic(
 
             # Calculate the hill average 
             C = (cvoigt + creuss)/2
+            
+            # The stiffness matrix needs to be positive definite which means all
+            # of the eigenvalues must be positive
+            eigenvalues, eigenvectors = np.linalg.eigh(C)
+            if np.sum(eigenvalues <= 0) > 0:
+                print('Stiffness tensor is not positive definite.')
+            
         elif not anisotropic[ind] and material_name[ind] == 'ice1h':
             print('Computing the homogeneous stiffness coefficients.')
             C = ice_stiffness(temp[ind], 0.1)
@@ -368,6 +375,11 @@ def get_perm(
             # Calculate the hill average 
             permittivity = (pvoigt + preuss)/2
             
+            # Check to make sure the permittivity tensor is positive definite
+            eigenvalues, eigenvectors = np.linalg.eigh(permittivity)
+            if np.sum(eigenvalues <= 0) > 0:
+                print('Permittivity tensor is not positive definite.')
+                
         tensor[ind, :] = np.array(
             [
                 ind,
