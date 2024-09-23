@@ -105,7 +105,7 @@ class Domain:
             print('\n Domain inputs are not satisfied. I can"t go on anymore. \n')
             # quit()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 class Material:
     """
@@ -214,7 +214,7 @@ class Material:
                 print('No .ANG file specified for anisotropic material')
     
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class Model:
     """
     A class to manage the simulation model configuration.
@@ -333,7 +333,7 @@ class Model:
         if self.y and not self.phi:
             self.phi = 0
         
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class AnimatedGif:
     """
     A class to create an animated GIF from a series of images.
@@ -428,6 +428,7 @@ class AnimatedGif:
         else:
             animation.save(filename, dpi = 300, writer = 'imagemagick')
 
+# ------------------------------------------------------------------------------
 def kband_check(modelclass, domain):
     '''
     Check to make sure the discretization values of the domain satisfy the 
@@ -476,7 +477,8 @@ def kband_check(modelclass, domain):
             f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
         )
 
-# -------------------------- Function Definitions -----------------------------
+
+# -------------------------- Function Definitions ------------------------------
 def read_dat(
         fn: str, 
         channel: str, 
@@ -588,7 +590,7 @@ def image2int(image_filename: str) -> np.ndarray:
 
     return rgb_int.astype(int)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # After computing tensor coefficients we want to append them to the given text
 # file. In order to do this, we need to create a new file then move it to the
 # original file
@@ -718,10 +720,10 @@ def append_coefficients(
     # Replace the original project file with the new file
     call('mv ' + newfile + ' ' + prjfile, shell=True)
 
-# =============================================================================
-# ========================= Read/Assign Project File ==========================
-# =============================================================================
-# -----------------------------------------------------------------------------
+# ==============================================================================
+# ========================= Read/Assign Project File ===========================
+# ==============================================================================
+# ------------------------------------------------------------------------------
 def loadproject(
         project_file: str, 
         domain: Domain, material: Material, seismic: Model, electromag: Model
@@ -914,7 +916,7 @@ def loadproject(
     return domain, material, seismic, electromag
 
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Make sure variables are in the correct type for Fortran
 def prepme(
         model_object: Model, 
@@ -978,13 +980,13 @@ def prepme(
 
     return(model_object, domain)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Append coefficients
 def coefs2prj(model_object, material, domain, modeltype):
     pass
 
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def airsurf(material: Material, domain: Domain, N: int = 2) -> np.ndarray:
     """
     Generates a gradient matrix to simulate the air surface in a domain, based 
@@ -1063,7 +1065,7 @@ def airsurf(material: Material, domain: Domain, N: int = 2) -> np.ndarray:
 
     return(gradcomp)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def rcxgen(
         rgb: list, 
         domain: Domain, material: Material, 
@@ -1108,8 +1110,8 @@ def rcxgen(
     return(xyz)
 
 
-# ============================== Source Functions =============================
-# -----------------------------------------------------------------------------
+# ============================= Source Functions ===============================
+# ------------------------------------------------------------------------------
 def coherdt(
         alpha: float, 
         v: float, 
@@ -1170,7 +1172,7 @@ def coherdt(
     dt = x * np.sin( np.deg2rad(alpha) ) / v
     return(dt)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def coherstf(
         timediff: np.ndarray, 
         source_function: np.ndarray, 
@@ -1225,7 +1227,7 @@ def coherstf(
     cpmlmat[cpml:,cpml:,:] = sfmat[:,:,:]
     cpmlmat.T.tofile('sourcefunctionmatrix.dat')
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def stfvec2mat(
         source_function: np.ndarray, 
         xind: int, zind: int, 
@@ -1265,7 +1267,7 @@ def stfvec2mat(
     cpmlmat[cpml:,cpml:,:] = sfmat[:,:,:]
     cpmlmat.T.tofile('sourcefunctionmatrix.dat')
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def movingsrc(sf: np.ndarray, txlocs: np.ndarray) -> None:
     """
     Simulates a moving source given a stationary source time function.
@@ -1280,7 +1282,7 @@ def movingsrc(sf: np.ndarray, txlocs: np.ndarray) -> None:
     """
     pass  # Implementation yet to be done or specified.
 
-# ----------------------------- Plotting Functions ----------------------------
+# ----------------------------- Plotting Functions -----------------------------
 def indvar(
         model_object: Model, domain: Domain
     ) -> tuple[np.ndarray, Optional[np.ndarray], np.ndarray, np.ndarray]:

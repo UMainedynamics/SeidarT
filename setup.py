@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='seidart',
-    version='2.3.1',
+    version='2.3.2',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     include_package_data=True,

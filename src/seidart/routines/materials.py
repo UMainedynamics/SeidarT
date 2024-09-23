@@ -21,6 +21,7 @@ __all__ = [
     'read_ang',
     'rotator_zxz',
     'bond',
+    'highfreq_stability_conditions',
     'fujita_complex_permittivity'
 ]
 
@@ -262,6 +263,10 @@ def get_seismic(
             eigenvalues, eigenvectors = np.linalg.eigh(C)
             if np.sum(eigenvalues <= 0) > 0:
                 print('Stiffness tensor is not positive definite.')
+            else:
+                print('Stiffness tensor is positive definite')
+            
+            cond1, cond2, cond3 = highfreq_stability_conditions(C)
             
         elif not anisotropic[ind] and material_name[ind] == 'ice1h':
             print('Computing the homogeneous stiffness coefficients.')
@@ -303,7 +308,7 @@ def get_perm(
     """
 
     #!!!!! Use the material class as an input since it will have all of the values that you need instead of inputting all of them 
-    material.temp
+    # material.temp
     
     m = len(material.temp)
     # We will always compute the complex tensor. 
@@ -349,7 +354,7 @@ def get_perm(
             )[1]
         
         if material.is_anisotropic[ind]:
-            euler = read_ang(angfile[ind])
+            euler = read_ang(material.angfiles[ind])
             p = len(euler[:,0])
             
             pvoigt = np.zeros([3,3])
@@ -928,6 +933,32 @@ def bond(R: np.ndarray) -> np.ndarray:
     ]
 
     return M
+
+# ------------------------------------------------------------------------------
+def highfreq_stability_conditions(T):
+    """
+    This is a check to make sure that no numerical instabilities or unreal wave 
+    modes are generated. See Bécache (2003) and Komatitsch (2007) for more 
+    details.
+    
+    :param T: This is either a 2nd order (3-by-3) or 4th order (6-by-6) tensor 
+    :type T: np.ndarray
+    :return: The stability condition values 
+    :rtype: tuple
+    """
+    cond1 = (( T[0,1] + T[2,2] )**2 - T[0,0] * (T[1,1] - T[2,2] )) * \
+        (( T[0,1]+T[2,2] )**2 + T[2,2]*(T[1,1] - T[2,2] ))
+    cond2 = ( T[0,1] + 2 * T[2,2] )**2 - T[0,0]*T[1,1]
+    cond3 = ( T[0,1] + T[2,2] )**2 - T[0,0]*T[2,2] - T[2,2]**2
+
+    if cond1 > 0:
+        print('Failed to pass high frequency stability condition 1.')
+    if cond2 > 0:
+        print('Failed to pass high frequency stability condition 2.')
+    if cond3 > 0:
+        print('Failed to pass high frequency stability condition 3.')
+
+    return cond1, cond2, cond3 
 
 # -----------------------------------------------------------------------------
 def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):

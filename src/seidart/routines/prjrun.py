@@ -29,6 +29,10 @@ NPA = 2  # Additional numerical parameter for CPML
 kappa_max = 5  # Max value for CPML parameter
 Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
+# Courant-Friedrichs-Levy condition 
+CFL = 1/np.sqrt(3)
+
+
 # ============================ Create the objects ==============================
 # Let's initiate the domain and check to make sure everything is good to go
 def domain_initialization(
@@ -102,6 +106,14 @@ def status_check(
                               Defaults to True.
     :type append_to_prjfile: bool
     """
+    global CFL
+    
+    # Set the CFL to its max value if it exceeds the 
+    if domain.dim == 2.5:
+        CFL = np.min([CFL, 1/np.sqrt(3)])
+    else:
+        CFL = np.min([CFL, 1/np.sqrt(2)])
+    
     if modelclass.exit_status == 0 and \
         material.material_flag and \
             append_to_prjfile:
@@ -129,7 +141,7 @@ def status_check(
             # correspond to the same material.
             ind = np.where(tensor.max() == tensor)
             max_rho = tensor[ ind[0][0], -1]
-            modelclass.dt = 0.7 * np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
+            modelclass.dt = CFL * np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * tensor.max()/max_rho )
             append_coefficients(prjfile, tensor, CP = 'C', dt = modelclass.dt)
         else:
             print('Computing the permittivity and conductivity coefficients.')
@@ -138,8 +150,8 @@ def status_check(
                 material, modelclass
             )
             modelclass.tensor_coefficients = tensor
-            modelclass.dt = np.min([domain.dx, domain.dz]) / \
-                (2.0 * clight/ \
+            modelclass.dt = CFL * np.min([domain.dx, domain.dz]) / \
+                ( clight/ \
                     np.sqrt(np.min(
                         [
                             tensor[:,1].real.astype(float).min(), 
@@ -227,7 +239,7 @@ def cpmlcompute(
         # We will use the maximum permittivity coefficient and assume that the 
         # magnetic permeability is 1. We can use a different value
         sig_max = sig_opt_scalar * \
-            ((NP + 1) / (dx * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
+            ((NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
         alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
             sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
