@@ -12,12 +12,12 @@ set(fortran_src_file "${CMAKE_CURRENT_SOURCE_DIR}/src/seidart/fortran/cpmlfdtd.f
 set(osname "${CMAKE_SYSTEM_NAME}") 
 string(TOLOWER ${osname} osname_lower)
 set(arch ${CMAKE_SYSTEM_PROCESSOR})
-set(basefile "${f2py_module_name}.cpython-311-${arch}-${osname_lower}")
+set(basefile "${f2py_module_name}.cpython-311")
 # We need support for Linux, and MacOS from Monterey to Sequoia
 if(${osname_lower} STREQUAL "linux")
-    set(filename "${basefile}-gnu.so")
+    set(filename "${basefile}-${arch}-${osname_lower}-gnu.so")
 else()
-    set(filename "${basefile}.so")
+    set(filename "${basefile}-${osname_lower}.so")
 endif()
 
 set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${filename}")

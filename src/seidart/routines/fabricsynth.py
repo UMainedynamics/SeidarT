@@ -23,8 +23,10 @@ class Fabric:
         
         """
         self.output_filename = output_filename
-        self.trends = np.array([0]) 
-        self.plunges = np.array([0])
+        self.trends = np.array([0]) # c-axes trends
+        self.plunges = np.array([0]) # c-axes plunges
+        self.a_trends = None # a-axes trends
+        self.a_plunges = None # a-axes plunges
         self.orientations = np.array([0])
         self.density = None 
         self.xedges = None 
@@ -221,7 +223,13 @@ class Fabric:
     
 
     # --------------------------------------------------------------------------
-    def projection_plot(self, density_sigma = 3, vmin = 1):
+    def projection_plot(
+            self, 
+            density_sigma = 3, 
+            vmin = 1, 
+            a_axes = False, 
+            colorbar_location = 'bottom'
+        ):
         """
         Create the stereonet plot. The axes and figure inputs are useful when 
         creating subplots since replacing empty axes objects with mplstereonet 
@@ -233,12 +241,17 @@ class Fabric:
         :type density_sigma: float 
          
         """
+        if a_axes:
+            trends = self.a_trends.copy() 
+            plunges = self.a_plunges.copy()
+        else:
+            trends = self.trends.copy() 
+            plunges = self.plunges.copy() 
+        
         # Plot the data using mplstereonet
         self.fig, self.ax = mplstereonet.subplots(figsize = self.figsize)
-        
-
         self.cax = self.ax.density_contourf(
-            self.trends, self.plunges, levels = self.contour_levels,
+            trends, plunges, levels = self.contour_levels,
             measurement = 'poles', 
             cmap = self.cmap,
             sigma = density_sigma,
@@ -246,7 +259,7 @@ class Fabric:
             vmin = vmin
         )
         self.ax.pole(
-            self.trends, self.plunges, 
+            trends, plunges, 
             '.', c = '#050505', markersize = self.marker_size, 
             alpha = self.alpha 
         )
@@ -260,8 +273,11 @@ class Fabric:
         self.ax._polar.set_position(self.ax.get_position() )
         
         # Add the colorbar
-        self.cbar = self.fig.colorbar(self.cax, shrink = 0.5, location = 'bottom' )
+        self.cbar = self.fig.colorbar(
+            self.cax, shrink = 0.5, location = colorbar_location 
+        )
         self.ax.grid()
+        
         plt.show()
     
     # --------------------------------------------------------------------------
@@ -270,11 +286,25 @@ class Fabric:
         Compute the euler angles for the z-x-z transform (Bunge's notation). A 
         space delimited file will be produced from the output. 
         """
+        
         n = len(self.trends)
+        self.a_plunges = np.zeros([n])
+        self.a_trends = np.zeros([n])
+        a_local = np.array([1, 0, 0])
         euler_zxz = np.zeros([n, 3])
+        
         for ind in range(n):
             rotmat = self.trend_plunge_to_rotation_matrix(self.trends[ind], self.plunges[ind], self.orientations[ind])
             euler_zxz[ind,:] = self.rotation_matrix_to_euler_angles(rotmat)
+            a_global = rotmat @ a_local
+            # Calculate trend and plunge from global coordinates
+            x, y, z = a_global
+            self.a_plunges[ind] = np.arcsin(z)
+            self.a_trends[ind] = np.arctan2(y, x)
+            
+        # all a-axis plunges and trends need to be in degrees.
+        self.a_plunges = np.degrees(self.a_plunges)
+        self.a_trends = np.degrees(self.a_trends)
         
         self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
         # Write the space delimited text file. 
