@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(seidart LANGUAGES Fortran)
 
-# set(F2PY_EXECUTABLE ${PYTHON_EXECUTABLE} -m numpy.f2py)
 set(module_name "cpmlfdtd")
-
 set(fortran_src_file "${CMAKE_CURRENT_SOURCE_DIR}/src/seidart/fortran/cpmlfdtd.f95")
 
 # -----------------------------------
@@ -14,6 +12,7 @@ string(TOLOWER ${osname} osname_lower)
 set(arch ${CMAKE_SYSTEM_PROCESSOR})
 
 set(basefile "${module_name}.cpython-311")
+
 # We need support for Linux, and MacOS from Monterey to Sequoia
 if(${osname_lower} STREQUAL "linux")
     set(filename "${basefile}-${arch}-${osname_lower}-gnu.so")
@@ -21,12 +20,17 @@ else()
     set(filename "${basefile}-${osname_lower}.so")
 endif()
 
-set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${filename}")
+#set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${filename}")
 #set(generated_module_file "${CMAKE_CURRENT_BINARY_DIR}/${module_name}.cpython-311-darwin.so")
 
 # -----------------------------------
 # Create a shared library from the Fortran source file
-add_library(cpmlfdtd SHARED ${fortran_src_file})
+add_library(${module_name} SHARED ${fortran_src_file})
+
+# Force the output file extension to be .so on macOS
+if(${osname_lower} STREQUAL "darwin")
+    set_target_properties(${module_name} PROPERTIES SUFFIX ".so")
+endif()
 
 # Set the output file name for the shared library
 set_target_properties(cpmlfdtd PROPERTIES OUTPUT_NAME ${filename})
@@ -35,9 +39,4 @@ set_target_properties(cpmlfdtd PROPERTIES OUTPUT_NAME ${filename})
 # Install the generated shared library to the Python package's Fortran folder
 install(TARGETS cpmlfdtd
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python3.11/site-packages/seidart/fortran)
-
-
-
-
-
 
