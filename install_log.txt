@@ -1,0 +1,75 @@
+[2024-09-25 15:28:59] 
+
+--------------------------------------------------------------------------------
+-- Trying 'Ninja' generator
+--------------------------------
+---------------------------
+----------------------
+-----------------
+------------
+-------
+--
+Not searching for unused variables given on the command line.
+-- The C compiler identification is GNU 12.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- The CXX compiler identification is GNU 12.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sisyphus/github/umainedynamics/SeidarT/_cmake_test_compile/build
+--
+-------
+------------
+-----------------
+----------------------
+---------------------------
+--------------------------------
+-- Trying 'Ninja' generator - success
+--------------------------------------------------------------------------------
+
+Configuring Project
+  Working directory:
+    /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build
+  Command:
+    /home/sisyphus/miniconda3/envs/seidart/bin/cmake /home/sisyphus/github/umainedynamics/SeidarT -G Ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-install -DPYTHON_VERSION_STRING:STRING=3.11.8 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPYTHON_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPYTHON_LIBRARY:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/libpython3.11.so -DPython_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DPython3_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython3_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython3_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release
+
+Not searching for unused variables given on the command line.
+-- The Fortran compiler identification is GNU 12.4.0
+-- Detecting Fortran compiler ABI info
+-- Detecting Fortran compiler ABI info - done
+-- Check for working Fortran compiler: /home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gfortran - skipped
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build
+[1/6] Generating cpmlfdtd.cpython-311-x86_64-linux-gnu.so
+FAILED: cpmlfdtd.cpython-311-x86_64-linux-gnu.so /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/cpmlfdtd.cpython-311-x86_64-linux-gnu.so 
+cd /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build && -m -c /home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd.f95
+/bin/sh: line 1: -m: command not found
+[2/6] Building Fortran preprocessed CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd.f95-pp.f95
+ninja: build stopped: subcommand failed.
+Traceback (most recent call last):
+  File "/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/setuptools_wrap.py", line 668, in setup
+    cmkr.make(make_args, install_target=cmake_install_target, env=env)
+  File "/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/cmaker.py", line 696, in make
+    self.make_impl(clargs=clargs, config=config, source_dir=source_dir, install_target=install_target, env=env)
+  File "/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/cmaker.py", line 741, in make_impl
+    raise SKBuildError(msg)
+
+An error occurred while building with CMake.
+  Command:
+    /home/sisyphus/miniconda3/envs/seidart/bin/cmake --build . --target install --config Release --
+  Install target:
+    install
+  Source directory:
+    /home/sisyphus/github/umainedynamics/SeidarT
+  Working directory:
+    /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build
+Please check the install target is valid and see CMake's output for more information.

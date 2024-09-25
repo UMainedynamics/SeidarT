@@ -21,5 +21,6 @@ dependencies:
   - seaborn
   - scikit-build
   - dill 
+  - ninja
   - pip:
       - mplstereonet
