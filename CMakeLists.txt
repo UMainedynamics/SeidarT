@@ -25,7 +25,7 @@ endif()
 
 # -----------------------------------
 # Create a shared library from the Fortran source file
-add_library(${module_name} SHARED ${fortran_src_file})
+add_library(${module_name} MODULE ${fortran_src_file})
 
 # Force the output file extension to be .so on macOS
 if(${osname_lower} STREQUAL "darwin")
