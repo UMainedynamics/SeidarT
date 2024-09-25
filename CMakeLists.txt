@@ -35,7 +35,7 @@ endif()
 # Set the output file name for the shared library
 set_target_properties(${module_name} PROPERTIES 
     PREFIX ""               # No 'lib' prefix
-    SUFFIX ".so"            # Ensure '.so' extension
+    SUFFIX ""            # Ensure '.so' extension
     OUTPUT_NAME ${filename} # Set correct output name
 )
 # -----------------------------------
