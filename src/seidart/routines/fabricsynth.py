@@ -418,7 +418,9 @@ def main():
         params['trend_low'] = trend 
         params['trend_high'] = trend2 
         params['plunge_low'] = plunge 
-        params['plunge_high'] = plunge2 
+        params['plunge_high'] = plunge2
+        params['orientation_low'] = orientation 
+        params['orientation_high'] = orientation2
     elif distribution == 'poisson':
         params['lambda_trend'] = lambda_trend 
         params['lambda_plunge'] = lambda_plunge
