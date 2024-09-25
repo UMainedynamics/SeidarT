@@ -27,11 +27,6 @@ endif()
 # Create a shared library from the Fortran source file
 add_library(${module_name} MODULE ${fortran_src_file})
 
-# Force the output file extension to be .so on macOS
-if(${osname_lower} STREQUAL "darwin")
-    set_target_properties(${module_name} PROPERTIES PREFIX "" SUFFIX ".so")
-endif()
-
 # Set the output file name for the shared library
 set_target_properties(${module_name} PROPERTIES 
     PREFIX ""               # No 'lib' prefix
