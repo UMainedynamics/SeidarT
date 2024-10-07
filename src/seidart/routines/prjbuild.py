@@ -9,271 +9,378 @@ import argparse
 import numpy as np
 import matplotlib.image as mpimg
 from typing import Tuple
+import json 
 
-__all__ = ['prjbuild']
+# __all__ = ['prjbuild']
 
+# ------------------------------------------------------------------------------
+def generate_template(nmats, **kwargs):
+    """
+    """
+    template = {
+        "Domain": {
+            "dim": 2,
+            "nx": None,
+            "ny": 1,
+            "nz": None,
+            "dx": None,
+            "dy": 1,
+            "dz": None,
+            "cpml": 10,
+            "nmats": 5,
+            "image_file": None
+        },
+        "Materials": [
+            {
+                "id": i,
+                "name": None,
+                "rgb": f"{-i}/{-i}/{-i}",
+                "temperature": None,
+                "density": None,
+                "porosity": None,
+                "water_content": None,
+                "is_anisotropic": None,
+                "euler_angles": None
+            } for i in range(nmats)
+        ],
+        "Seismic": [
+            {
+                "Time_Parameters": [
+                    {
+                        "dt": None,
+                        "time_steps": 1
+                    }
+                ],
+                "Attenuation": [
+                    {
+                        "id": i,
+                        "name": None,
+                        "alpha_x": 0.0,
+                        "alpha_y": 0.0,
+                        "alpha_z": 0.0,
+                        "reference_frequency": 1.0
+                    } for i in range(nmats)
+                ],
+                "Source": [
+                    {
+                        "x": 1.0,
+                        "y": 1.0,
+                        "z": 1.0,
+                        "source_frequency": 1.0,
+                        "x-z_rotation": 0,
+                        "x-y_rotation": 0,
+                        "amplitude": 1.0,
+                        "source_type": None
+                    }
+                ],
+                "Stiffness_Coefficients": [
+                    {
+                        "id": i,
+                        "c11": 0.0,
+                        "c12": 0.0,
+                        "c13": 0.0,
+                        "c14": 0.0,
+                        "c15": 0.0,
+                        "c16": 0.0,
+                        "c22": 0.0,
+                        "c23": 0.0,
+                        "c24": 0.0,
+                        "c25": 0.0,
+                        "c26": 0.0,
+                        "c33": 0.0,
+                        "c34": 0.0,
+                        "c35": 0.0,
+                        "c36": 0.0,
+                        "c44": 0.0,
+                        "c45": 0.0,
+                        "c46": 0.0,
+                        "c55": 0.0,
+                        "c56": 0.0,
+                        "c66": 0.0,
+                        "density": 0.0
+                    } for i in range(nmats)
+                ]
+            }
+        ],
+        "Electromagnetic": [
+            {
+                "Time_Parameters": [
+                    {
+                        "dt": None,
+                        "time_steps": None
+                    }
+                ],
+                "Source": [
+                    {
+                        "x": 1.0,
+                        "y": 1.0,
+                        "z": 1.0,
+                        "source_frequency": 1.0,
+                        "x-z_rotation": 0,
+                        "x-y_rotation": 0,
+                        "amplitude": 1.0,
+                        "source_type": None
+                    }
+                ],
+                "Permittivity": [
+                    {
+                        "id": i,
+                        "e11": 0.0,
+                        "e12": 0.0,
+                        "e13": 0.0,
+                        "e22": 0.0,
+                        "e23": 0.0,
+                        "e33": 0.0
+                    } for i in range(nmats)
+                ],
+                "Conductivity": [
+                    {
+                        "id": i,
+                        "s11": 0.0,
+                        "s12": 0.0,
+                        "s13": 0.0,
+                        "s22": 0.0,
+                        "s23": 0.0,
+                        "s33": 0.0
+                    } for i in range(nmats)
+                ]
+            }
+        ]
+    }
+    
+    # Apply updates from **kwargs
+    for kwarg_key, value in kwargs.items():
+        path = parse_kwargs_to_path(kwarg_key)
+        set_value_in_dict(template, path, value)
+    
+    return template
 
-# -------------------------------- String Variables -------------------------------
-new_line = '\n'
-header_comment = """
-# This is a project file template for the SeidarT software. In order to run the
-# model for seismic, electromagnetic or both, the required inputs must be
-#
-# Domain Input Values:
-#	dim 		- STR; either '2' or '2.5'; default is '2'
-#	nx,ny,nz 	- INT; the dimensions of the image. If dim = 2.5, and ny is
-#			  empty then default ny=1
-#	dx,dy,dz	- REAL; the spatial step size for each dimension in meters. If
-#			  dim = 2.5 and dy is empty then default dy=min(dx,dz)
-#
-# Material Input Values:
-#	id 		- INT; the identifier given to each unique rgb value as it
-#			  is read into the computer. It's recommended to use this
-#			  script to make sure it's sorted correctly.
-#	R/G/B 		- STR; the 0-255 values for each color code.
-#	Temperature 	- FLOAT (REAL); temperature in Celsius.
-#	Density 	- FLOAT (REAL); density in kg/m^3
-#	Porosity 	- FLOAT (REAL); percent porosity
-#	Water_Content 	- FLOAT (REAL); percent of pores that contain water
-#	Anisotropic 	- BOOL; whether the material is anisotropic (True) or
-#			  isotropic (False).
-#	ANG_File 	- STR; if Anisotrpic is True then the full path to the
-#			  .ang file is supplied. The .ang file is a delimited text
-#			  file that contains the 3-by-n array of euler rotation
-#			  angles in radians.
-#
-#		or alternatively...
-#	C11-C66 	- FLOAT (REAL); the stiffness coefficients with the appropriate id
-#	E11-E33,S11-S33	- FLOAT (REAL); the permittivity and conductivity coefficients and
-#			  'id' value corresponding to the coefficients along the diagonal
-#			  of their respective tensors.
-#
-#
-# Source Input Values:
-#	dt 		- REAL; dx/(2*maxvelcity)
-#	steps 		- INT; the total number of time steps
-#	x,y,z 		- REAL; locations in meters, +x is to the right, +z is down, +y is into the screen
-#	f0 		- REAL; center frequency for the guassian pulse function if
-#			  'source_file' isn't supplied
-#	theta 		- REAL; source orientation in the x-z plane,
-#	phi 		- REAL; source orientation in the x-y plane for 2.5/3D only,
-#	source_file	- STR; the pointer to the text file that contains the source
-#			  timeseries as a steps-by-1 vector.
-#
-# 	**phi and theta are the rotation angles for spherical coordinates so
-#		x = r sin(theta)cos(phi)
-#		y = r sin(theta)sin(phi)
-#		z = r cos(theta)
-#
-#	Theta is the angle from the z-axis (+ down relative to image), phi is the
-#	angle from x-axis in the x-y plane (+ counterclockwise when viewed from above)
-#
-# Written by Steven Bernsen
-# University of Maine
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+def parse_kwargs_to_path(kwarg_key):
+    """
+    Converts a kwarg like 'Domain_nx' or 'Electromagnetic.Conductivity.s11' into 'Domain.nx' 
+    to handle nested dictionary paths.
+    
+    It also handles array indexing by converting 'Electromagnetic_0_Conductivity_0_s11' into 
+    'Electromagnetic[0].Conductivity[0].s11'.
+    """
+    if '.' in kwarg_key:
+        # If dot notation is used, return it as is
+        return kwarg_key
+    
+    # Handle underscore notation by converting it to dot notation with array indexing
+    keys = kwarg_key.split('_')
+    path = []
+    for key in keys:
+        if key.isdigit():
+            path[-1] = f'{path[-1]}[{key}]'  # Handles array index conversion
+        else:
+            path.append(key)
+    return '.'.join(path)
 
-"""
+# ------------------------------------------------------------------------------
+# Helper function to set a value in a nested dictionary using dot notation
+def set_value_in_dict(data, path, value):
+    keys = path.split('.')
+    d = data
+    for key in keys[:-1]:
+        # Handle list indices if they appear in the path
+        if '[' in key and ']' in key:
+            key, idx = key.split('[')
+            idx = int(idx[:-1])  # Extract index and cast to integer
+            d = d[key][idx]
+        else:
+            d = d[key]
+    # Final key to set the value
+    if '[' in keys[-1] and ']' in keys[-1]:
+        key, idx = keys[-1].split('[')
+        idx = int(idx[:-1])
+        d[key][idx] = value
+    else:
+        d[keys[-1]] = value
 
+# ------------------------------------------------------------------------------
+def set_value_by_id(data, section, id_value, field, value):
+    """
+    Sets a value in a list of dictionaries where the dictionary has a specific `id`.
+    
+    Parameters:
+    - data (dict): The dictionary to update.
+    - section (str): The top-level section to look for the id (e.g., 'Materials' or 'Seismic').
+    - id_value (int): The id to look for.
+    - field (str): The field to update (e.g., 'rgb' or 'Attenuation.alpha_x').
+    - value: The value to set.
+    """
+    # Find the dictionary in the section where 'id' matches id_value
+    for item in data[section]:
+        if item['id'] == id_value:
+            # Split the field if it's a nested field (like 'Attenuation.alpha_x')
+            keys = field.split('.')
+            d = item
+            for key in keys[:-1]:
+                d = d[key]
+            d[keys[-1]] = value
+            break
+
+# ------------------------------------------------------------------------------
+def update_json(template, updates):
+    """
+    Updates the template JSON based on a dictionary of updates where the keys are a mixture of:
+    - dot notation paths
+    - underscore notation paths
+    - tuple notation, where the index or `id` can appear at different positions in the tuple.
+    
+    Parameters:
+    - template (dict): The JSON template to update.
+    - updates (dict): A dictionary where keys are paths (dot/underscore notation) or tuples, 
+                      and values are the new values to set.
+                      
+    # Example updates with tuple, dot, and underscore notation
+    updates = {
+        # Tuple with id at second index
+        ("Materials", 0, "rgb"): "255/0/0",   
+        # Tuple with id at third index
+        ("Seismic", "Attenuation", 1, "alpha_x"): 0.1,  
+        # Dot notation
+        "Domain.nx": 800,  
+        # Underscore notation
+        "Electromagnetic_0_Conductivity_0_s11": 0.002
+    }
+    
+    # Apply the updates
+    updated_template = update_json(template, updates)
+    """
+    for key, value in updates.items():
+        if isinstance(key, tuple):
+            # If it's a tuple, determine the structure of the tuple and handle it accordingly
+            if len(key) == 2:
+                path = '.'.join(key)
+                set_value_in_dict(template, path, value)
+            elif len(key) == 3:
+                # Case 1: (section, id, field) e.g. ("Materials", 0, "rgb")
+                section, id_value, field = key
+                set_value_by_id(template, section, id_value, field, value)
+            elif len(key) == 4:
+                # Case 2: (section, field, id_position, value) where id_position is dynamic
+                section, field, id_value, sub_field = key
+                set_value_by_id(template, section, id_value, f"{field}.{sub_field}", value)
+            else:
+                raise ValueError(f"Unsupported tuple format: {key}")
+        else:
+            # If it's not a tuple, it's a regular dot or underscore notation update
+            path = parse_kwargs_to_path(key)
+            set_value_in_dict(template, path, value)
+    
+    print("Template JSON file updated with the provided values.")
+    return template
 
 # ------------------------ Some Necessary Definitions -------------------------
-
 def image2int(imfilename: str) -> Tuple[np.ndarray, np.ndarray]:
-	"""
-	Converts an image file to a 2D array of integer values representing unique
-	RGB combinations and returns the unique RGB values.
+    """
+    Converts an image file to a 2D array of integer values representing unique
+    RGB combinations and returns the unique RGB values.
 
-	:param imfilename: The path to the image file.
-	:type imfilename: str
-	:return: A tuple containing the 2D array of integer values and the array of unique RGB values.
-	:rtype: Tuple[np.ndarray, np.ndarray]
-	"""
-	# read the image
-	img = mpimg.imread(imfilename)
-	# Convert RGB to a single value
-	rgb_int = np.array(65536*img[:,:,0] +  255*img[:,:,1] + img[:,:,2])
-	# Get the unique values of the image
-	rgb_uni = np.unique(rgb_int)
-	# We want the unique rgb values too
-	rgb = np.zeros( [len(rgb_uni), 3] )
-	# reshape the image. We know it's three channels
-	img_vect = np.zeros( [np.prod(rgb_int.shape), 3] )
-	img_vect[:,0] = np.reshape(img[:, :, 0], np.prod(np.shape(img[:, :, 0]) ) )
-	img_vect[:,1] =	np.reshape(img[:, :, 1], np.prod(np.shape(img[:, :, 1]) ) )
-	img_vect[:,2] =	np.reshape(img[:, :, 2], np.prod(np.shape(img[:, :, 2]) ) )
+    :param imfilename: The path to the image file.
+    :type imfilename: str
+    :return: A tuple containing the 2D array of integer values and the array of unique RGB values.
+    :rtype: Tuple[np.ndarray, np.ndarray]
+    """
+    # read the image
+    img = mpimg.imread(imfilename)
+    # Convert RGB to a single value
+    rgb_int = np.array(65536*img[:,:,0] +  255*img[:,:,1] + img[:,:,2])
+    # Get the unique values of the image
+    rgb_uni = np.unique(rgb_int)
+    # We want the unique rgb values too
+    rgb = np.zeros( [len(rgb_uni), 3] )
+    # reshape the image. We know it's three channels
+    img_vect = np.zeros( [np.prod(rgb_int.shape), 3] )
+    img_vect[:,0] = np.reshape(img[:, :, 0], np.prod(np.shape(img[:, :, 0]) ) )
+    img_vect[:,1] =	np.reshape(img[:, :, 1], np.prod(np.shape(img[:, :, 1]) ) )
+    img_vect[:,2] =	np.reshape(img[:, :, 2], np.prod(np.shape(img[:, :, 2]) ) )
+    
+    for ind in range(0, len(rgb_uni) ):
+        rgb_ind = np.reshape(rgb_int == rgb_uni[ind], [np.prod(rgb_int.shape)])
+        rgb[ind,:] = (img_vect[rgb_ind,:])[0,:]
+        rgb_int[ rgb_int == rgb_uni[ind] ] = ind
+    
+    if np.max(rgb) <= 1.0:
+        rgb = rgb * 255
+        rgb = rgb.astype(int)
+    
+    return( rgb_int.astype(int), rgb)
 
-	for ind in range(0, len(rgb_uni) ):
-		rgb_ind = np.reshape(rgb_int == rgb_uni[ind], [np.prod(rgb_int.shape)])
-		rgb[ind,:] = (img_vect[rgb_ind,:])[0,:]
-		rgb_int[ rgb_int == rgb_uni[ind] ] = ind
+# ------------------------------------------------------------------------------
+def prjbuild(
+        image_file: str, 
+        outputjson: str
+    ) -> None:
+    """
+    Generates a project file (.prj) based on an input image file. This file
+    contains domain parameters, material parameters, attenuation parameters,
+    seismic parameters, and electromagnetic parameters derived from the image.
 
-	if np.max(rgb) <= 1.0:
-		rgb = rgb * 255
-		rgb = rgb.astype(int)
+    :param image_file: The path to the input image file.
+    :param outputjson: The path where the project file is to be saved.
+    :type image_file: str
+    :type outputjson: str
+    
+    
+    """
+    # ----- Read the image file
+    im, rgb = image2int(image_file)
+    im = im.transpose()
+    material_id = np.unique(im)
+    
+    nx, nz = im.shape
+    nmats = len(material_id)
+    template = generate_template(nmats, Domain_nx = nx, Domain_nz = nz)
+        
+        # -------------------------------------------------------------------------
+    updates = {}
+    for i in range(nmats):
+        updates[("Materials", material_id[i], "rgb")] = '/'.join(rgb[i].astype(str))
+    
+    updates[("Domain","image_file")] = image_file
+    updated_template = update_json(template, updates)
+    # -------------------------------------------------------------------------
+    
+    # Save the generated template JSON file
+    with open(outputjson, 'w') as f:
+        json.dump(updated_template, f, indent=4)
+    
 
-	return( rgb_int.astype(int), rgb)
-
-def prjbuild(image_file: str, prjfile: str, file_header = header_comment) -> None:
-	"""
-	Generates a project file (.prj) based on an input image file. This file
-	contains domain parameters, material parameters, attenuation parameters,
-	seismic parameters, and electromagnetic parameters derived from the image.
-
-	:param image_file: The path to the input image file.
-	:param prjfile: The path where the project file is to be saved.
-	:type image_file: str
-	:type prjfile: str
-	"""
-	# ----- Read the image file
-	im, rgb = image2int(image_file)
-	im = im.transpose()
-	mat_id = np.unique(im)
-	# Start writing the project file. To allow for headers we will start all
-	# pertinant information after
-	with open(prjfile, 'w') as prj:
-		prj.write(file_header)
-		prj.write(new_line)
-		prj.write('I,'+image_file+new_line)
-		prj.write(new_line)
-		
-	# -------------------------------------------------------------------------
-	# ------ Write domain parameters
-	dim = 'D,dim,2'
-	nx = 'D,nx,' + str(np.shape(im)[0])
-	ny = 'D,ny,1'
-	nz = 'D,nz,' + str(np.shape(im)[1])
-	dx = 'D,dx,'
-	dy = 'D,dy,1'
-	dz = 'D,dz,'
-	cpml = 'D,cpml,20'
-	nmat = 'D,nmats,' + str(len( np.unique(im) ))
-	tfile = 'D,tfile,'
-	with open(prjfile, 'a') as prj:
-		prj.write(dim+new_line)
-		prj.write(nx+new_line)
-		prj.write(ny+new_line)
-		prj.write(nz+new_line)
-		prj.write(dx+new_line)
-		prj.write(dy+new_line)
-		prj.write(dz+new_line)
-		prj.write(cpml+new_line)
-		prj.write(nmat+new_line)
-		prj.write(tfile + new_line)
-		prj.write(new_line)
-	
-	# -------------------------------------------------------------------------
-	# ----- Write material parameters
-	header = ("# number, id, R/G/B, Temperature, Density, Porosity, "
-					"Water_Content, Anisotropic, ANG_File")
-	
-	with open(prjfile, 'a') as prj:
-		i = 0
-		prj.write(header + new_line )
-		for x in mat_id:
-			ln = ('M,' + str(x) + ',,' + str(rgb[x,0])  + '/' +
-				str(rgb[x,1]) + '/' + str(rgb[x,2]) +
-				',,,,,,')
-			prj.write( ln + new_line)
-		prj.write(new_line)
-	
-	# -------------------------------------------------------------------------
-	# ----- Write the attenuation parameters
-	header = ("# number, AlphaX, AlphaY, AlphaZ, fref")
-	with open(prjfile, 'a') as prj:
-		i = 0
-		prj.write(header + new_line)
-		for x in mat_id:
-			ln = ('A,' + str(x) + ',0.0,0.0,0.0,1.0')
-			prj.write(ln + new_line)
-		prj.write(new_line)
-	
-	# -------------------------------------------------------------------------
-	# ----- Write seismic parameters
-	dt = 'dt,'
-	steps = 'time_steps,1'
-	x = 'x,1.0'
-	y = 'y,1.0'
-	z = 'z,1.0'
-	f0 = 'f0,1.0'
-	theta = 'theta,0'
-	phi = 'phi,0'
-	source_file='source_file,'
-	#
-	comm = '# The source parameters for the seismic model'
-	header = '# id, C11, C12, C13, C22, C23, C33, C44, C55, C66, rho'
-	#
-	with open(prjfile, 'a') as prj:
-		i = 0
-		prj.write(comm + new_line)
-		prj.write('S,' + dt + new_line)
-		prj.write('S,' + steps + new_line)
-		prj.write('S,' + x + new_line)
-		prj.write('S,' + y + new_line)
-		prj.write('S,' + z + new_line)
-		prj.write('S,' + f0 + new_line)
-		prj.write('S,' + theta + new_line)
-		prj.write('S,' + phi + new_line)
-		prj.write(new_line)
-
-		prj.write(header + new_line )
-		for ind in mat_id:
-			prj.write( 'C,' + str(ind) + ',,,,,,,,,,' + new_line)
-
-		prj.write(new_line)
-	
-	# -------------------------------------------------------------------------
-	# ----- Write EM Parameters 
-	comm = '# The source parameters for the electromagnetic model'
-	header = '# id, e11, e12, e13, e22, e23, e33, s11, s12, s13, s22, s23, s33'
-	#
-	with open(prjfile, 'a') as prj:
-		i = 0
-		prj.write(comm + new_line)
-		prj.write('E,' + dt + new_line)
-		prj.write('E,' + steps + new_line)
-		prj.write('E,' + x + new_line)
-		prj.write('E,' + y + new_line)
-		prj.write('E,' + z + new_line)
-		prj.write('E,' + f0 + new_line)
-		prj.write('E,' + theta + new_line)
-		prj.write('E,' + phi + new_line)
-
-		prj.write(new_line)
-
-		prj.write(header + new_line )
-		for ind in mat_id:
-			prj.write( 'P,' + str(ind) + ',,,,,,,,,,' + new_line)
-
-		prj.write(new_line)
-
+def buildwizard(jsonfile):
+    pass 
 
 def main():
-	# -------------------------- Command Line Arguments ------------------------
-	parser = argparse.ArgumentParser(description="""The SeidarT software 
+    # -------------------------- Command Line Arguments ------------------------
+    parser = argparse.ArgumentParser(description="""The SeidarT software 
         requires a .PNG image that is used to construct the model domain for 
         seismic and electromagnetic wave propagation. Given the image file, a 
         project file will be constructed which contains all the necessary 
         parameters to be read in to the finite differences time domain modeling 
         schemes.""" )
-	
-	parser.add_argument(
-		'-i','--imagefile', 
-		nargs=1, type=str, required = True,
-		help='the full file path for the image', default=None
-	)
+    
+    parser.add_argument(
+        '-i','--imagefile', 
+        nargs=1, type=str, required = True,
+        help='the full file path for the image', default=None
+    )
 
-	parser.add_argument(
-		'-p', '--prjfile',
-		nargs=1, type=str, required = False, default = 'steven_bernsen_rules.prj',
-		help = """Name of output file path with extension .prj and excluding
-		the full path directory."""
-	)
+    parser.add_argument(
+        '-o', '--outputjson',
+        nargs=1, type=str, required = False, default = 'steven_bernsen_rules.prj',
+        help = """Name of output file path with extension .prj and excluding
+        the full path directory."""
+    )
 
-	# Get the arguments
-	args = parser.parse_args()
-	image_file = ''.join(args.imagefile)
-	prjfile = ''.join(args.prjfile)
-	prjbuild(image_file, prjfile)
+    # Get the arguments
+    args = parser.parse_args()
+    image_file = ''.join(args.imagefile)
+    outputjson = ''.join(args.outputjson)
+    prjbuild(image_file, outputjson)
 
 
 if __name__ == "__main__":
-	main()
+    main()

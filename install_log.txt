@@ -1,4 +1,4 @@
-[2024-09-25 15:28:59] 
+[2024-10-02 10:48:41] 
 
 --------------------------------------------------------------------------------
 -- Trying 'Ninja' generator
@@ -39,21 +39,422 @@ Configuring Project
   Working directory:
     /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build
   Command:
-    /home/sisyphus/miniconda3/envs/seidart/bin/cmake /home/sisyphus/github/umainedynamics/SeidarT -G Ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-install -DPYTHON_VERSION_STRING:STRING=3.11.8 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPYTHON_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPYTHON_LIBRARY:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/libpython3.11.so -DPython_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DPython3_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython3_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython3_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release
+    /home/sisyphus/miniconda3/envs/seidart/bin/cmake /home/sisyphus/github/umainedynamics/SeidarT -G Ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-install/src/seidart/fortran -DPYTHON_VERSION_STRING:STRING=3.11.8 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPYTHON_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPYTHON_LIBRARY:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/libpython3.11.so -DPython_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DPython3_EXECUTABLE:PATH=/home/sisyphus/miniconda3/envs/seidart/bin/python -DPython3_ROOT_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -DPython3_NumPy_INCLUDE_DIRS:PATH=/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release -DCMAKE_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ar -DCMAKE_CXX_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_C_COMPILER_AR=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ar -DCMAKE_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_C_COMPILER_RANLIB=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gcc-ranlib -DCMAKE_LINKER=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-ld -DCMAKE_STRIP=/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-strip -DCMAKE_BUILD_TYPE=Release
 
 Not searching for unused variables given on the command line.
 -- The Fortran compiler identification is GNU 12.4.0
+-- The C compiler identification is GNU 12.4.0
 -- Detecting Fortran compiler ABI info
 -- Detecting Fortran compiler ABI info - done
 -- Check for working Fortran compiler: /home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-gfortran - skipped
--- Configuring done (0.2s)
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found Python3: /home/sisyphus/miniconda3/envs/seidart/include/python3.11 (found version "3.11.8") found components: Development NumPy Interpreter Development.Module Development.Embed
+-- CMAKE_INSTALL_PREFIX is set to: /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-install/src/seidart/fortran
+-- CMAKE_SEIDART_INSTALL_PREFIX is set to: /home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages
+-- FULL_OUTPUT_PATH for generated so is set to: /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/cpmlfdtd.cpython-311-x86_64-linux-gnu.so
+-- Configuring done (0.5s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build
-[1/6] Generating cpmlfdtd.cpython-311-x86_64-linux-gnu.so
-FAILED: cpmlfdtd.cpython-311-x86_64-linux-gnu.so /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build/cpmlfdtd.cpython-311-x86_64-linux-gnu.so 
-cd /home/sisyphus/github/umainedynamics/SeidarT/_skbuild/linux-x86_64-3.11/cmake-build && -m -c /home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd.f95
-/bin/sh: line 1: -m: command not found
-[2/6] Building Fortran preprocessed CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd.f95-pp.f95
+[1/6] Building Fortran preprocessed CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd.f95-pp.f95
+[2/6] Generating Fortran dyndep file CMakeFiles/cpmlfdtd.dir/Fortran.dd
+[3/6] Building C object CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd_wrapper.c.o
+FAILED: CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd_wrapper.c.o 
+/home/sisyphus/miniconda3/envs/seidart/bin/x86_64-conda-linux-gnu-cc -Dcpmlfdtd_EXPORTS -I/home/sisyphus/miniconda3/envs/seidart/include/python3.11 -I/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/numpy/_core/include -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/sisyphus/miniconda3/envs/seidart/include -O3 -DNDEBUG -fPIC -fPIC -MD -MT CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd_wrapper.c.o -MF CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd_wrapper.c.o.d -o CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd_wrapper.c.o -c /home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_seismic2':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:15: warning: passing argument 1 of 'seismic2_' makes integer from pointer without a cast [-Wint-conversion]
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |               ^~~
+      |               |
+      |               int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:27: note: expected 'int' but argument is of type 'int *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                       ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:20: warning: passing argument 2 of 'seismic2_' makes integer from pointer without a cast [-Wint-conversion]
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                    ^~~
+      |                    |
+      |                    int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:35: note: expected 'int' but argument is of type 'int *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                               ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:25: error: incompatible type for argument 3 of 'seismic2_'
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                         ^~~
+      |                         |
+      |                         double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:46: note: expected 'double' but argument is of type 'double *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                       ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:30: error: incompatible type for argument 4 of 'seismic2_'
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                              ^~~
+      |                              |
+      |                              double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:57: note: expected 'double' but argument is of type 'double *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                  ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:35: warning: passing argument 5 of 'seismic2_' makes integer from pointer without a cast [-Wint-conversion]
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                   ^~~~~~~~~~~~
+      |                                   |
+      |                                   int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:65: note: expected 'int' but argument is of type 'int *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                             ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:54: warning: passing argument 7 of 'seismic2_' makes integer from pointer without a cast [-Wint-conversion]
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                      ^~~~~~
+      |                                                      |
+      |                                                      int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:92: note: expected 'int' but argument is of type 'int *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                        ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:167:62: warning: passing argument 8 of 'seismic2_' makes integer from pointer without a cast [-Wint-conversion]
+  167 |     seismic2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                              ^~~~~~~~~~~~~~
+      |                                                              |
+      |                                                              int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:11:103: note: expected 'int' but argument is of type 'int *'
+   11 | extern void seismic2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                   ~~~~^~~~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_seismic25':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:16: warning: passing argument 1 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                ^~~
+      |                |
+      |                int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:28: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                        ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:21: warning: passing argument 2 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                     ^~~
+      |                     |
+      |                     int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:36: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:26: warning: passing argument 3 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                          ^~~
+      |                          |
+      |                          int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:44: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                        ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:31: error: incompatible type for argument 4 of 'seismic25_'
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                               ^~~
+      |                               |
+      |                               double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:55: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:36: error: incompatible type for argument 5 of 'seismic25_'
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                    ^~~
+      |                                    |
+      |                                    double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:66: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                           ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:41: error: incompatible type for argument 6 of 'seismic25_'
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                         ^~~
+      |                                         |
+      |                                         double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:77: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                      ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:46: warning: passing argument 7 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                              ^~~~~~~~~~~~
+      |                                              |
+      |                                              int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:85: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                 ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:65: warning: passing argument 9 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                 ^~~~~~
+      |                                                                 |
+      |                                                                 int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:112: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                            ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:202:73: warning: passing argument 10 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  202 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                         ^~~~~~~~~~~~~~
+      |                                                                         |
+      |                                                                         int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:123: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                                       ~~~~^~~~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_electromag2':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:18: warning: passing argument 1 of 'electromag2_' makes integer from pointer without a cast [-Wint-conversion]
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                  ^~~
+      |                  |
+      |                  int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:30: note: expected 'int' but argument is of type 'int *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                          ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:23: warning: passing argument 2 of 'electromag2_' makes integer from pointer without a cast [-Wint-conversion]
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                       ^~~
+      |                       |
+      |                       int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:38: note: expected 'int' but argument is of type 'int *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                  ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:28: error: incompatible type for argument 3 of 'electromag2_'
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                            ^~~
+      |                            |
+      |                            double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:49: note: expected 'double' but argument is of type 'double *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                          ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:33: error: incompatible type for argument 4 of 'electromag2_'
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                 ^~~
+      |                                 |
+      |                                 double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:60: note: expected 'double' but argument is of type 'double *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                     ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:38: warning: passing argument 5 of 'electromag2_' makes integer from pointer without a cast [-Wint-conversion]
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                      ^~~~~~~~~~~~
+      |                                      |
+      |                                      int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:68: note: expected 'int' but argument is of type 'int *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:57: warning: passing argument 7 of 'electromag2_' makes integer from pointer without a cast [-Wint-conversion]
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                         ^~~~~~
+      |                                                         |
+      |                                                         int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:95: note: expected 'int' but argument is of type 'int *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                           ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:237:65: warning: passing argument 8 of 'electromag2_' makes integer from pointer without a cast [-Wint-conversion]
+  237 |     electromag2_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                 ^~~~~~~~~~~~~~
+      |                                                                 |
+      |                                                                 int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:13:106: note: expected 'int' but argument is of type 'int *'
+   13 | extern void electromag2_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                      ~~~~^~~~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_electromag25':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:16: warning: passing argument 1 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                ^~~
+      |                |
+      |                int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:28: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                        ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:21: warning: passing argument 2 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                     ^~~
+      |                     |
+      |                     int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:36: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:26: warning: passing argument 3 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                          ^~~
+      |                          |
+      |                          int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:44: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                        ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:31: error: incompatible type for argument 4 of 'seismic25_'
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                               ^~~
+      |                               |
+      |                               double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:55: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:36: error: incompatible type for argument 5 of 'seismic25_'
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                    ^~~
+      |                                    |
+      |                                    double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:66: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                           ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:41: error: incompatible type for argument 6 of 'seismic25_'
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                         ^~~
+      |                                         |
+      |                                         double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:77: note: expected 'double' but argument is of type 'double *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                      ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:46: warning: passing argument 7 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                              ^~~~~~~~~~~~
+      |                                              |
+      |                                              int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:85: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                 ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:65: warning: passing argument 9 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                 ^~~~~~
+      |                                                                 |
+      |                                                                 int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:112: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                            ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:271:73: warning: passing argument 10 of 'seismic25_' makes integer from pointer without a cast [-Wint-conversion]
+  271 |     seismic25_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                         ^~~~~~~~~~~~~~
+      |                                                                         |
+      |                                                                         int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:12:123: note: expected 'int' but argument is of type 'int *'
+   12 | extern void seismic25_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                                       ~~~~^~~~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_electromag2c':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:19: warning: passing argument 1 of 'electromag2c_' makes integer from pointer without a cast [-Wint-conversion]
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                   ^~~
+      |                   |
+      |                   int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:31: note: expected 'int' but argument is of type 'int *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                           ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:24: warning: passing argument 2 of 'electromag2c_' makes integer from pointer without a cast [-Wint-conversion]
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                        ^~~
+      |                        |
+      |                        int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:39: note: expected 'int' but argument is of type 'int *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                   ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:29: error: incompatible type for argument 3 of 'electromag2c_'
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                             ^~~
+      |                             |
+      |                             double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:50: note: expected 'double' but argument is of type 'double *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                           ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:34: error: incompatible type for argument 4 of 'electromag2c_'
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                  ^~~
+      |                                  |
+      |                                  double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:61: note: expected 'double' but argument is of type 'double *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                      ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:39: warning: passing argument 5 of 'electromag2c_' makes integer from pointer without a cast [-Wint-conversion]
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                       ^~~~~~~~~~~~
+      |                                       |
+      |                                       int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:69: note: expected 'int' but argument is of type 'int *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                 ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:58: warning: passing argument 7 of 'electromag2c_' makes integer from pointer without a cast [-Wint-conversion]
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                          ^~~~~~
+      |                                                          |
+      |                                                          int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:96: note: expected 'int' but argument is of type 'int *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                            ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:306:66: warning: passing argument 8 of 'electromag2c_' makes integer from pointer without a cast [-Wint-conversion]
+  306 |     electromag2c_(&nx, &nz, &dx, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                  ^~~~~~~~~~~~~~
+      |                                                                  |
+      |                                                                  int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:15:107: note: expected 'int' but argument is of type 'int *'
+   15 | extern void electromag2c_(int nx, int nz, double dx, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                       ~~~~^~~~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c: In function 'cpmlfdtd_electromag25c':
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:20: warning: passing argument 1 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                    ^~~
+      |                    |
+      |                    int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:32: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                            ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:25: warning: passing argument 2 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                         ^~~
+      |                         |
+      |                         int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:40: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                    ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:30: warning: passing argument 3 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                              ^~~
+      |                              |
+      |                              int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:48: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                            ~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:35: error: incompatible type for argument 4 of 'electromag25c_'
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                   ^~~
+      |                                   |
+      |                                   double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:59: note: expected 'double' but argument is of type 'double *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                    ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:40: error: incompatible type for argument 5 of 'electromag25c_'
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                        ^~~
+      |                                        |
+      |                                        double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:70: note: expected 'double' but argument is of type 'double *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                               ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:45: error: incompatible type for argument 6 of 'electromag25c_'
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                             ^~~
+      |                                             |
+      |                                             double *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:81: note: expected 'double' but argument is of type 'double *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                          ~~~~~~~^~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:50: warning: passing argument 7 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                  ^~~~~~~~~~~~
+      |                                                  |
+      |                                                  int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:89: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                     ~~~~^~~~~~~~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:69: warning: passing argument 9 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                     ^~~~~~
+      |                                                                     |
+      |                                                                     int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:116: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                                ~~~~^~~~~
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:341:77: warning: passing argument 10 of 'electromag25c_' makes integer from pointer without a cast [-Wint-conversion]
+  341 |     electromag25c_(&nx, &ny, &nz, &dx, &dy, &dz, &npoints_pml, src, &nstep, &single_output);
+      |                                                                             ^~~~~~~~~~~~~~
+      |                                                                             |
+      |                                                                             int *
+/home/sisyphus/github/umainedynamics/SeidarT/src/seidart/fortran/cpmlfdtd_wrapper.c:16:127: note: expected 'int' but argument is of type 'int *'
+   16 | extern void electromag25c_(int nx, int ny, int nz, double dx, double dy, double dz, int npoints_pml, int *src, int nstep, int single_output);
+      |                                                                                                                           ~~~~^~~~~~~~~~~~~
+[4/6] Building Fortran object CMakeFiles/cpmlfdtd.dir/src/seidart/fortran/cpmlfdtd.f95.o
 ninja: build stopped: subcommand failed.
 Traceback (most recent call last):
   File "/home/sisyphus/miniconda3/envs/seidart/lib/python3.11/site-packages/skbuild/setuptools_wrap.py", line 668, in setup

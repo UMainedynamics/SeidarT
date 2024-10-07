@@ -3,9 +3,6 @@ module cpmlfdtd
     ! precompile is using the pip install. For individual compilation to 
     ! generate the shared object file to be imported as a python module use:
     !
-    ! f2py3 -c --fcompiler=gnu95 -m cpmlfdtd readwrite_routines.f95 \
-    !           seismicfdtd.f95 electromagfdtd.f95 cpmlfdtd.f95
-    ! 
     ! For debugging: 
     !   gfortran -Wall -Wextra -fcheck=all -Og -g -o your_program_name cpmlfdtd.f95
     ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +17,12 @@ module cpmlfdtd
     ! use seismicfdtd 
     
     implicit none
-
+    public :: permittivity_write, permittivity_write_c, &
+                attenuation_write, stiffness_write, &
+                seismic2, seismic25, &
+                electromag2, electromag25, &
+                electromag2c, electromag25c
+    
     contains 
     
     !==========================================================================
@@ -55,35 +57,7 @@ module cpmlfdtd
     end subroutine loadcpml
     
     !==========================================================================
-    ! subroutine loadcpml2(filename, image_data)
-
-    !     implicit none
-
-    !     integer,parameter :: dp = kind(0.d0)
-    !     character(len=*),intent(in) :: filename
-    !     real(kind=dp),dimension(:,:),intent(out) :: image_data
-
-    !     open(unit = 13, form="unformatted", file = trim(filename), access='stream')
-    !     read(13) image_data
-    !     close(unit = 13)
-    ! end subroutine loadcpml2
-    
-    !==========================================================================
-    ! subroutine loadcpml3(filename, image_data)
-
-    !     implicit none
-
-    !     integer,parameter :: dp = kind(0.d0)
-    !     character(len=*),intent(in) :: filename
-    !     real(kind=dp),dimension(:,:,:),intent(out) :: image_data
-
-    !     open(unit = 13, form="unformatted", file = trim(filename), access='stream')
-    !     read(13) image_data
-    !     close(unit = 13)
-    ! end subroutine loadcpml3
-    
-    !==========================================================================
-    subroutine permittivity_write(im, mlist, npoints_pml, nx, nz) 
+    subroutine permittivity_write(im, mlist, npoints_pml, nx, nz) bind(C, name="permittivity_write_")
         ! STIFFNESS_ARRAYS takes a matrix containing the material integer 
         ! identifiers and creates the same size array for each independent 
         ! coefficient of the stiffness matrix along with a density matrix. 
@@ -98,21 +72,25 @@ module cpmlfdtd
         !   
         ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         
+        use, intrinsic :: iso_c_binding, only: c_int, c_double, c_double_complex
+        
         implicit none 
         
-        integer :: nx,nz
-        integer,parameter :: dp = kind(0.d0)
-        integer,dimension(nx,nz) :: im
-        integer :: i, j, npoints_pml
-        real(kind=dp), dimension(:,:) :: mlist
-        real(kind=dp), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
-                eps11, eps22, eps33, &
-                eps12, eps13, eps23, &
-                sig11, sig22, sig33, &
-                sig12, sig13, sig23
+        integer(c_int), intent(in) :: nx, nz, npoints_pml
+        ! integer,parameter :: dp = kind(0.d0)
+        integer(c_int), dimension(nx,nz), intent(in) :: im
+        real(c_double), dimension(:,:), intent(in) :: mlist
+        ! Declare the arrays for permittivity and sigma with PML extension
+        real(c_double), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
+                    eps11, eps22, eps33, &
+                    eps12, eps13, eps23, &
+                    sig11, sig22, sig33, &
+                    sig12, sig13, sig23
         
-        !f2py3 intent(in):: im, mlist, npoints_pml, nx, nz
-        
+        ! Local variables
+        integer :: i, j
+        ! -------------------------- End Declarations --------------------------
+
         ! Allocate space for permittivity and conductivity values
         eps11(:,:) = 0.d0
         eps12(:,:) = 0.d0
@@ -223,7 +201,7 @@ module cpmlfdtd
     end subroutine permittivity_write
     
     !==========================================================================
-    subroutine permittivity_write_c(im, mlist, npoints_pml, nx, nz) 
+    subroutine permittivity_write_c(im, mlist, npoints_pml, nx, nz) bind(C, name="permittivity_write_c_")
         ! STIFFNESS_ARRAYS takes a matrix containing the material integer 
         ! identifiers and creates the same size array for each independent 
         ! coefficient of the stiffness matrix along with a density matrix. 
@@ -241,22 +219,25 @@ module cpmlfdtd
         ! but for sigma values, the complex component is 0. 
         ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         
+        use, intrinsic :: iso_c_binding, only: c_int, c_double, c_double_complex
         implicit none 
         
-        integer :: nx,nz
-        integer,parameter :: dp = kind(0.d0)
-        integer,dimension(nx,nz) :: im
-        integer :: i, j, npoints_pml
-        complex(kind=dp), dimension(:,:) :: mlist
-        complex(kind=dp), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
+        integer(c_int), intent(in) :: nx, nz, npoints_pml
+        integer(c_int), dimension(nx,nz), intent(in) :: im
+        integer :: i, j
+
+        complex(c_double_complex), dimension(:,:), intent(in) :: mlist
+        complex(c_double_complex), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
                 eps11, eps22, eps33, &
                 eps12, eps13, eps23
-        real(kind=dp), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
+        
+        real(c_double), dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: &
                 sig11, sig22, sig33, &
                 sig12, sig13, sig23
         
-        !f2py3 intent(in):: im, mlist, npoints_pml, nx, nz
-        
+        ! -------------------------- End Declarations --------------------------
+
+
         ! Allocate space for permittivity and conductivity values
         eps11(:,:) = 0.d0
         eps12(:,:) = 0.d0
@@ -367,7 +348,7 @@ module cpmlfdtd
     end subroutine permittivity_write_c
     
     !==========================================================================
-    subroutine stiffness_write(im, mlist, npoints_pml, nx, nz, gradient) 
+    subroutine stiffness_write(im, mlist, npoints_pml, nx, nz, gradient) bind(C, name="stiffness_write_")
         ! STIFFNESS_ARRAYS takes a matrix containing the material integer identifiers 
         ! and creates the same size array for each independent coefficient of the 
         ! stiffness matrix along with a density matrix. Since we ae using PML
@@ -381,15 +362,16 @@ module cpmlfdtd
         !   
         ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+        use, intrinsic :: iso_c_binding, only: c_int, c_double
         implicit none 
 
-        integer,parameter :: dp = kind(0.d0)
-        integer :: nx, nz
+        integer(c_int), intent(in) :: nx, nz, npoints_pml
         integer,dimension(nx,nz) :: im
-        integer :: i, j, npoints_pml
-        real(kind=dp),dimension(:,:) :: mlist
-        real(kind=dp),dimension(nx,nz) :: gradient
-        real(kind=dp),dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: c11,c12,c13,&
+        integer :: i, j
+        
+        real(c_double),dimension(:,:) :: mlist
+        real(c_double),dimension(nx,nz) :: gradient
+        real(c_double),dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: c11,c12,c13,&
                                                                     c14,c15,c16, &
                                                                     c22,c23,c24,c25,c26,&
                                                                     c33,c34,c35,c36, &
@@ -397,9 +379,8 @@ module cpmlfdtd
                                                                     c55,c56,c66, &
                                                                     rho
         
-
-        !f2py3 intent(in) :: im, mlist, npoints_pml, nx, nz, gradient
-
+        ! -------------------------- End Declarations --------------------------
+        
         c11(:,:) = 0.d0 
         c12(:,:) = 0.d0 
         c13(:,:) = 0.d0
@@ -581,7 +562,7 @@ module cpmlfdtd
     end subroutine stiffness_write
     
     !==========================================================================
-    subroutine attenuation_write(im, alist, npoints_pml, nx, nz, cpmlvalue) 
+    subroutine attenuation_write(im, alist, npoints_pml, nx, nz, cpmlvalue) bind(C, name="attenuation_write_")
         ! STIFFNESS_ARRAYS takes a matrix containing the material integer identifiers 
         ! and creates the same size array for each independent coefficient of the 
         ! stiffness matrix along with a density matrix. Since we ae using PML
@@ -594,20 +575,19 @@ module cpmlfdtd
         !   npoints_pml (INTEGER) - the 
         !   
         ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+        use, intrinsic :: iso_c_binding, only: c_int, c_double
         implicit none 
 
-        integer,parameter :: dp = kind(0.d0)
-        integer :: nx, nz
-        integer,dimension(nx,nz) :: im
-        integer :: i, j, npoints_pml
-        real(kind=dp),dimension(:,:) :: alist
-        real(kind=dp) :: cpmlvalue
-        logical :: seismic
-        real(kind=dp),dimension(2*npoints_pml+nx,2*npoints_pml+nz) :: gamma_x, gamma_y, gamma_z
-                                                                     
+        ! Arguments and types
+        integer(c_int), intent(in) :: nx, nz, npoints_pml
+        integer(c_int), dimension(nx,nz), intent(in) :: im
+        real(c_double), dimension(:,:), intent(in) :: alist
+        real(c_double), intent(in) :: cpmlvalue
 
-        !f2py3 intent(in) :: im, alist, npoints_pml, nx, nz, gradient
+        ! Local variables
+        integer :: i, j
+        real(c_double), dimension(2*npoints_pml+nx, 2*npoints_pml+nz) :: &
+            gamma_x, gamma_y, gamma_z
         
         ! call material_rw('rho.dat', rho, .TRUE. )
         gamma_x(:,:) = cpmlvalue 
@@ -800,8 +780,8 @@ module cpmlfdtd
     
     ! =========================================================================    
     ! Computations are done in double precision and written to binary as single
-    ! precision unless specified by the optional logical, OUTPUT_SINGLE.
-    subroutine seismic2(nx, nz, dx, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
+    ! precision unless specified by the optional logical, SINGLE_OUTPUT.
+    subroutine seismic2(nx, nz, dx, dz, npoints_pml, src, nstep, SINGLE_OUTPUT) bind(C, name="seismic2_")
 
         ! 2D elastic finite-difference code in velocity and stress formulation
         ! with Convolutional-PML (C-PML) absorbing conditions for an 
@@ -817,149 +797,105 @@ module cpmlfdtd
         ! Virieux (1986) is used:
 
         ! INPUT
-        !   im (INTEGER)
-        !   nx, ny (INTEGER)
-        !   c11, c12, c22, c66, rho (REAL)
+        !   nx, nz (INTEGER) - dimensions of the domain 
         !   dx, dy (REAL)
         !   npoints_pml (INTEGER) - the thickness of the pml
+        !   src (INTEGER) - the x-z location indices of the source
+        !   nstep (INTEGER) - the number of time steps 
+        !   SINGLE_OUTPUT - flag whether the data outputs are single (True) or
+        !       double (False) precision; default is True
         ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
-        
-            implicit none
-        
-            integer, parameter :: dp=kind(0.d0)
+        use, intrinsic :: iso_c_binding, only: c_int, c_double, c_float
+        implicit none
 
-            ! total number of grid points in each direction of the grid
-            integer :: nx
-            integer :: nz
-        
-            ! thickness of the PML layer in grid points
-            integer :: npoints_pml
-            ! integer, dimension(nx,nz)
-            real(kind=dp), dimension(nx,nz) :: c11, c13, c15, c33, c35, c55, rho
-            real(kind=dp) :: deltarho
-        
-            ! total number of time steps
-            integer :: nstep
-        
-            ! time step in seconds 
-            real(kind=dp) :: DT
-            real(kind=dp) :: dx, dz 
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-            ! source
-            integer,dimension(:) :: src
-            integer :: isource, jsource
-        
-            ! velocity threshold above which we consider that the code became unstable
-            real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
-        
-            ! main arrays
-            real(kind=dp), dimension(nx,nz) :: vx,vz,sigmaxx,sigmazz,sigmaxz
-                    
-            ! arrays for the memory variables
-            ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-            real(kind=dp), dimension(NX,NZ) :: &
-                memory_dvx_dx, &
-                memory_dvx_dz, &
-                memory_dvz_dx, &
-                memory_dvz_dz, &
-                memory_dsigmaxx_dx, &
-                memory_dsigmazz_dz, &
-                memory_dsigmaxz_dx, &
-                memory_dsigmaxz_dz
-        
-            real(kind=dp) :: &
-                value_dvx_dx, &
-                value_dvx_dz, &
-                value_dvz_dx, &
-                value_dvz_dz, &
-                value_dsigmaxx_dx, &
-                value_dsigmazz_dz, &
-                value_dsigmaxz_dx, &
-                value_dsigmaxz_dz
-        
-            ! 1D arrays for the damping profiles
-            real(kind=dp), dimension(nx) :: K_x, alpha_x, a_x, b_x, &
-                                        K_x_half, alpha_x_half, &
-                                        a_x_half, b_x_half
-            real(kind=dp), dimension(nz) :: K_z, alpha_z, a_z, b_z, &
-                                        K_z_half, alpha_z_half, &
-                                        a_z_half, b_z_half
-        
-            real(kind=dp), dimension(nx,nz) :: gamma_x, gamma_z
-            ! for the source
-            real(kind=dp),dimension(nstep) :: srcx, srcz
-        
-            integer :: i,j,it
-        
-            real(kind=dp) :: velocnorm
+        ! Local variables
+        real(c_double), dimension(nx,nz) :: c11, c13, c15, c33, c35, c55, rho
+        real(c_double), dimension(nx,nz) :: vx, vz, sigmaxx, sigmazz, sigmaxz
+        real(c_double), dimension(nx,nz) :: &
+            memory_dvx_dx, memory_dvx_dz, memory_dvz_dx, memory_dvz_dz, &
+            memory_dsigmaxx_dx, memory_dsigmazz_dz, memory_dsigmaxz_dx, memory_dsigmaxz_dz
+        real(c_double) :: deltarho, velocnorm, value_dvx_dx, value_dvx_dz, &
+            value_dvz_dx, value_dvz_dz, value_dsigmaxx_dx, value_dsigmazz_dz, &
+            value_dsigmaxz_dx, value_dsigmaxz_dz
 
-            ! Boolean flag to save as double precision or single precision 
-            logical :: SINGLE
-            logical, intent(in), optional :: OUTPUT_SINGLE 
+        ! 1D arrays for damping profiles
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, K_z_half, alpha_z_half, a_z_half, b_z_half
 
-            ! Name the f2py inputs 
-            !f2py3 intent(in) :: nx, nx, dx, dx,
-            !f2py3 intent(in) :: noints_pml, src, nstep, OUTPUT_SINGLE
+        real(c_double), dimension(nx,nz) :: gamma_x, gamma_z
+        real(c_double), dimension(nstep) :: srcx, srcz
 
-            ! The default data output is single precision unless OUTPUT_SINGLE is 
-            ! set to .FALSE.
-            if (present(OUTPUT_SINGLE)) then 
-                SINGLE = OUTPUT_SINGLE 
-            else
-                SINGLE = .TRUE.
-            endif
-        
-            ! -------------------- Load Stiffness Coefficients --------------------
-        
-            call material_rw('c11.dat', c11, .TRUE.)
-            call material_rw('c13.dat', c13, .TRUE.)
-            call material_rw('c15.dat', c15, .TRUE.)
-            call material_rw('c33.dat', c33, .TRUE.)
-            call material_rw('c35.dat', c35, .TRUE.)
-            call material_rw('c55.dat', c55, .TRUE.)
-            call material_rw('rho.dat', rho, .TRUE.)
-            
-            ! ------------------- Load Attenuation Coefficients --------------------
-            call material_rw('gamma_x.dat', gamma_x, .TRUE.)
-            call material_rw('gamma_z.dat', gamma_z, .TRUE.)
-            
-            ! ------------------------ Assign some constants -----------------------
-        
-            isource = src(1)+npoints_pml
-            jsource = src(2)+npoints_pml
-        
-            DT = minval( (/dx,dz/) )/ &
-                (sqrt( 3.d0*( maxval( (/ c11/rho, c33/rho /) ) ) ) ) 
+        real(c_double) :: dt
+        integer(c_int) :: i, j, it, isource, jsource
+        logical :: SINGLE
 
-                ! ================================ LOAD SOURCE ================================
-        
-            call loadsource('seismicsourcex.dat', nstep, srcx)
-            ! We are using the coordinate names x, Z but the math computes the source in 
-            ! the x-z plane
-            call loadsource('seismicsourcez.dat', nstep, srcz)
-        
-            ! -----------------------------------------------------------------------------
-            !--- define profile of absorption in PML region
+        ! Stability threshold
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.d+25
 
-            ! Initialize PML 
-            K_x(:) = 1.d0
-            K_x_half(:) = 1.d0
-            alpha_x(:) = 0.d0
-            alpha_x_half(:) = 0.d0
-            a_x(:) = 0.d0
-            a_x_half(:) = 0.d0
-            b_x(:) = 0.d0 
-            b_x_half(:) = 0.d0
+        ! The default data output is single precision unless SINGLE_OUTPUT is 
+        ! set to .FALSE.
+        if (present(SINGLE_OUTPUT)) then 
+            SINGLE = SINGLE_OUTPUT 
+        else
+            SINGLE = .TRUE.
+        endif
+    
+        ! -------------------- Load Stiffness Coefficients --------------------
+    
+        call material_rw('c11.dat', c11, .TRUE.)
+        call material_rw('c13.dat', c13, .TRUE.)
+        call material_rw('c15.dat', c15, .TRUE.)
+        call material_rw('c33.dat', c33, .TRUE.)
+        call material_rw('c35.dat', c35, .TRUE.)
+        call material_rw('c55.dat', c55, .TRUE.)
+        call material_rw('rho.dat', rho, .TRUE.)
+        
+        ! ------------------- Load Attenuation Coefficients --------------------
+        call material_rw('gamma_x.dat', gamma_x, .TRUE.)
+        call material_rw('gamma_z.dat', gamma_z, .TRUE.)
+        
+        ! ------------------------ Assign some constants -----------------------
+    
+        isource = src(1)+npoints_pml
+        jsource = src(2)+npoints_pml
+    
+        DT = minval( (/dx,dz/) )/ &
+            (sqrt( 3.d0*( maxval( (/ c11/rho, c33/rho /) ) ) ) ) 
 
-            K_z(:) = 1.d0
-            K_z_half(:) = 1.d0 
-            alpha_z(:) = 0.d0
-            alpha_z_half(:) = 0.d0
-            a_z(:) = 0.d0
-            a_z_half(:) = 0.d0
-            b_z(:) = 0.d0
-            b_z_half(:) = 0.d0
+            ! ================================ LOAD SOURCE ================================
+    
+        call loadsource('seismicsourcex.dat', nstep, srcx)
+        ! We are using the coordinate names x, Z but the math computes the source in 
+        ! the x-z plane
+        call loadsource('seismicsourcez.dat', nstep, srcz)
+    
+        ! -----------------------------------------------------------------------------
+        !--- define profile of absorption in PML region
+
+        ! Initialize PML 
+        K_x(:) = 1.d0
+        K_x_half(:) = 1.d0
+        alpha_x(:) = 0.d0
+        alpha_x_half(:) = 0.d0
+        a_x(:) = 0.d0
+        a_x_half(:) = 0.d0
+        b_x(:) = 0.d0 
+        b_x_half(:) = 0.d0
+
+        K_z(:) = 1.d0
+        K_z_half(:) = 1.d0 
+        alpha_z(:) = 0.d0
+        alpha_z_half(:) = 0.d0
+        a_z(:) = 0.d0
+        a_z_half(:) = 0.d0
+        b_z(:) = 0.d0
+        b_z_half(:) = 0.d0
 
         ! ------------------------------ Load the boundary ----------------------------        
         call loadcpml('kappax_cpml.dat', K_x)
@@ -1149,97 +1085,105 @@ module cpmlfdtd
     end subroutine seismic2
 
     ! =========================================================================
-    subroutine seismic25(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
+    subroutine seismic25(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, SINGLE_OUTPUT)
+        !--------------------------------------------------------------------------------------
+        ! 3D elastic finite-difference code in velocity and stress formulation
+        ! with Convolutional-PML (C-PML) absorbing conditions for an anisotropic medium.
+        !
+        ! This subroutine solves elastic wave propagation using a staggered-grid finite-difference
+        ! scheme in a 3D anisotropic medium, including PML (Perfectly Matched Layer) boundaries
+        ! for absorbing outgoing waves at the grid boundaries.
+        !
+        ! INPUT PARAMETERS:
+        !   nx, ny, nz (INTEGER, IN)   : Number of grid points in the x, y, and z directions.
+        !   dx, dy, dz (REAL, IN)      : Grid spacing in the x, y, and z directions (in meters).
+        !   npoints_pml (INTEGER, IN)  : Thickness of the PML absorbing boundary (in grid points).
+        !   src (INTEGER, IN)          : Array containing the source location coordinates.
+        !   nstep (INTEGER, IN)        : Total number of time steps in the simulation.
+        !   SINGLE_OUTPUT (LOGICAL, IN, OPTIONAL) : Flag to specify if the output should be saved 
+        !                                           as single precision (default is double precision).
+        !
+        ! LOCAL VARIABLES:
+        !   c11, c12, ..., rho (REAL)  : Elastic stiffness tensors and density matrix for the medium.
+        !   vx, vy, vz (REAL)          : Velocity components in the x, y, and z directions.
+        !   sigmaxx, sigmayy, sigmazz (REAL) : Stress components in the x, y, and z directions.
+        !   gamma_x, gamma_y, gamma_z (REAL) : PML damping coefficients in x, y, and z directions.
+        !   srcx, srcy, srcz (REAL)    : Source time history for x, y, and z components.
+        !
+        !   SINGLE (LOGICAL)           : Boolean flag to determine if output should be in single or 
+        !                                double precision. Default is TRUE (single precision).
+        !
+        ! OUTPUT:
+        !   Wave propagation and PML absorbing boundary computations are performed based on the 
+        !   given elastic properties and source function.
+        !
+        !   The results of the simulation can be written to output files as specified by the user.
+        !--------------------------------------------------------------------------------------
 
+        use, intrinsic :: iso_c_binding, only: c_int, c_double
         implicit none
 
-        integer, parameter :: dp=kind(0.d0)
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, ny, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dy, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-        ! total number of grid points in each direction of the grid
-        integer :: nx, ny, nz
+        ! Local variables
+        real(c_double), dimension(nx,nz) :: c11, c12, c13, c14, c15, c16, &
+                                            c22, c23, c24, c25, c26, &
+                                            c33, c34, c35, c36, &
+                                            c44, c45, c46, &
+                                            c55, c56, &
+                                            c66, &
+                                            rho
+        real(c_double) :: deltarho, velocnorm, DT
+        integer(c_int) :: i, j, k, it, isource, jsource, ksource
 
-        ! thickness of the PML layer in grid points
-        integer :: npoints_pml
-        real(kind=dp), dimension(nx,nz) ::  c11, c12, c13, c14, c15, c16, &
-                                c22, c23, c24, c25, c26, &
-                                c33, c34, c35, c36, &
-                                c44, c45, c46, &
-                                c55, c56, &
-                                c66, &
-                                rho
-        real(kind=dp) :: deltarho
+        ! Arrays for velocity and stress components
+        real(c_double), dimension(nx,ny,nz) :: vx, vy, vz, &
+                                            sigmaxx, sigmayy, sigmazz, &
+                                            sigmaxy, sigmaxz, sigmayz
 
-        ! total number of time steps
-        integer :: nstep
+        ! Memory arrays for the PML
+        real(c_double), dimension(nx,ny,nz) :: memory_dvx_dx, memory_dvx_dy, memory_dvx_dz, &
+                                            memory_dvy_dx, memory_dvy_dy, memory_dvy_dz, &
+                                            memory_dvz_dx, memory_dvz_dy, memory_dvz_dz, &
+                                            memory_dsigmaxx_dx, memory_dsigmayy_dy, memory_dsigmazz_dz, &
+                                            memory_dsigmaxy_dx, memory_dsigmaxy_dy, &
+                                            memory_dsigmaxz_dx, memory_dsigmaxz_dz, &
+                                            memory_dsigmayz_dy, memory_dsigmayz_dz
 
-        ! time step in seconds. decreasing the time step improves the pml attenuation
-        ! but it should be inversely proportional to the center frequency of the 
-        ! source frequency 
-        real(kind=dp) :: DT
-        real(kind=dp) :: dx, dy, dz
+        ! Values of the velocity and stress differentials
+        real(c_double) :: dvx_dx, dvx_dy, dvx_dz, &
+                        dvy_dx, dvy_dy, dvy_dz, &
+                        dvz_dx, dvz_dy, dvz_dz, &
+                        dsigmaxx_dx, dsigmayy_dy, dsigmazz_dz, &
+                        dsigmaxy_dx, dsigmaxy_dy, &
+                        dsigmaxz_dx, dsigmaxz_dz, &
+                        dsigmayz_dy, dsigmayz_dz
 
-        ! source
-        integer,dimension(:) :: src
-        integer :: isource, jsource, ksource
+        ! 1D arrays for the damping profiles in each direction
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(ny) :: K_y, alpha_y, a_y, b_y, K_y_half, alpha_y_half, a_y_half, b_y_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, K_z_half, alpha_z_half, a_z_half, b_z_half
 
-        ! velocity threshold above which we consider that the code became unstable
-        real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
+        ! Arrays for the PML damping factors
+        real(c_double), dimension(nx,nz) :: gamma_x, gamma_y, gamma_z
 
-        ! main arrays
-        real(kind=dp), dimension(nx,ny,nz) :: vx,vy,vz, &
-                                sigmaxx,sigmayy,sigmazz, &
-                                sigmaxy,sigmaxz,sigmayz
+        ! Source arrays
+        real(c_double), dimension(nstep) :: srcx, srcy, srcz
 
-        ! arrays for the memory variables
-        ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-        real(kind=dp), dimension(nx,ny,nz) :: &
-        memory_dvx_dx, memory_dvx_dy, memory_dvx_dz, &
-        memory_dvy_dx, memory_dvy_dy, memory_dvy_dz, &
-        memory_dvz_dx, memory_dvz_dy, memory_dvz_dz, &
-        memory_dsigmaxx_dx, memory_dsigmayy_dy, memory_dsigmazz_dz, &
-        memory_dsigmaxy_dx, memory_dsigmaxy_dy, &
-        memory_dsigmaxz_dx, memory_dsigmaxz_dz, &
-        memory_dsigmayz_dy, memory_dsigmayz_dz
+        ! Velocity threshold for stability
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.d+25
 
-        real(kind=dp) :: &
-        dvx_dx, dvx_dy, dvx_dz, &
-        dvy_dx, dvy_dy, dvy_dz, &
-        dvz_dx, dvz_dy, dvz_dz, &
-        dsigmaxx_dx, dsigmayy_dy, dsigmazz_dz, &
-        dsigmaxy_dx, dsigmaxy_dy, &
-        dsigmaxz_dx, dsigmaxz_dz, &
-        dsigmayz_dy, dsigmayz_dz
-
-        ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
-                            K_x_half,alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(ny) :: K_y,alpha_y,a_y,b_y, &
-                            K_y_half,alpha_y_half,a_y_half,b_y_half
-        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
-                            K_z_half,alpha_z_half,a_z_half,b_z_half
-
-        real(kind=dp), dimension(nx,nz) :: gamma_x, gamma_y, gamma_z
-
-        
-        ! for the source
-        real(kind=dp),dimension(nstep) :: srcx, srcy, srcz
-
-        integer :: i,j,k,it
-
-        real(kind=dp) :: velocnorm
-        
-        ! Boolean flag to save as double precision or single precision 
+        ! Boolean flag to save as double precision or single precision
         logical :: SINGLE
-        logical, intent(in), optional :: OUTPUT_SINGLE 
-        
-        ! Name the f2py inputs 
-        !f2py3 intent(in) :: nx, ny, nz, dx, dy, dz,
-        !f2py3 intent(in) :: noints_pml, src, nstep, OUTPUT_SINGLE
 
-        ! The default data output is single precision unless OUTPUT_SINGLE is 
+        ! The default data output is single precision unless SINGLE_OUTPUT is 
         ! set to .FALSE.
-        if (present(OUTPUT_SINGLE)) then 
-            SINGLE = OUTPUT_SINGLE 
+        if (present(SINGLE_OUTPUT)) then 
+            SINGLE = SINGLE_OUTPUT 
         else
             SINGLE = .TRUE.
         endif
@@ -1700,422 +1644,93 @@ module cpmlfdtd
 
         enddo   ! end of time loop
     end subroutine seismic25
-    
-    ! =========================================================================
-    ! CENTERED DIFFERENCE SCHEME
-    ! subroutine electromag2(nx, nz, dx, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
-
-    !     ! 2D elastic finite-difference code in velocity and stress formulation
-    !     ! with Convolutional-PML (C-PML) absorbing conditions for an anisotropic medium
-
-    !     ! Dimitri Komatitsch, University of Pau, France, April 2007.
-    !     ! Anisotropic implementation by Roland Martin and Dimitri Komatitsch, University of Pau, France, April 2007.
-
-    !     ! The second-order staggered-grid formulation of Madariaga (1976) and Virieux (1986) is used:
-    !     !
-    !     !            ^ y
-    !     !            |
-    !     !            |
-    !     !
-    !     !            +-------------------+
-    !     !            |                   |
-    !     !            |                   |
-    !     !            |                   |
-    !     !            |                   |
-    !     !            |        v_y        |
-    !     !   sigma_xy +---------+         |
-    !     !            |         |         |
-    !     !            |         |         |
-    !     !            |         |         |
-    !     !            |         |         |
-    !     !            |         |         |
-    !     !            +---------+---------+  ---> x
-    !     !           v_x    sigma_xx
-    !     !                  sigma_yy
-    !     !
-    !     ! IMPORTANT : all our CPML codes work fine in single precision as well (which is significantly faster).
-    !     !             If you want you can thus force automatic conversion to single precision at compile time
-    !     !             or change all the declarations and constants in the code from real(kind=dp) to single.
-    !     !
-    !     ! INPUT
-    !     !   im (INTEGER)
-    !     !   nx, nz (INTEGER)
-    !     !   eps11, sig11, eps22, sig22 (REAL)
-    !     !   dx, dz (REAL)
-    !     !   npoints_pml (INTEGER) - the thickness of the pml
-    !     !   rcx (INTEGER) - the x and y indices for an array of recievers
-    !     !
-
-
-    !     implicit none
-
-    !     integer,parameter :: dp=kind(0.d0)
-
-    !     ! total number of grid points in each direction of the grid
-    !     integer :: nx, nz
-    !     ! integer, dimension(:,:) :: rcx 
-
-    !     ! thickness of the PML layer in grid points
-    !     integer :: npoints_pml, nstep
-
-    !     ! integer, dimension(nx,nz)
-    !     real(kind=dp), dimension(nx,nz) :: eps11, eps13, eps33, &
-    !                                     sig11, sig13, sig33, &
-    !                                     epsilonx, epsilonz, &
-    !                                     sigmax, sigmaz
-
-
-    !     ! time step in seconds. decreasing the time step improves the pml attenuation
-    !     ! but it should be inversely proportional to the center frequency of the 
-    !     ! source frequency 
-    !     real(kind=dp) :: DT, dx, dz 
-
-    !     ! source
-    !     integer,dimension(:) :: src
-    !     real(kind=dp),dimension(nstep) :: srcx, srcz
-    !     integer :: isource, jsource
-
-    !     ! value of PI
-    !     real(kind=dp), parameter :: PI = 3.141592653589793238462643d0
-
-    !     ! speed of mother fuckin' light 
-    !     real(kind=dp), parameter :: Clight = 2.9979458d+8
-
-    !     ! permability and permittivity of free space 
-    !     real(kind=dp), parameter :: mu0 = 4.0d0*pi*1.0d-7, eps0 = 8.85418782d-12
-
-    !     ! typical relative permeability of common materials is close to unity but for
-    !     ! the more specific case we can edit the following line to input permeability 
-    !     ! as a 2D array 
-    !     real(kind=dp), parameter :: mu = 1.d0
-
-    !     ! E-field threshold above which we consider that the code became unstable
-    !     real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
-
-    !     ! main arrays
-    !     real(kind=dp), dimension(nx,nz) :: Ex
-    !     real(kind=dp), dimension(nx,nz) :: Ez
-    !     real(kind=dp), dimension(nx,nz) :: Hy
-
-    !     ! we will compute the coefficients for the finite difference scheme 
-    !     real(kind=dp), dimension(nx, nz) :: caEx, cbEx
-    !     real(kind=dp), dimension(nx, nz) :: caEz, cbEz
-    !     real(kind=dp) :: daHy, dbHy
-
-    !     real(kind=dp) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
-
-    !     ! arrays for the memory variables
-    !     ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-    !     real(kind=dp), dimension(nx,nz) ::  memory_dEz_dx,  memory_dEx_dz 
-    !     real(kind=dp), dimension(nx,nz) :: memory_dHy_dx
-    !     real(kind=dp), dimension(nx,nz) ::  memory_dHy_dz
-
-    !     ! parameters for the source
-    !     ! angle of source force clockwise with respect to vertical (Y) axis
-    !     ! character(len=6) :: src_type
-    !     integer :: i,j, it
-
-    !     real(kind=dp) :: velocnorm
-
-    !     ! -------------------------------- PML parameters 
-    !     ! 1D arrays for the damping profiles
-    !     real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
-    !                                     K_x_half, alpha_x_half,a_x_half,b_x_half
-    !     real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
-    !                                     K_z_half, alpha_z_half,a_z_half,b_z_half
-                                        
-    !     logical :: SINGLE
-    !     logical, intent(in), optional :: OUTPUT_SINGLE 
-
-    !     ! ------------------- Name the f2py inputs 
-    !     !f2py3 intent(in) :: nx, nz, dx, dz,
-    !     !f2py3 intent(in) :: noints_pml, src, nstep
-        
-    !     ! The default data output is single precision unless OUTPUT_SINGLE is 
-    !     ! set to .FALSE.
-    !     if (present(OUTPUT_SINGLE)) then 
-    !         SINGLE = OUTPUT_SINGLE 
-    !     else
-    !         SINGLE = .TRUE.
-    !     endif
-    !     ! =============================================================================
-    !     ! ----------------------- Load Permittivity Coefficients ----------------------
-    !     call material_rw('eps11.dat', eps11, .TRUE.)
-    !     call material_rw('eps13.dat', eps13, .TRUE.)
-    !     call material_rw('eps33.dat', eps33, .TRUE.) ! We will change y to z soon
-    !     call material_rw('sig11.dat', sig11, .TRUE.)
-    !     call material_rw('sig13.dat', sig13, .TRUE.)
-    !     call material_rw('sig33.dat', sig33, .TRUE.)
-
-    !     ! ------------------------ Assign some constants -----------------------
-    !     ! Assign the source location indices
-    !     isource = int(src(1)) + npoints_pml
-    !     jsource = int(src(2)) + npoints_pml
-
-    !     ! Define the 
-    !     DT = minval( (/dx, dz/) )/ ( 2.d0 * Clight/sqrt( minval( (/ eps11, eps33 /) ) ) ) 
-
-    !     ! Compute the coefficients of the FD scheme. First scale the relative 
-    !     ! permittivity and permeabilities to get the absolute values 
-    !     epsilonx(:,:) = (eps11 + eps13)*eps0
-    !     epsilonz(:,:) = (eps13 + eps33)*eps0
-    !     sigmax(:,:) = sig11 + sig13 
-    !     sigmaz(:,:) = sig13 + sig33 
-
-    !     ! We need to change sigma to dsigma, same for epsilon
-
-    !     caEx(:,:) = ( 1.0d0 - sigmax * dt / ( 2.0d0 * epsilonx ) ) / &
-    !                 ( 1.0d0 + sigmax * dt / (2.0d0 * epsilonx ) )
-    !     cbEx(:,:) = (dt / epsilonx ) / ( 1.0d0 + sigmax * dt / ( 2.0d0 * epsilonx ) )
-
-    !     caEz(:,:) = ( 1.0d0 - sigmaz * dt / ( 2.0d0 * epsilonz ) ) / &
-    !                 ( 1.0d0 + sigmaz * dt / (2.0d0 * epsilonz ) )
-    !     cbEz(:,:) = (dt / epsilonz ) / ( 1.0d0 + sigmaz * dt / ( 2.0d0 * epsilonz ) )
-
-    !     daHy = dt/(4.0d0*mu0*mu)
-    !     dbHy = dt/mu0 !dt/(mu*mu*dx*(1+daHy) ) 
-    !     daHy = 1.0d0 ! (1-daHy)/(1+daHy) ! 
-
-    !     ! ================================ LOAD SOURCE ================================
-    !     call loadsource('electromagneticsourcex.dat', nstep, srcx)
-    !     call loadsource('electromagneticsourcez.dat', nstep, srcz)
-
-    !     ! ----------------------------------------------------------------------
-
-    !     ! Initialize CPML damping variables
-    !     K_x(:) = 1.0d0
-    !     K_x_half(:) = 1.0d0
-    !     alpha_x(:) = 0.0d0
-    !     alpha_x_half(:) = 0.0d0
-    !     a_x(:) = 0.0d0
-    !     a_x_half(:) = 0.0d0
-    !     b_x(:) = 0.0d0 
-    !     b_x_half(:) = 0.0d0 
-
-    !     K_z(:) = 1.0d0
-    !     K_z_half(:) = 1.0d0
-    !     alpha_z(:) = 0.0d0
-    !     alpha_z_half(:) = 0.0d0
-    !     a_z(:) = 0.0d0
-    !     a_z_half(:) = 0.0d0
-
-
-    !     call loadcpml('kappax_cpml.dat', K_x)
-    !     call loadcpml('alphax_cpml.dat', alpha_x)
-    !     call loadcpml('acoefx_cpml.dat', a_x)
-    !     call loadcpml('bcoefx_cpml.dat', b_x)
-
-    !     call loadcpml('kappaz_cpml.dat', K_z)
-    !     call loadcpml('alphaz_cpml.dat', alpha_z)
-    !     call loadcpml('acoefz_cpml.dat', a_z)
-    !     call loadcpml('bcoefz_cpml.dat', b_z)
-
-    !     call loadcpml('kappax_half_cpml.dat', K_x_half)
-    !     call loadcpml('alphax_half_cpml.dat', alpha_x_half)
-    !     call loadcpml('acoefx_half_cpml.dat', a_x_half)
-    !     call loadcpml('bcoefx_half_cpml.dat', b_x_half)
-
-    !     call loadcpml('kappaz_half_cpml.dat', K_z_half)
-    !     call loadcpml('alphaz_half_cpml.dat', alpha_z_half)
-    !     call loadcpml('acoefz_half_cpml.dat', a_z_half)
-    !     call loadcpml('bcoefz_half_cpml.dat', b_z_half)
-
-
-    !     ! initialize arrays
-    !     Ex(:,:) = 0.0d0
-    !     Ez(:,:) = 0.0d0
-    !     Hy(:,:) = 0.0d0
-
-    !     ! PML
-    !     memory_dEx_dz(:,:) = 0.0d0
-    !     memory_dEz_dx(:,:) = 0.0d0
-
-    !     memory_dHy_dx(:,:) = 0.0d0
-    !     memory_dHy_dz(:,:) = 0.0d0
-
-    !     !---
-    !     !---  beginning of time loop
-    !     !---
-
-    !     do it = 1,NSTEP
-        
-    !         !--------------------------------------------------------
-    !         ! compute magnetic field and update memory variables for C-PML
-    !         !--------------------------------------------------------
-    !         do j = 2,nz-1  
-    !             do i = 2,nx-1
-                
-    !                 ! Values needed for the magnetic field updates
-    !                 value_dEx_dz = (Ex(i, j+1) - Ex(i, j-1)) / (2 * dz)
-    !                 memory_dEx_dz(i, j) = b_z(j) * memory_dEx_dz(i, j) + a_z(j) * value_dEx_dz
-    !                 value_dEx_dz = value_dEx_dz / K_z(j) + memory_dEx_dz(i, j)
-
-    !                 value_dEz_dx = (Ez(i+1, j) - Ez(i-1, j)) / (2 * dx)
-    !                 memory_dEz_dx(i, j) = b_x(i) * memory_dEz_dx(i, j) + a_x(i) * value_dEz_dx
-    !                 value_dEz_dx = value_dEz_dx / K_x(i) + memory_dEz_dx(i, j)
-
-    !                 ! Now update the Magnetic field
-    !                 Hy(i,j) = daHy*Hy(i,j) + dbHy*( value_dEz_dx + value_dEx_dz )
-
-    !             enddo  
-    !         enddo
-
-    !         !--------------------------------------------------------
-    !         ! compute electric field and update memory variables for C-PML
-    !         !--------------------------------------------------------
-            
-    !         ! Compute the differences in the y-direction
-    !         do j = 2,nz-1
-    !             do i = 2,nx-1
-    !                 ! Update the Ex field
-    !                 value_dHy_dz = ( Hy(i,j) - Hy(i,j-1) )/dz ! this is nz-1 length vector
-    !                 memory_dHy_dz(i,j) = b_z_half(j) * memory_dHy_dz(i,j) + a_z_half(j) * value_dHy_dz
-    !                 value_dHy_dz = value_dHy_dz/K_z_half(j) + memory_dHy_dz(i,j)
-
-    !                 Ex(i, j) = (( caEx(i,j) + caEx(i,j-1) )/2) * Ex(i,j) + &
-    !                     (( cbEx(i,j) + cbEx(i,j-1) )/2 ) * value_dHy_dz
-    !             enddo
-    !         enddo
-
-    !         do j = 2,nz-1
-    !             do i = 2,nx-1
-    !                 ! Update the Ez field
-    !                 value_dHy_dx = (Hy(i, j) - Hy(i-1, j)) / dx
-    !                 memory_dHy_dx(i, j) = b_x_half(i) * memory_dHy_dx(i, j) + a_x_half(i) * value_dHy_dx
-    !                 value_dHy_dx = value_dHy_dx / K_x_half(i) + memory_dHy_dx(i, j)
-                    
-    !                 Ez(i,j) = (( caEz(i,j) + caEz(i-1,j) )/2) * Ez(i,j) + &
-    !                     (( cbEz(i,j) + cbEz(i-1,j) )/2) * value_dHy_dx 
-    !             enddo
-    !         enddo
-
-
-    !         !----------------------------------------------------------------------------
-
-    !         Ex(isource,jsource) = Ex(isource,jsource) + srcx(it) * DT / eps11(isource,jsource)
-    !         Ez(isource,jsource) = Ez(isource,jsource) + srcz(it) * DT / eps33(isource,jsource) 
-            
-    !         ! Dirichlet conditions (rigid boundaries) on the edges or at the bottom of the PML layers
-    !         Ex(1,:) = 0.d0
-    !         Ex(nx-1,:) = 0.d0
-    !         Ex(:,1) = 0.d0
-    !         Ex(:,nz) = 0.d0
-
-    !         Ez(1,:) = 0.d0
-    !         Ez(nx,:) = 0.d0
-    !         Ez(:,1) = 0.d0
-    !         Ez(:,nz-1) = 0.d0
-
-    !         Hy(1,:) = 0.d0
-    !         Hy(nx-1,:) = 0.d0
-    !         Hy(:,1) = 0.d0
-    !         Hy(:,nz-1) = 0.d0
-
-    !         ! print maximum of norm of velocity
-    !         velocnorm = maxval(sqrt(Ex**2 + Ez**2))
-    !         if (velocnorm > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
-
-    !         call write_image2(Ex, nx, nz, src, it, 'Ex', SINGLE)
-    !         call write_image2(Ez, nx, nz, src, it, 'Ez', SINGLE)
-    !     enddo
-    ! end subroutine electromag2
 
     ! =========================================================================
     ! FORWARD AND BACKWARD DIFFERENCE SCHEME
-    subroutine electromag2(nx, nz, dx, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
-        ! INPUT
-        !   im (INTEGER)
-        !   nx, nz (INTEGER)
-        !   eps11, sig11, eps22, sig22 (REAL)
-        !   dx, dz (REAL)
-        !   npoints_pml (INTEGER) - the thickness of the pml
-        !   rcx (INTEGER) - the x and y indices for an array of recievers
+    subroutine electromag2(nx, nz, dx, dz, npoints_pml, src, nstep, SINGLE_OUTPUT) bind(C, name="electromag2_")
+        !--------------------------------------------------------------------------------------
+        ! Electromagnetic wave propagation in a 2D grid with Convolutional-PML (C-PML)
+        ! absorbing conditions for an anisotropic medium.
         !
+        ! This subroutine solves electromagnetic wave propagation using a finite-difference
+        ! time-domain (FDTD) method in a 2D grid, with PML absorbing conditions.
+        !
+        ! INPUT PARAMETERS:
+        !   nx, nz (INTEGER, IN)          : Number of grid points in the x and z directions.
+        !   dx, dz (REAL, IN)             : Grid spacing in the x and z directions (in meters).
+        !   npoints_pml (INTEGER, IN)     : Thickness of the PML absorbing boundary (in grid points).
+        !   src (INTEGER ARRAY, IN)       : Source location array.
+        !   nstep (INTEGER, IN)           : Total number of time steps in the simulation.
+        !   SINGLE_OUTPUT (LOGICAL, IN, OPTIONAL) : Flag to specify if the output should be saved
+        !                                           as single precision (default is double precision).
+        !
+        ! LOCAL VARIABLES:
+        !   eps11, sig11, ... (REAL)      : Permittivity and conductivity arrays in the grid.
+        !   Ex, Ez, Hy (REAL)             : Electric and magnetic field components.
+        !   caEx, cbEx, caEz, cbEz (REAL) : Coefficients for the finite difference scheme.
+        !   memory_dEz_dx, ... (REAL)     : Arrays to store memory variables for the PML.
+        !   velocnorm (REAL)              : Normalized velocity for stability checks.
+        !
+        ! OUTPUT:
+        !   The results of the simulation are calculated for electric and magnetic fields,
+        !   and optionally written to output files or further processed.
+        !--------------------------------------------------------------------------------------
+
+        use, intrinsic :: iso_c_binding, only: c_int, c_double
         implicit none
 
-        integer,parameter :: dp=kind(0.d0)
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-        ! total number of grid points in each direction of the grid
-        integer :: nx, nz
-        ! integer, dimension(:,:) :: rcx 
+        ! Local variables
+        real(c_double), dimension(nx,nz) :: eps11, eps13, eps33, &
+                                            sig11, sig13, sig33, &
+                                            epsilonx, epsilonz, &
+                                            sigmax, sigmaz
 
-        ! thickness of the PML layer in grid points
-        integer :: npoints_pml, nstep
+        real(c_double) :: DT
+        real(c_double), dimension(nstep) :: srcx, srcz
+        integer(c_int) :: isource, jsource, i, j, it
 
-        ! integer, dimension(nx,nz)
-        real(kind=dp), dimension(nx,nz) :: eps11, eps13, eps33, &
-                                        sig11, sig13, sig33, &
-                                        epsilonx, epsilonz, &
-                                        sigmax, sigmaz
+        ! Constants
+        real(c_double), parameter :: PI = 3.141592653589793238462643d0
+        real(c_double), parameter :: Clight = 2.9979458d+8
+        real(c_double), parameter :: mu0 = 4.0d0 * PI * 1.0d-7
+        real(c_double), parameter :: eps0 = 8.85418782d-12
+        real(c_double), parameter :: mu = 1.d0
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.d+25
 
-        ! time step in seconds. decreasing the time step improves the pml attenuation
-        ! but it should be inversely proportional to the center frequency of the 
-        ! source frequency 
-        real(kind=dp) :: DT, dx, dz 
+        ! Main arrays for electric and magnetic field components
+        real(c_double), dimension(nx,nz) :: Ex, Ez, Hy
 
-        ! source
-        integer,dimension(:) :: src
-        real(kind=dp),dimension(nstep) :: srcx, srcz
-        integer :: isource, jsource
+        ! Coefficients for the finite difference scheme
+        real(c_double), dimension(nx,nz) :: caEx, cbEx
+        real(c_double), dimension(nx,nz) :: caEz, cbEz
+        real(c_double) :: daHy, dbHy
+        real(c_double) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
 
-        ! value of PI
-        real(kind=dp), parameter :: PI = 3.141592653589793238462643d0
+        ! Arrays for the memory variables in PML
+        real(c_double), dimension(nx,nz) :: memory_dEz_dx, memory_dEx_dz
+        real(c_double), dimension(nx,nz) :: memory_dHy_dx, memory_dHy_dz
 
-        ! speed of mother fuckin' light 
-        real(kind=dp), parameter :: Clight = 2.9979458d+8
-
-        ! permability and permittivity of free space 
-        real(kind=dp), parameter :: mu0 = 4.0d0*pi*1.0d-7, eps0 = 8.85418782d-12
-
-        ! typical relative permeability of common materials is close to unity but for
-        ! the more specific case we can edit the following line to input permeability 
-        ! as a 2D array 
-        real(kind=dp), parameter :: mu = 1.d0
-
-        ! E-field threshold above which we consider that the code became unstable
-        real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
-
-        ! main arrays
-        real(kind=dp), dimension(nx,nz) :: Ex
-        real(kind=dp), dimension(nx,nz) :: Ez
-        real(kind=dp), dimension(nx,nz) :: Hy
-
-        ! we will compute the coefficients for the finite difference scheme 
-        real(kind=dp), dimension(nx, nz) :: caEx, cbEx
-        real(kind=dp), dimension(nx, nz) :: caEz, cbEz
-        real(kind=dp) :: daHy, dbHy
-        real(kind=dp) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
-
-        ! arrays for the memory variables
-        ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-        real(kind=dp), dimension(nx,nz) ::  memory_dEz_dx,  memory_dEx_dz 
-        real(kind=dp), dimension(nx,nz) :: memory_dHy_dx
-        real(kind=dp), dimension(nx,nz) ::  memory_dHy_dz
-
-        ! parameters for the source
-        ! angle of source force clockwise with respect to vertical (Y) axis
-        ! character(len=6) :: src_type
-        integer :: i,j, it
-        real(kind=dp) :: velocnorm
-
-        ! -------------------------------- PML parameters 
         ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
-                                        K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
-                                        K_z_half, alpha_z_half,a_z_half,b_z_half
-                                        
-        logical :: SINGLE
-        logical, intent(in), optional :: OUTPUT_SINGLE 
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, &
+                                        K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, &
+                                        K_z_half, alpha_z_half, a_z_half, b_z_half
 
-        ! ------------------- Name the f2py inputs 
-        !f2py3 intent(in) :: nx, nz, dx, dz,
-        !f2py3 intent(in) :: noints_pml, src, nstep
-        
-        ! The default data output is single precision unless OUTPUT_SINGLE is 
-        ! set to .FALSE.
-        if (present(OUTPUT_SINGLE)) then 
-            SINGLE = OUTPUT_SINGLE 
+        ! Velocity normalization factor
+        real(c_double) :: velocnorm
+
+        ! Boolean flag to save as double precision or single precision
+        logical :: SINGLE
+
+        ! Check if SINGLE_OUTPUT is provided, default to single precision if not
+        if (present(SINGLE_OUTPUT)) then
+            SINGLE = SINGLE_OUTPUT
         else
             SINGLE = .TRUE.
         endif
@@ -2294,97 +1909,90 @@ module cpmlfdtd
     end subroutine electromag2
 
     ! =========================================================================
-    subroutine electromag2c(nx, nz, dx, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
+    subroutine electromag2c(nx, nz, dx, dz, npoints_pml, src, nstep, SINGLE_OUTPUT) bind(C, name="electromag2c_")
+        !--------------------------------------------------------------------------------------
+        ! Electromagnetic wave propagation in a 2D grid with Convolutional-PML (C-PML)
+        ! absorbing conditions for a complex anisotropic medium.
+        !
+        ! This subroutine solves complex-valued electromagnetic wave propagation using 
+        ! a finite-difference time-domain (FDTD) method in a 2D grid, with PML absorbing 
+        ! conditions.
+        !
+        ! INPUT PARAMETERS:
+        !   nx, nz (INTEGER, IN)          : Number of grid points in the x and z directions.
+        !   dx, dz (REAL, IN)             : Grid spacing in the x and z directions (in meters).
+        !   npoints_pml (INTEGER, IN)     : Thickness of the PML absorbing boundary (in grid points).
+        !   src (INTEGER ARRAY, IN)       : Source location array.
+        !   nstep (INTEGER, IN)           : Total number of time steps in the simulation.
+        !   SINGLE_OUTPUT (LOGICAL, IN, OPTIONAL) : Flag to specify if the output should be saved
+        !                                           as single precision (default is double precision).
+        !
+        ! LOCAL VARIABLES:
+        !   eps11, sig11, ... (COMPLEX/REAL) : Permittivity and conductivity arrays in the grid.
+        !   Ex, Ez, Hy (COMPLEX)              : Complex electric and magnetic field components.
+        !   caEx, cbEx, caEz, cbEz (COMPLEX)  : Coefficients for the finite difference scheme.
+        !   memory_dEz_dx, ... (COMPLEX)      : Arrays to store memory variables for the PML.
+        !   velocnorm (REAL)                  : Normalized velocity for stability checks.
+        !
+        ! OUTPUT:
+        !   The results of the simulation are calculated for electric and magnetic fields,
+        !   and optionally written to output files or further processed.
+        !--------------------------------------------------------------------------------------
 
+        use, intrinsic :: iso_c_binding, only: c_int, c_double, c_double_complex
         implicit none
 
-        integer,parameter :: dp=kind(0.d0)
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-        ! total number of grid points in each direction of the grid
-        integer :: nx, nz
-        ! integer, dimension(:,:) :: rcx 
+        ! Local variables
+        complex(c_double_complex), dimension(nx,nz) :: eps11, eps13, eps33, epsilonx, epsilonz
+        real(c_double), dimension(nx,nz) :: sig11, sig13, sig33, sigmax, sigmaz
+        real(c_double) :: DT
+        real(c_double), dimension(nstep) :: srcx, srcz
+        integer(c_int) :: isource, jsource, i, j, it
 
-        ! thickness of the PML layer in grid points
-        integer :: npoints_pml, nstep
+        ! Constants
+        real(c_double), parameter :: PI = 3.141592653589793238462643d0
+        real(c_double), parameter :: Clight = 2.9979458d+8
+        real(c_double), parameter :: mu0 = 4.0d0 * PI * 1.0d-7
+        real(c_double), parameter :: eps0 = 8.85418782d-12
+        real(c_double), parameter :: mu = 1.d0
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.d+25
 
-        ! integer, dimension(nx,nz)
-        complex(kind=dp), dimension(nx,nz) :: eps11, eps13, eps33, epsilonx, epsilonz
-        real(kind=dp), dimension(nx,nz) :: sig11, sig13, sig33, sigmax, sigmaz
+        ! Main arrays for electric and magnetic field components (complex)
+        complex(c_double_complex), dimension(nx,nz) :: Ex, Ez, Hy
 
-        ! time step in seconds. decreasing the time step improves the pml attenuation
-        ! but it should be inversely proportional to the center frequency of the 
-        ! source frequency 
-        real(kind=dp) :: DT, dx, dz 
+        ! Coefficients for the finite difference scheme (complex)
+        complex(c_double_complex), dimension(nx,nz) :: caEx, cbEx
+        complex(c_double_complex), dimension(nx,nz) :: caEz, cbEz
+        real(c_double) :: daHy, dbHy
 
-        ! source
-        integer,dimension(:) :: src
-        real(kind=dp),dimension(nstep) :: srcx, srcz
-        integer :: isource, jsource
+        complex(c_double_complex) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
 
-        ! value of PI
-        real(kind=dp), parameter :: PI = 3.141592653589793238462643d0
+        ! Arrays for the memory variables in PML (complex)
+        complex(c_double_complex), dimension(nx,nz) :: memory_dEz_dx, memory_dEx_dz
+        complex(c_double_complex), dimension(nx,nz) :: memory_dHy_dx, memory_dHy_dz
 
-        ! speed of mother fuckin' light 
-        real(kind=dp), parameter :: Clight = 2.9979458d+8
+        ! 1D arrays for the damping profiles (real)
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, K_z_half, alpha_z_half, a_z_half, b_z_half
 
-        ! permability and permittivity of free space 
-        real(kind=dp), parameter :: mu0 = 4.0d0*pi*1.0d-7, eps0 = 8.85418782d-12
+        ! Velocity normalization factor
+        real(c_double) :: velocnorm
 
-        ! typical relative permeability of common materials is close to unity but for
-        ! the more specific case we can edit the following line to input permeability 
-        ! as a 2D array 
-        real(kind=dp), parameter :: mu = 1.d0
-
-        ! E-field threshold above which we consider that the code became unstable
-        real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.d+25
-
-        ! main arrays
-        complex(kind=dp), dimension(nx,nz) :: Ex
-        complex(kind=dp), dimension(nx,nz) :: Ez
-        complex(kind=dp), dimension(nx,nz) :: Hy
-
-        ! we will compute the coefficients for the finite difference scheme 
-        complex(kind=dp), dimension(nx, nz) :: caEx, cbEx
-        complex(kind=dp), dimension(nx, nz) :: caEz, cbEz
-        real(kind=dp) :: daHy, dbHy
-
-        complex(kind=dp) :: value_dEx_dz, value_dEz_dx, value_dHy_dz, value_dHy_dx
-
-        ! arrays for the memory variables
-        ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-        complex(kind=dp), dimension(nx,nz) ::  memory_dEz_dx,  memory_dEx_dz 
-        complex(kind=dp), dimension(nx,nz) :: memory_dHy_dx
-        complex(kind=dp), dimension(nx,nz) ::  memory_dHy_dz
-
-        ! character(len=6) :: src_type
-        integer :: i,j, it
-
-        real(kind=dp) :: velocnorm
-
-        ! -------------------------------- PML parameters 
-        ! 1D arrays for the damping profiles
-        real(kind=dp), dimension(nx) :: K_x,alpha_x,a_x,b_x, &
-                                        K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp), dimension(nz) :: K_z,alpha_z,a_z,b_z, &
-                                        K_z_half, alpha_z_half,a_z_half,b_z_half
-                                        
-        ! Boolean flag to save as double precision or single precision 
+        ! Boolean flag to save as double precision or single precision
         logical :: SINGLE
-        logical, intent(in), optional :: OUTPUT_SINGLE 
 
-        ! ------------------- Name the f2py inputs 
-        !f2py3 intent(in) :: nx, nz, dx, dz,
-        !f2py3 intent(in) :: noints_pml, src, nstep
-
-        ! =============================================================================
-        ! The default data output is single precision unless OUTPUT_SINGLE is 
-        ! set to .FALSE.
-        if (present(OUTPUT_SINGLE)) then 
-            SINGLE = OUTPUT_SINGLE 
+        ! Check if SINGLE_OUTPUT is provided, default to single precision if not
+        if (present(SINGLE_OUTPUT)) then
+            SINGLE = SINGLE_OUTPUT
         else
             SINGLE = .TRUE.
         endif
-
         ! ----------------------- Load Permittivity Coefficients ----------------------
 
         call material_rwc('eps11.dat', eps11, .TRUE.)
@@ -2573,115 +2181,97 @@ module cpmlfdtd
     end subroutine electromag2c
 
     ! =========================================================================
-    subroutine electromag25(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
-        
+    subroutine electromag25(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, SINGLE_OUTPUT) bind(C, name="electromag25_")
+        !--------------------------------------------------------------------------------------
+        ! Electromagnetic wave propagation in a 3D grid with Convolutional-PML (C-PML)
+        ! absorbing conditions for an anisotropic medium.
+        !
+        ! This subroutine solves electromagnetic wave propagation using a finite-difference
+        ! time-domain (FDTD) method in a 3D grid, with PML absorbing conditions.
+        !
+        ! INPUT PARAMETERS:
+        !   nx, ny, nz (INTEGER, IN)      : Number of grid points in x, y, and z directions.
+        !   dx, dy, dz (REAL, IN)         : Grid spacing in the x, y, and z directions (in meters).
+        !   npoints_pml (INTEGER, IN)     : Thickness of the PML absorbing boundary (in grid points).
+        !   src (INTEGER ARRAY, IN)       : Source location array.
+        !   nstep (INTEGER, IN)           : Total number of time steps in the simulation.
+        !   SINGLE_OUTPUT (LOGICAL, IN, OPTIONAL) : Flag to specify if the output should be saved
+        !                                           as single precision (default is double precision).
+        !
+        ! LOCAL VARIABLES:
+        !   eps11, sig11, ... (REAL)      : Permittivity and conductivity arrays in the grid.
+        !   Ex, Ey, Ez, Hx, Hy, Hz (REAL) : Electric and magnetic field components.
+        !   memory_dEz_dx, ... (REAL)     : Arrays to store memory variables for the PML.
+        !   velocnorm (REAL)              : Normalized velocity for stability checks.
+        !
+        ! OUTPUT:
+        !   The results of the simulation are calculated for electric and magnetic fields,
+        !   and optionally written to output files or further processed.
+        !--------------------------------------------------------------------------------------
+
+        use, intrinsic :: iso_c_binding, only: c_int, c_double
         implicit none
 
-        integer,parameter :: dp=kind(0.0d0)
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, ny, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dy, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-        ! total number of grid points in each direction of the grid
-        integer :: nx, ny, nz
-        ! time step in seconds. decreasing the time step improves the pml attenuation
-        ! but it should be inversely proportional to the center frequency of the 
-        ! source frequency 
-        integer :: npoints_pml, nstep
-
-        ! source
-        integer,dimension(:) :: src
-        integer :: isource,jsource,ksource
-
-
-        real(kind=dp), dimension(nx,nz) :: eps11, eps22, eps33, &
+        ! Local variables
+        real(c_double), dimension(nx,nz) :: eps11, eps22, eps33, &
                                             eps12, eps13, eps23, &
                                             sig11, sig22, sig33, &
                                             sig12, sig13, sig23, &
                                             epsilonx, epsilony, epsilonz, &
                                             sigmax, sigmay, sigmaz
 
-        real(kind=dp) :: DT, dx, dy, dz
+        real(c_double) :: DT
+        real(c_double) :: velocnorm
+        integer(c_int) :: isource, jsource, ksource, i, j, k, it
 
-        ! value of PI
-        real(kind=dp), parameter :: PI = 3.141592653589793238462643d0
+        ! Constants
+        real(c_double), parameter :: PI = 3.141592653589793238462643d0
+        real(c_double), parameter :: Clight = 2.9979458d+8
+        real(c_double), parameter :: mu0 = 4.0d0 * PI * 1.0d-7
+        real(c_double), parameter :: eps0 = 8.85418782d-12
+        real(c_double), parameter :: mu = 1.0d0
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.d+25
 
-        ! speed of mother fuckin' light 
-        real(kind=dp), parameter :: Clight = 2.9979458d+8
+        ! Main arrays for electric and magnetic field components
+        real(c_double), dimension(nx,ny,nz) :: Ex, Ey, Ez
+        real(c_double), dimension(nx,ny,nz) :: Hx, Hy, Hz
 
-        ! permability and permittivity of free space 
-        real(kind=dp), parameter :: mu0 = 4.0d0*pi*1.0d-7, eps0 = 8.85418782d-12
+        ! Coefficients for the finite difference scheme
+        real(c_double), dimension(nx,nz) :: caEx, cbEx, caEy, cbEy, caEz, cbEz
+        real(c_double) :: daHx, dbHx, daHy, dbHy, daHz, dbHz
 
-        ! typical relative permeability of common materials is close to unity but for
-        ! the more specific case we can edit the following line to input permeability 
-        ! as a 2D array 
-        real(kind=dp), parameter :: mu = 1.0d0
+        real(c_double) :: dEx_dy, dEy_dx, dEy_dz, dEz_dy, dEz_dx, dEx_dz, &
+                        dHx_dy, dHx_dz, dHy_dx, dHy_dz, dHz_dy, dHz_dx
 
-        ! E-field threshold above which we consider that the code became unstable
-        real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.0d+25
-
-        ! main arrays
-        real(kind=dp), dimension(nx,ny,nz) :: Ex
-        real(kind=dp), dimension(nx,ny,nz) :: Ey
-        real(kind=dp), dimension(nx,ny,nz) :: Ez
-        real(kind=dp), dimension(nx,ny,nz) :: Hx
-        real(kind=dp), dimension(nx,ny,nz) :: Hy
-        real(kind=dp), dimension(nx,ny,nz) :: Hz
-
-
-        ! we will compute the coefficients for the finite difference scheme 
-        real(kind=dp), dimension(nx, nz) :: caEx, cbEx, &
-                                            caEy, cbEy, &
-                                            caEz, cbEz
-
-        !real(kind=dp), dimension(nx+1, ny+1) :: caEy, cbEy
-        real(kind=dp) :: daHx, dbHx, daHy, dbHy, daHz, dbHz
-
-        real(kind=dp) ::  dEx_dy, dEy_dx, &
-                        dEy_dz, dEz_dy, &
-                        dEz_dx, dEx_dz, &
-                        dHx_dy, dHx_dz, &
-                        dHy_dx, dHy_dz, &
-                        dHz_dy, dHz_dx
-
-        ! arrays for the memory variables
-        ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-        real(kind=dp),dimension(nx,ny,nz) :: memory_dEy_dx, memory_dEx_dy, &
+        ! Arrays for the memory variables in PML
+        real(c_double), dimension(nx,ny,nz) :: memory_dEy_dx, memory_dEx_dy, &
                                             memory_dEz_dx, memory_dEx_dz, &
                                             memory_dEy_dz, memory_dEz_dy
 
-        real(kind=dp),dimension(nx,ny,nz) :: memory_dHz_dx, memory_dHx_dz, &
+        real(c_double), dimension(nx,ny,nz) :: memory_dHz_dx, memory_dHx_dz, &
                                             memory_dHy_dx, memory_dHx_dy, &
                                             memory_dHy_dz, memory_dHz_dy
 
-        ! parameters for the source
-        ! angle of source force clockwise with respect to vertical (Y) axis
-        ! this will later be treated as an input
-        real(kind=dp),dimension(nstep) :: srcx, srcy, srcz
+        ! Source arrays
+        real(c_double), dimension(nstep) :: srcx, srcy, srcz
 
-        integer :: i,j,k,it
+        ! 1D arrays for the damping profiles in each direction
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(ny) :: K_y, alpha_y, a_y, b_y, K_y_half, alpha_y_half, a_y_half, b_y_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, K_z_half, alpha_z_half, a_z_half, b_z_half
 
-        real(kind=dp) :: velocnorm
-
-        ! -------------------------------- PML parameters 
-
-        ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
-                                        K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
-                                        K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
-                                        K_z_half, alpha_z_half,a_z_half,b_z_half
-
-        ! integer :: npml_x,npml_y, npml_z
+        ! Boolean flag to save as double precision or single precision
         logical :: SINGLE
-        logical, intent(in), optional :: OUTPUT_SINGLE 
 
-        ! Name the f2py inputs 
-        !f2py3 intent(in) :: nx, ny, nz, dx, dy, dz,
-        !f2py3 intent(in) :: noints_pml, src, nstep
-                
-        ! The default data output is single precision unless OUTPUT_SINGLE is 
-        ! set to .FALSE.
-        if (present(OUTPUT_SINGLE)) then 
-            SINGLE = OUTPUT_SINGLE 
+        ! Check if SINGLE_OUTPUT is provided, default to single precision if not
+        if (present(SINGLE_OUTPUT)) then
+            SINGLE = SINGLE_OUTPUT
         else
             SINGLE = .TRUE.
         endif
@@ -2701,7 +2291,6 @@ module cpmlfdtd
         call material_rw('sig22.dat', sig22, .TRUE.)
         call material_rw('sig23.dat', sig23, .TRUE.)
         call material_rw('sig33.dat', sig33, .TRUE.)
-
 
         ! ------------------------ Assign some constants -----------------------
         ! Assign the source location indices
@@ -3051,116 +2640,98 @@ module cpmlfdtd
     end subroutine electromag25
 
     ! =========================================================================
-    subroutine electromag25c(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, OUTPUT_SINGLE)
-        
+    subroutine electromag25c(nx, ny, nz, dx, dy, dz, npoints_pml, src, nstep, SINGLE_OUTPUT) bind(C, name="electromag25c_")
+        !--------------------------------------------------------------------------------------
+        ! Complex Electromagnetic wave propagation in a 3D grid with Convolutional-PML (C-PML)
+        ! absorbing conditions for an anisotropic medium.
+        !
+        ! This subroutine solves complex-valued electromagnetic wave propagation using 
+        ! a finite-difference time-domain (FDTD) method in a 3D grid, with PML absorbing 
+        ! conditions.
+        !
+        ! INPUT PARAMETERS:
+        !   nx, ny, nz (INTEGER, IN)      : Number of grid points in x, y, and z directions.
+        !   dx, dy, dz (REAL, IN)         : Grid spacing in the x, y, and z directions (in meters).
+        !   npoints_pml (INTEGER, IN)     : Thickness of the PML absorbing boundary (in grid points).
+        !   src (INTEGER ARRAY, IN)       : Source location array.
+        !   nstep (INTEGER, IN)           : Total number of time steps in the simulation.
+        !   SINGLE_OUTPUT (LOGICAL, IN, OPTIONAL) : Flag to specify if the output should be saved
+        !                                           as single precision (default is double precision).
+        !
+        ! LOCAL VARIABLES:
+        !   eps11, sig11, ... (COMPLEX/REAL) : Permittivity and conductivity arrays in the grid.
+        !   Ex, Ey, Ez, Hx, Hy, Hz (COMPLEX) : Complex electric and magnetic field components.
+        !   memory_dEz_dx, ... (COMPLEX)     : Arrays to store memory variables for the PML.
+        !   velocnorm (REAL)                 : Normalized velocity for stability checks.
+        !
+        ! OUTPUT:
+        !   The results of the simulation are calculated for electric and magnetic fields,
+        !   and optionally written to output files or further processed.
+        !--------------------------------------------------------------------------------------
+
+        use, intrinsic :: iso_c_binding, only: c_int, c_double, c_double_complex
         implicit none
 
-        integer,parameter :: dp=kind(0.0d0)
+        ! Input arguments
+        integer(c_int), intent(in) :: nx, ny, nz, npoints_pml, nstep
+        real(c_double), intent(in) :: dx, dy, dz
+        integer(c_int), dimension(:), intent(in) :: src
+        logical, intent(in), optional :: SINGLE_OUTPUT
 
-        ! total number of grid points in each direction of the grid
-        integer :: nx, ny, nz
-        ! time step in seconds. decreasing the time step improves the pml attenuation
-        ! but it should be inversely proportional to the center frequency of the 
-        ! source frequency 
-        integer :: npoints_pml, nstep
-
-        ! source
-        integer,dimension(:) :: src
-        integer :: isource,jsource,ksource
-
-
-        complex(kind=dp), dimension(nx,nz) :: eps11, eps22, eps33, &
-                                            eps12, eps13, eps23, &
-                                            epsilonx, epsilony, epsilonz
-                                            
-        real(kind=dp), dimension(nx, nz) :: sig11, sig22, sig33, &
+        ! Local variables
+        complex(c_double_complex), dimension(nx,nz) :: eps11, eps22, eps33, &
+                                                    eps12, eps13, eps23, &
+                                                    epsilonx, epsilony, epsilonz
+                                                    
+        real(c_double), dimension(nx,nz) :: sig11, sig22, sig33, &
                                             sig12, sig13, sig23, &
                                             sigmax, sigmay, sigmaz
 
-        real(kind=dp) :: DT, dx, dy, dz
+        real(c_double) :: DT, velocnorm
+        integer(c_int) :: isource, jsource, ksource, i, j, k, it
 
-        ! value of PI
-        real(kind=dp), parameter :: PI = 3.141592653589793238462643d0
+        ! Constants
+        real(c_double), parameter :: PI = 3.141592653589793238462643d0
+        real(c_double), parameter :: Clight = 2.9979458d+8
+        real(c_double), parameter :: mu0 = 4.0d0 * PI * 1.0d-7
+        real(c_double), parameter :: eps0 = 8.85418782d-12
+        real(c_double), parameter :: mu = 1.0d0
+        real(c_double), parameter :: STABILITY_THRESHOLD = 1.0d+25
 
-        ! speed of mother fuckin' light 
-        real(kind=dp), parameter :: Clight = 2.9979458d+8
+        ! Main arrays for complex electric and magnetic field components
+        complex(c_double_complex), dimension(nx,ny,nz) :: Ex, Ey, Ez
+        complex(c_double_complex), dimension(nx,ny,nz) :: Hx, Hy, Hz
 
-        ! permability and permittivity of free space 
-        real(kind=dp), parameter :: mu0 = 4.0d0*pi*1.0d-7, eps0 = 8.85418782d-12
+        ! Coefficients for the finite difference scheme (complex)
+        complex(c_double_complex), dimension(nx,nz) :: caEx, cbEx, caEy, cbEy, caEz, cbEz
+        real(c_double) :: daHx, dbHx, daHy, dbHy, daHz, dbHz
 
-        ! typical relative permeability of common materials is close to unity but for
-        ! the more specific case we can edit the following line to input permeability 
-        ! as a 2D array 
-        real(kind=dp), parameter :: mu = 1.0d0
+        complex(c_double_complex) :: dEx_dy, dEy_dx, dEy_dz, dEz_dy, dEz_dx, dEx_dz, &
+                                    dHx_dy, dHx_dz, dHy_dx, dHy_dz, dHz_dy, dHz_dx
 
-        ! E-field threshold above which we consider that the code became unstable
-        real(kind=dp), parameter :: STABILITY_THRESHOLD = 1.0d+25
+        ! Arrays for the memory variables in PML (complex)
+        complex(c_double_complex), dimension(nx,ny,nz) :: memory_dEy_dx, memory_dEx_dy, &
+                                                        memory_dEz_dx, memory_dEx_dz, &
+                                                        memory_dEy_dz, memory_dEz_dy
 
-        ! main arrays
-        complex(kind=dp), dimension(nx,ny,nz) :: Ex
-        complex(kind=dp), dimension(nx,ny,nz) :: Ey
-        complex(kind=dp), dimension(nx,ny,nz) :: Ez
-        complex(kind=dp), dimension(nx,ny,nz) :: Hx
-        complex(kind=dp), dimension(nx,ny,nz) :: Hy
-        complex(kind=dp), dimension(nx,ny,nz) :: Hz
+        complex(c_double_complex), dimension(nx,ny,nz) :: memory_dHz_dx, memory_dHx_dz, &
+                                                        memory_dHy_dx, memory_dHx_dy, &
+                                                        memory_dHy_dz, memory_dHz_dy
 
+        ! Source arrays
+        real(c_double), dimension(nstep) :: srcx, srcy, srcz
 
-        ! we will compute the coefficients for the finite difference scheme 
-        complex(kind=dp), dimension(nx, nz) :: caEx, cbEx, &
-                                            caEy, cbEy, &
-                                            caEz, cbEz
+        ! 1D arrays for the damping profiles in each direction
+        real(c_double), dimension(nx) :: K_x, alpha_x, a_x, b_x, K_x_half, alpha_x_half, a_x_half, b_x_half
+        real(c_double), dimension(ny) :: K_y, alpha_y, a_y, b_y, K_y_half, alpha_y_half, a_y_half, b_y_half
+        real(c_double), dimension(nz) :: K_z, alpha_z, a_z, b_z, K_z_half, alpha_z_half, a_z_half, b_z_half
 
-        !real(kind=dp), dimension(nx+1, ny+1) :: caEy, cbEy
-        real(kind=dp) :: daHx, dbHx, daHy, dbHy, daHz, dbHz
-
-        complex(kind=dp) ::  dEx_dy, dEy_dx, &
-                        dEy_dz, dEz_dy, &
-                        dEz_dx, dEx_dz, &
-                        dHx_dy, dHx_dz, &
-                        dHy_dx, dHy_dz, &
-                        dHz_dy, dHz_dx
-
-        ! arrays for the memory variables
-        ! could declare these arrays in PML only to save a lot of memory, but proof of concept only here
-        complex(kind=dp),dimension(nx,ny,nz) :: memory_dEy_dx, memory_dEx_dy, &
-                                            memory_dEz_dx, memory_dEx_dz, &
-                                            memory_dEy_dz, memory_dEz_dy
-
-        complex(kind=dp),dimension(nx,ny,nz) :: memory_dHz_dx, memory_dHx_dz, &
-                                            memory_dHy_dx, memory_dHx_dy, &
-                                            memory_dHy_dz, memory_dHz_dy
-
-        ! parameters for the source
-        ! angle of source force clockwise with respect to vertical (Y) axis
-        ! this will later be treated as an input
-        real(kind=dp),dimension(nstep) :: srcx, srcy, srcz
-
-        integer :: i,j,k,it
-
-        real(kind=dp) :: velocnorm
-
-        ! -------------------------------- PML parameters 
-
-        ! 1D arrays for the damping profiles
-        real(kind=dp),dimension(nx) ::  K_x,alpha_x,a_x,b_x, & 
-                                        K_x_half, alpha_x_half,a_x_half,b_x_half
-        real(kind=dp),dimension(ny) ::  K_y,alpha_y,a_y,b_y, &
-                                        K_y_half, alpha_y_half,a_y_half,b_y_half
-        real(kind=dp),dimension(nz) ::  K_z,alpha_z,a_z,b_z, &
-                                        K_z_half, alpha_z_half,a_z_half,b_z_half
-
-        ! integer :: npml_x,npml_y, npml_z
+        ! Boolean flag to save as double precision or single precision
         logical :: SINGLE
-        logical, intent(in), optional :: OUTPUT_SINGLE 
 
-        ! Name the f2py inputs 
-        !f2py3 intent(in) :: nx, ny, nz, dx, dy, dz,
-        !f2py3 intent(in) :: noints_pml, src, nstep
-                
-        ! The default data output is single precision unless OUTPUT_SINGLE is 
-        ! set to .FALSE.
-        if (present(OUTPUT_SINGLE)) then 
-            SINGLE = OUTPUT_SINGLE 
+        ! Check if SINGLE_OUTPUT is provided, default to single precision if not
+        if (present(SINGLE_OUTPUT)) then
+            SINGLE = SINGLE_OUTPUT
         else
             SINGLE = .TRUE.
         endif

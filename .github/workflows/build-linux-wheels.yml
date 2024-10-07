@@ -1,72 +1,33 @@
-name: Build Linux Wheels
+name: Build and publish wheels
 
 on:
   push:
     branches:
       - main
-      - master
   pull_request:
-    branches: 
+    branches:
       - main
-      - master
 
 jobs:
-  build-wheels:
-    name: Build wheels on ${{ matrix.os }}
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11']
 
     steps:
-      - name: Checkout seidart
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install cibuildwheel and auditwheel
+      - name: Install dependencies
         run: |
-          python -m pip install cibuildwheel
-          python -m pip install auditwheel
-      
-      -
+          python -m pip install --upgrade pip
+          pip install scikit-build cmake
 
-      - name: Build wheels (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: cp311-*
-          CIBW_ARCHS_LINUX: auto ppc64le s390x  #aarch64
-          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_24_x86_64
-          
-      - uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: ./wheelhouse/*.whl
-      
-  # publish_wheels:
-  #   needs: build_wheels
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Download wheels
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: wheels
-  #         path: ?
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.11
-
-  #     - name: Install twine
-  #       run: python -m pip install twine
-
-  #     - name: Publish wheels to PyPI
-  #       env:
-  #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-  #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-  #       run: python -m twine upload ?/*.whl
+      - name: Build and Install
+        run: python -m pip install .

@@ -1,0 +1,137 @@
+# ============================== skbuild Python ================================
+# [build-system]
+# requires = ["setuptools", "scikit-build", "cmake", "ninja", "wheel"]
+# build-backend = "setuptools.build_meta"
+
+# [project]
+# name = "seidart"
+# version = "2.3.2"
+# license = {file = "LICENSE.txt"}
+# description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
+# requires-python = ">=3.11"
+# readme = "README.rst"
+# authors = [
+#     { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
+#     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
+# ]
+# maintainers = [
+#     { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
+#     { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
+# ]
+# dependencies = [
+#     "numpy",
+#     "scipy",
+#     "matplotlib",
+#     "pandas",
+#     "mplstereonet",
+#     "pyevtk",
+#     "glob2",
+#     "dill",
+#     "seaborn"
+# ]
+# classifiers = [
+#     "Programming Language :: Python :: 3",
+#     "License :: OSI Approved :: GNU Affero General Public License v3",
+#     "Operating System :: OS Independent",
+#     "Framework :: Matplotlib",
+#     "Topic :: Scientific/Engineering :: Physics",
+#     "Intended Audience :: Science/Research",
+#     "Natural Language :: English",
+#     "Development Status :: 4 - Beta",
+# ]
+
+# [tool.setuptools]
+# package-dir = {"" = "src"}
+# packages = [
+#     "seidart",
+#     "seidart.fortran", 
+#     "seidart.routines", 
+#     "seidart.simulations", 
+#     "seidart.visualization"
+# ]
+
+# [tool.setuptools.package-data]
+# seidart = ["fortran/*.so"]
+
+# [project.scripts]
+# prjbuild = "seidart.routines.prjbuild:main"
+# prjrun = "seidart.routines.prjrun:main"
+# arraybuild = "seidart.routines.arraybuild:main"
+# sourcefunction = "seidart.routines.sourcefunction:main"
+# rcxdisplay = "seidart.visualization.rcxdisplay:main"
+# im2anim = "seidart.visualization.im2anim:build_animation"
+
+# # Optionals
+# [project.urls]
+# homepage = "https://github.com/UMainedynamics/SeidarT"
+# documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+
+
+# =============================== Meson Python =================================
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+    "meson",
+    "meson-python",
+    "numpy", # Include any additional dependencies
+    "scipy",
+]
+build-backend = "mesonpy"
+
+[project]
+name = "seidart"
+version = "2.3.2"
+license = {file = "LICENSE.txt"}
+description = "SeidarT is a 2 and 2.5d seismic and electromagnetic modeling suite."
+requires-python = ">=3.11"
+readme = "README.rst"
+authors = [
+    { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
+    { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
+]
+maintainers = [
+    { name = "Steven Bernsen", email = "steven.bernsen@maine.edu"},
+    { name = "Christopher Gerbi", email = "christopher.gerbi@maine.edu"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Framework :: Matplotlib",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Development Status :: 4 - Beta",
+]
+keywords = ["wave propagation", "seismic", "radar", "snow", "ice"]
+
+# [tool.meson-python]
+# python-sources = ['src/seidart']  # Define the Python source directory
+
+# Optionals
+[project.urls]
+homepage = "https://github.com/UMainedynamics/SeidarT"
+documentation = "https://umainedynamics.github.io/SeidarT/index.html"
+
+[project.scripts]
+prjbuild="seidart.routines.prjbuild:main"
+prjrun="seidart.routines.prjrun:main"
+arraybuild="seidart.routines.arraybuild:main"
+sourcefunction="seidart.routines.sourcefunction:main"
+rcxdisplay="seidart.visualization.rcxdisplay:main"
+im2anim="seidart.visualization.im2anim:build_animation"
+
+
+[project.optional-dependencies]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "mplstereonet",
+    "pyevtk",
+    "glob2",
+    "dill",
+    "seaborn"
+]

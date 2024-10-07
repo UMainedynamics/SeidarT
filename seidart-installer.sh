@@ -3,6 +3,7 @@
 # Default values for the variables
 FULL=false
 ENVUPGRADE=false
+export CMAKE_SEIDART_INSTALL_PREFIX=$(python -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -111,7 +112,7 @@ echo "Installing SeidarT..."
 echo "$install_result" | grep -q "Successfully installed"
 if [ $? -eq 0 ]; then
     echo "seidart installed successfully."
-    rm -rf _skbuild/ dist/
+    # rm -rf _skbuild/ dist/
 else
     log_with_timestamp "Failed to install seidart."
     log_with_timestamp "$install_result"

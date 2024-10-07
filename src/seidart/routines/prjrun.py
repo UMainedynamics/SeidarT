@@ -8,8 +8,6 @@ from typing import Tuple
 # import seidart.routines.materials as mf
 from seidart.routines.definitions import *
 
-# Modeling modules
-from seidart.fortran.cpmlfdtd import cpmlfdtd
 
 # ------------------------------ Global Constants ------------------------------
 # Physics
@@ -29,8 +27,8 @@ NPA = 2  # Additional numerical parameter for CPML
 kappa_max = 5  # Max value for CPML parameter
 Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
-# Courant-Friedrichs-Levy condition 
-CFL = 1/np.sqrt(3)
+# Courant-Friedrichs-Levy condition
+CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D. 
 
 
 # ============================ Create the objects ==============================
@@ -668,7 +666,7 @@ def runseismic(
     # Write the coefficient images to a fortran file
     
     # Create the stiffness .dat files
-    cpmlfdtd.stiffness_write(
+    stiffness_write(
         domain.geometry + 1,
         modelclass.tensor_coefficients,
         domain.cpml,
@@ -680,7 +678,7 @@ def runseismic(
     #     modelclass.dt / (np.ones([domain.nmats, 3]) * \
     #         modelclass.attenuation_coefficients.astype(float) ).T
     # Create the attenuation .dat files
-    cpmlfdtd.attenuation_write(
+    attenuation_write(
         domain.geometry + 1,
         modelclass.attenuation_coefficients,
         domain.cpml,
@@ -690,7 +688,7 @@ def runseismic(
     if domain.dim == 2.5:
         print('Running 2.5D model')
         # Run the FDTD
-        cpmlfdtd.seismic25(
+        seismic25(
             domain.nx + 2*domain.cpml, 
             domain.ny + 2*domain.cpml, 
             domain.nz + 2*domain.cpml,
@@ -702,7 +700,7 @@ def runseismic(
         )
     else:
             print('Running 2D model')
-            cpmlfdtd.seismic2(
+            seismic2(
                 domain.nx + 2*domain.cpml, 
                 domain.nz + 2*domain.cpml,
                 domain.dx, domain.dz,
@@ -747,7 +745,7 @@ def runelectromag(
         cpmlcompute(modelclass, domain, d, half = True)
     
     if use_complex_equations:
-        cpmlfdtd.permittivity_write_c(
+        permittivity_write_c(
             domain.geometry+1,
             modelclass.tensor_coefficients,
             domain.cpml,
@@ -756,7 +754,7 @@ def runelectromag(
         )
         if domain.dim == 2.5:
             print('Running complex 3D model.')
-            cpmlfdtd.electromag25c(
+            electromag25c(
                 domain.nx + 2*domain.cpml, 
                 domain.ny + 2*domain.cpml, 
                 domain.nz + 2*domain.cpml,
@@ -768,7 +766,7 @@ def runelectromag(
             )
         else:
             print('Running complex 2D model')
-            cpmlfdtd.electromag2c(
+            electromag2c(
                 domain.nx + 2*domain.cpml,
                 domain.nz + 2*domain.cpml,
                 domain.dx, domain.dz,
@@ -778,7 +776,7 @@ def runelectromag(
                 single_precision
             )
     else:  
-        cpmlfdtd.permittivity_write(
+        permittivity_write(
                 domain.geometry+1,
                 modelclass.tensor_coefficients.real,
                 domain.cpml,
@@ -787,7 +785,7 @@ def runelectromag(
             )
         if domain.dim == 2.5:
             print('Running 2.5D model')
-            cpmlfdtd.electromag25(
+            electromag25(
                 domain.nx + 2*domain.cpml, 
                 domain.ny + 2*domain.cpml, 
                 domain.nz + 2*domain.cpml,
@@ -799,7 +797,7 @@ def runelectromag(
             )
         else:
             print('Running 2D model')
-            cpmlfdtd.electromag2(
+            electromag2(
                 domain.nx + 2*domain.cpml,
                 domain.nz + 2*domain.cpml,
                 domain.dx, domain.dz,
