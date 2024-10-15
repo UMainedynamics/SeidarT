@@ -11,7 +11,12 @@ import matplotlib.image as mpimg
 from typing import Tuple
 import json 
 
-# __all__ = ['prjbuild']
+__all__ = [
+    'prjbuild',
+    'generate_template',
+    'update_json',
+    'image2int',
+]
 
 # ------------------------------------------------------------------------------
 def generate_template(nmats, **kwargs):
@@ -43,109 +48,97 @@ def generate_template(nmats, **kwargs):
                 "euler_angles": None
             } for i in range(nmats)
         ],
-        "Seismic": [
-            {
-                "Time_Parameters": [
-                    {
-                        "dt": None,
-                        "time_steps": 1
-                    }
-                ],
-                "Attenuation": [
-                    {
-                        "id": i,
-                        "name": None,
-                        "alpha_x": 0.0,
-                        "alpha_y": 0.0,
-                        "alpha_z": 0.0,
-                        "reference_frequency": 1.0
-                    } for i in range(nmats)
-                ],
-                "Source": [
-                    {
-                        "x": 1.0,
-                        "y": 1.0,
-                        "z": 1.0,
-                        "source_frequency": 1.0,
-                        "x-z_rotation": 0,
-                        "x-y_rotation": 0,
-                        "amplitude": 1.0,
-                        "source_type": None
-                    }
-                ],
-                "Stiffness_Coefficients": [
-                    {
-                        "id": i,
-                        "c11": 0.0,
-                        "c12": 0.0,
-                        "c13": 0.0,
-                        "c14": 0.0,
-                        "c15": 0.0,
-                        "c16": 0.0,
-                        "c22": 0.0,
-                        "c23": 0.0,
-                        "c24": 0.0,
-                        "c25": 0.0,
-                        "c26": 0.0,
-                        "c33": 0.0,
-                        "c34": 0.0,
-                        "c35": 0.0,
-                        "c36": 0.0,
-                        "c44": 0.0,
-                        "c45": 0.0,
-                        "c46": 0.0,
-                        "c55": 0.0,
-                        "c56": 0.0,
-                        "c66": 0.0,
-                        "density": 0.0
-                    } for i in range(nmats)
-                ]
-            }
-        ],
-        "Electromagnetic": [
-            {
-                "Time_Parameters": [
-                    {
-                        "dt": None,
-                        "time_steps": None
-                    }
-                ],
-                "Source": [
-                    {
-                        "x": 1.0,
-                        "y": 1.0,
-                        "z": 1.0,
-                        "source_frequency": 1.0,
-                        "x-z_rotation": 0,
-                        "x-y_rotation": 0,
-                        "amplitude": 1.0,
-                        "source_type": None
-                    }
-                ],
-                "Permittivity": [
-                    {
-                        "id": i,
-                        "e11": 0.0,
-                        "e12": 0.0,
-                        "e13": 0.0,
-                        "e22": 0.0,
-                        "e23": 0.0,
-                        "e33": 0.0
-                    } for i in range(nmats)
-                ],
-                "Conductivity": [
-                    {
-                        "id": i,
-                        "s11": 0.0,
-                        "s12": 0.0,
-                        "s13": 0.0,
-                        "s22": 0.0,
-                        "s23": 0.0,
-                        "s33": 0.0
-                    } for i in range(nmats)
-                ]
-            }
-        ]
+        "Seismic": {
+            "Time_Parameters": {
+                "dt": None,
+                "time_steps": 1
+            },
+            "Attenuation": [
+                {
+                    "id": i,
+                    "name": None,
+                    "alpha_x": 0.0,
+                    "alpha_y": 0.0,
+                    "alpha_z": 0.0,
+                    "reference_frequency": 1.0
+                } for i in range(nmats)
+            ],
+            "Source": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0,
+                "source_frequency": 1.0,
+                "x-z_rotation": 0,
+                "x-y_rotation": 0,
+                "amplitude": 1.0,
+                "source_type": None
+            },
+            "Stiffness_Coefficients": [
+                {
+                    "id": i,
+                    "c11": 0.0,
+                    "c12": 0.0,
+                    "c13": 0.0,
+                    "c14": 0.0,
+                    "c15": 0.0,
+                    "c16": 0.0,
+                    "c22": 0.0,
+                    "c23": 0.0,
+                    "c24": 0.0,
+                    "c25": 0.0,
+                    "c26": 0.0,
+                    "c33": 0.0,
+                    "c34": 0.0,
+                    "c35": 0.0,
+                    "c36": 0.0,
+                    "c44": 0.0,
+                    "c45": 0.0,
+                    "c46": 0.0,
+                    "c55": 0.0,
+                    "c56": 0.0,
+                    "c66": 0.0,
+                    "density": 0.0
+                } for i in range(nmats)
+            ]
+        },
+        "Electromagnetic": {
+            "Time_Parameters": {
+                "dt": None,
+                "time_steps": None
+            },
+            "Source": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0,
+                "source_frequency": 1.0,
+                "x-z_rotation": 0,
+                "x-y_rotation": 0,
+                "amplitude": 1.0,
+                "source_type": None
+            },
+            "Permittivity": [
+                {
+                    "id": i,
+                    "e11": 0.0,
+                    "e12": 0.0,
+                    "e13": 0.0,
+                    "e22": 0.0,
+                    "e23": 0.0,
+                    "e33": 0.0
+                } for i in range(nmats)
+            ],
+            "Conductivity": [
+                {
+                    "id": i,
+                    "s11": 0.0,
+                    "s12": 0.0,
+                    "s13": 0.0,
+                    "s22": 0.0,
+                    "s23": 0.0,
+                    "s33": 0.0
+                } for i in range(nmats)
+            ]
+        }
     }
     
     # Apply updates from **kwargs
@@ -271,7 +264,7 @@ def update_json(template, updates):
             path = parse_kwargs_to_path(key)
             set_value_in_dict(template, path, value)
     
-    print("Template JSON file updated with the provided values.")
+    print("JSON file updated with the provided values.")
     return template
 
 # ------------------------ Some Necessary Definitions -------------------------
@@ -308,7 +301,10 @@ def image2int(imfilename: str) -> Tuple[np.ndarray, np.ndarray]:
         rgb = rgb * 255
         rgb = rgb.astype(int)
     
-    return( rgb_int.astype(int), rgb)
+    rgb_int = rgb_int.astype(int)
+    rgb_int.T.tofile('geometry.dat')
+    
+    return( rgb_int, rgb)
 
 # ------------------------------------------------------------------------------
 def prjbuild(

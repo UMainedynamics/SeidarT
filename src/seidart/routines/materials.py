@@ -185,52 +185,33 @@ def anisotropic_boolean(
 
 # -----------------------------------------------------------------------------
 def get_seismic(
-        material_name: Union[list, np.ndarray] = [None], 
-        temp: Union[list, np.ndarray] = [None], 
-        rho: Union[list, np.ndarray] = [None], 
-        porosity: Union[list, np.ndarray] = [0], 
-        lwc: Union[list, np.ndarray] = [0], 
-        anisotropic: Union[list, np.ndarray] = [False], 
-        angfile: Union[list, np.ndarray] = [None]
-    ) -> np.ndarray:
+        self,
+        material
+    ):
     """
     Calculates seismic stiffness coefficients based on material properties,
     accounting for anisotropic conditions where applicable.
 
-    :param material_name: Names of materials.
-    :param temp: Temperatures associated with each material.
-    :param rho: Densities of materials.
-    :param porosity: Porosities of materials.
-    :param lwc: Liquid water contents of materials.
-    :param anisotropic: Indicates if materials are anisotropic.
-    :param angfile: Angular files associated with anisotropic materials.
-    :type material_name: Union[list, np.ndarray], optional
-    :type temp: Union[list, np.ndarray], optional
-    :type rho: Union[list, np.ndarray], optional
-    :type porosity: Union[list, np.ndarray], optional
-    :type lwc: Union[list, np.ndarray], optional
-    :type anisotropic: Union[list, np.ndarray], optional
-    :type angfile: Union[list, np.ndarray], optional
-    :return: A tensor containing seismic stiffness coefficients.
-    :rtype: np.ndarray
+    :param material: The class object that contains material parameters.
+    :type material: Material 
     """
 
-    m = len(temp)
-    tensor = np.zeros([m, 23])
+    m = len(material.temp)
+    stiffness_coefficients = np.zeros([m, 23])
 
     # Adjust the stiffness tensor according to the pressure and temperature 
     # conditions for ice
     for ind in range(0, m):
         density,_,_ = porewater_correction(
-            temp[ind], 
-            rho[ind], 
-            porosity[ind], 
-            lwc[ind] 
+            material.temp[ind], 
+            material.rho[ind], 
+            material.porosity[ind], 
+            material.lwc[ind] 
         )
 
-        if anisotropic[ind] and material_name[ind] == 'ice1h':
+        if material.is_anisotropic[ind] and material.material[ind] == 'ice1h':
             print('Computing the stiffness for anisotropic material ice1h.')
-            euler = read_ang(angfile[ind])
+            euler = read_ang(material.angfile[ind])
             p = len(euler[:,0])
 
             cvoigt = np.zeros([6,6])
@@ -240,7 +221,7 @@ def get_seismic(
             # Assume a constant pressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
             pressure = 0.1 * 1e-1 # in kbar
-            C = ice_stiffness(temp[ind], pressure)
+            C = ice_stiffness(material.temp[ind], pressure)
             S = np.linalg.inv(C)
 
             for k in range(0, p):
@@ -264,18 +245,20 @@ def get_seismic(
             if np.sum(eigenvalues <= 0) > 0:
                 print('Stiffness tensor is not positive definite.')
             else:
-                print('Stiffness tensor is positive definite')
-            
-            cond1, cond2, cond3 = highfreq_stability_conditions(C)
-            
-        elif not anisotropic[ind] and material_name[ind] == 'ice1h':
+                print('Stiffness tensor is positive definite')            
+        elif not material.is_anisotropic[ind] and material.material[ind] == 'ice1h':
             print('Computing the homogeneous stiffness coefficients.')
-            C = ice_stiffness(temp[ind], 0.1)
+            C = ice_stiffness(material.temp[ind], 0.1)
         else:
-            material_limits = isotropic_materials[ material_name[ind] ]
+            material_limits = isotropic_materials[ material.material[ind] ]
             C = isotropic_stiffness_tensor(0.1, density, material_limits )
-
-        tensor[ind, :] = (
+        
+        # The high frequency stability conditions will never pass for anisotropic ice
+        cond1, cond2, cond3 = highfreq_stability_conditions(C)
+        
+        # Assign the values        
+        C = np.round(C)
+        stiffness_coefficients[ind, :] = (
             ind, 
             C[0,0], C[0,1], C[0,2], C[0,3], C[0,4], C[0,5],
                     C[1,1], C[1,2], C[1,3], C[1,4], C[1,5],
@@ -285,14 +268,16 @@ def get_seismic(
                                                     C[5,5], 
             density
         )
-
-    return(tensor)
+    
+    # The model class is mutable so no need to return it
+    self.stiffness_coefficients = stiffness_coefficients
+    
 
 # -----------------------------------------------------------------------------
 def get_perm(
+        self,
         material,
-        modelclass
-    ) -> np.ndarray:
+    ):
     """
     Computes the permittivity and conductivity tensors for materials based on attributes
     contained within material and model class instances.
@@ -300,11 +285,6 @@ def get_perm(
     :param material: An instance of a class containing attributes for materials, including
                      temperature, density, porosity, water content, and anisotropic properties.
     :type material: Material
-    :param modelclass: An instance of a class containing modeling parameters, such as the
-                       frequency of interest for electromagnetic modeling.
-    :type modelclass: Model
-    :return: A tensor array containing permittivity and conductivity values for each material.
-    :rtype: np.ndarray
     """
 
     #!!!!! Use the material class as an input since it will have all of the values that you need instead of inputting all of them 
@@ -312,7 +292,8 @@ def get_perm(
     
     m = len(material.temp)
     # We will always compute the complex tensor. 
-    tensor = np.zeros([m, 13], dtype = complex)
+    permittivity_coefficients = np.zeros([m, 7], dtype = complex)
+    conductivity_coefficients = np.zeros([m, 7])
     
     # Adjust the stiffness tensor according to the pressure and temperature 
     # conditions for ice
@@ -322,10 +303,10 @@ def get_perm(
             permittivity = ice_permittivity(
                 material.temp[ind],
                 material.rho[ind],
-                center_frequency = modelclass.f0
+                center_frequency = self.f0
             )
             conductivity = snow_conductivity(
-                permittivity = permittivity, frequency = modelclass.f0
+                permittivity = permittivity, frequency = self.f0
             )
             
         elif material.material[ind] == 'snow':
@@ -333,10 +314,10 @@ def get_perm(
                 temperature = material.temp[ind],
                 lwc = material.lwc[ind], 
                 porosity = material.porosity[ind],
-                center_frequency = modelclass.f0
+                center_frequency = self.f0
             )
             conductivity = snow_conductivity(
-                permittivity = permittivity, frequency = modelclass.f0
+                permittivity = permittivity, frequency = self.f0
             )
         else:
             permittivity = np.round(
@@ -354,7 +335,7 @@ def get_perm(
             )[1]
         
         if material.is_anisotropic[ind]:
-            euler = read_ang(material.angfiles[ind])
+            euler = read_ang(material.angfile[ind])
             p = len(euler[:,0])
             
             pvoigt = np.zeros([3,3])
@@ -380,24 +361,35 @@ def get_perm(
             # Calculate the hill average 
             permittivity = (pvoigt + preuss)/2
             
+            # Convert back to real
+            permittivity = permittivity.real 
+            conductivity = conductivity.real
+            
             # Check to make sure the permittivity tensor is positive definite
             eigenvalues, eigenvectors = np.linalg.eigh(permittivity)
             if np.sum(eigenvalues <= 0) > 0:
                 print('Permittivity tensor is not positive definite.')
                 
-        tensor[ind, :] = np.array(
+        permittivity_coefficients[ind, :] = np.array(
             [
                 ind,
                 permittivity[0,0], permittivity[0,1], permittivity[0,2],
                 permittivity[1,1], permittivity[1,2],
-                permittivity[2,2],
+                permittivity[2,2]
+            ]
+        )
+        conductivity_coefficients[ind, :] = np.array(
+            [
+                ind,
                 conductivity[0,0], conductivity[0,1], conductivity[0,2],
                 conductivity[1,1], conductivity[1,2],
                 conductivity[2,2]
             ] 
         )
     
-    return(tensor)
+    # The model class is mutable so no need to return it
+    self.permittivity_coefficients = permittivity_coefficients 
+    self.conductivity_coefficients = conductivity_coefficients
 
 # -----------------------------------------------------------------------------
 def rho_water_correction(temperature: float = 0.0) -> float:

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import seidart.routines.materials as mf
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.animation as anim
@@ -10,17 +9,20 @@ from subprocess import call
 from scipy.io import FortranFile
 import glob2
 import copy
+import json
+
+import seidart.routines.materials as mf
+from seidart.routines.prjbuild import image2int
 
 __all__ = [
     'read_dat',
-    'image2int',
     'complex2str',
     'str2complex',
     'append_coefficients',
     'loadproject',
-    'prepme',
-    'coefs2prj',
     'airsurf',
+    'cpmlcompute',
+    'cpml_parameters',
     'rcxgen',
     'coherdt',
     'coherstf',
@@ -30,403 +32,29 @@ __all__ = [
     'agc',
     'correct_geometric_spreading',
     'exponential_gain',
-    'Domain',
-    'Material',
-    'Model',
-    'AnimatedGif',
     'kband_check',
     'parameter_profile_1d',
+    'CFL',
 ]
 
-# =============================================================================
-# =========================== Define Class Variables ==========================
-# =============================================================================
+# --------------------------------- Globals ------------------------------------
+clight = 2.99792458e8  # Speed of light in vacuum (m/s)
+eps0 = 8.85418782e-12  # Permittivity of free space
+mu0 = 4.0 * np.pi * 1.0e-7  # Permeability of free space
+mu_r = 1.0
 
-# We need to define some class variables
-class Domain:
-    def __init__(self):
-        super().__init__()
-        self.build()
+# These can be changed for control over the cpml parameters
+#CPML
+#----
+sig_opt_scalar = 1.2
+alpha_max_scalar = 1.0
+NP = 2  # Numerical parameter for CPML
+NPA = 2  # Additional numerical parameter for CPML
+kappa_max = 5  # Max value for CPML parameter
+Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
-    def build(self):
-        # Initialize variables
-        self.geometry = None
-        self.dim = None
-        self.nx = None
-        self.ny = None
-        self.nz = None
-        self.dx = None
-        self.dy = None
-        self.dz = None
-        self.cpml = None
-        self.cpml_attenuation = 0.0 # Default attenuation in the cpml region. Higher is more attenuation.
-        self.write = None
-        self.imfile = None
-        self.exit_status = 1
-
-        # Flag to specify whether the all inputs are fulfilled
-        self.seismic_model = False
-        self.electromag_model = False
-
-    def para_check(self):
-        self.exit_status = 0
-        # make sure there's a geometry. This implies whether nx, and nz exist
-        if self.geometry is None:
-            self.exit_status = 1
-            print('No geometry loaded\n')
-        if not self.dx or self.dx is None:
-            self.exit_status = 1
-            print('No step size in the x-direction')
-        if not self.dz or self.dz is None:
-            self.exit_status = 1
-            print('No step size in the y-direction')
-        if not self.cpml or self.cpml is None:
-            self.exit_status = 1
-            print('No cpml thickness is given')
-
-        # Check 2.5D
-        if self.dim == '2.5' and exit_status == 0:
-            if self.ny is None or self.ny == 'n/a':
-                print('No dimension given for y-direction. Assigning default ny=3.')
-                self.ny = 3
-            if self.dy is None or self.dy == 'n/a':
-                self.dy = np.min( [int(self.dx), int(self.dz)])
-                print('No step size given for y-direction. Assigning min(dx,dz).')
-
-        # Convert variables to required types. Ny and Dy are already converted if given
-        if self.exit_status == 0:
-            self.dim = float(self.dim)
-            self.nx = int(self.nx)
-            self.nz = int(self.nz)
-            self.dx = float(self.dx)
-            self.dz = float(self.dz)
-            self.cpml = int(self.cpml)
-        else:
-            print('\n Domain inputs are not satisfied. I can"t go on anymore. \n')
-            # quit()
-
-# ------------------------------------------------------------------------------
-
-class Material:
-    """
-    A class to manage materials for simulation purposes.
-
-    Attributes
-    ----------
-    material_list : numpy.ndarray
-        An array to store the list of materials.
-    material_flag : bool
-        A flag indicating whether the materials were read in successfully.
-    material : numpy.ndarray or None
-        Stores material information.
-    rgb : numpy.ndarray or None
-        Stores RGB values for materials (not used currently).
-    temp : numpy.ndarray or None
-        Stores temperature values for materials.
-    rho : numpy.ndarray or None
-        Stores density values for materials.
-    porosity : numpy.ndarray or None
-        Stores porosity values for materials.
-    lwc : numpy.ndarray or None
-        Stores liquid water content values for materials.
-    is_anisotropic : numpy.ndarray or None
-        Indicates if the material is anisotropic.
-    angfiles : numpy.ndarray or None
-        Stores ANG file paths for anisotropic materials.
-    functions : Any
-        Stores material processing functions.
-    """
-    # initialize the class
-    def __init__(self) -> None:
-        """
-        Initializes the Material class by building the initial structure.
-        """
-        super().__init__()
-        self.build()
-
-    def build(self) -> None:
-        """
-        Initializes the material attributes with default values.
-        """
-        self.material_list = np.array([]) # initialize
-        self.material_flag = False # Whether the materials were read in
-
-        # We will assign each of the list variables
-        self.material = None
-        self.rgb = None
-        self.temp = None
-        # self.attenuation = None
-        self.rho = None
-        self.porosity = None
-        self.lwc = None
-        self.is_anisotropic = None
-        self.angfiles = None
-
-        # The processing functions
-        self.functions = mf
-
-    def sort_material_list(self) -> None:
-        """
-        Sorts the material list based on the material properties.
-        """
-        self.material = self.material_list[:,1]
-        self.temp = self.material_list[:,2].astype(float)
-        self.rho = self.material_list[:,3].astype(float)
-        self.porosity = self.material_list[:,4].astype(float)
-        self.lwc = self.material_list[:,5].astype(float)
-        self.is_anisotropic = self.material_list[:,6] == 'True'
-        self.angfiles = self.material_list[:,7]
-
-    def para_check(self) -> None:
-        """
-        Checks the parameters of the material list for completeness.
-
-        It ensures that necessary fields are provided and checks for the 
-        presence of .ANG files for anisotropic materials.
-        """
-        # The fields for the materials in the input are defined as:
-        # 'id, R/G/B, Temp., Dens., Por., WC, Anis, ANG_File'
-        # but the R/G/B column is deleted
-
-        if len(self.material_list) > 0:
-            # Check to make sure the necessary fields are provided
-            check = 0
-
-            for row in self.material_list[:,0:6]:
-                for val in row:
-                    if not val:
-                        check = check + 1
-
-        if check == 0:
-            file_check = 0
-            for ind in range(0, self.material_list.shape[0]):
-                if self.material_list[ind,6] == 'True' and \
-                    not self.material_list[ind,7] or \
-                        self.material_list[ind,7] == 'n/a':
-                    file_check = file_check + 1
-        else:
-            print('Material inputs aren"t satisfied.')
-
-        if check == 0:
-            if file_check == 0:
-                self.material_flag = True
-            else:
-                print('No .ANG file specified for anisotropic material')
-    
-
-# ------------------------------------------------------------------------------
-class Model:
-    """
-    A class to manage the simulation model configuration.
-
-    Attributes
-    ----------
-    dt : float or None
-        The time step size.
-    time_steps : int or None
-        The total number of time steps in the simulation.
-    x : float or None
-        The x-coordinate of the source location.
-    y : float or None
-        The y-coordinate of the source location. Optional, defaults to None.
-    z : float or None
-        The z-coordinate of the source location.
-    f0 : float or None
-        The source frequency.
-    theta : float or None
-        The angle of incidence in the xz-plane. Optional, defaults to 0 if 
-        unspecified.
-    phi : float or None
-        The angle of incidence in the xy-plane. Optional, defaults to 0 if `y` 
-        is specified and `phi` is unspecified.
-    src : Any
-        The source information. Type is unspecified.
-    tensor_coefficients : numpy.ndarray or None
-        The tensor coefficients for the simulation. Optional, but required for 
-        tensor-based simulations.
-    compute_coefficients : bool
-        A flag indicating whether to compute coefficients. Defaults to True.
-    attenuation_coefficients : numpy.ndarray or None
-        The attenuation coefficients for the simulation. Optional.
-    fref : float or None
-        The reference frequency for attenuation. Optional.
-    attenuation_fadjust : bool or None
-        Flag to adjust frequency for attenuation. Optional.
-    exit_status : int
-        Status code to indicate the success or failure of parameter checks.
-    """
-    def __init__(self) -> None:
-        """
-        Initializes the Model class by building the initial configuration.
-        """
-        super().__init__()
-        self.build()
-    
-    def build(self) -> None:
-        """
-        Initializes the simulation model attributes with default values.
-        """
-        self.dt = None
-        self.time_steps = None
-        self.x = None
-        self.y = None
-        self.z = None
-        self.f0 = None
-        self.theta = None
-        self.phi = None
-        self.src = None
-        self.tensor_coefficients = None
-        self.compute_coefficients = True
-        self.attenuation_coefficients = None
-        self.fref = None
-        self.attenuation_fadjust = None
-        self.exit_status = 0
-        self.is_seismic = None
-        self.kappa_max = np.zeros([3])
-        self.sig_max = np.zeros([3])
-        self.alpha_max = np.zeros([3]) 
-        self.kappa_max_half = np.zeros([3])
-        self.sig_max_half = np.zeros([3])
-        self.alpha_max_half = np.zeros([3])
-        self.step_limit = None 
-        
-    
-    def tensor_check(self) -> None:
-        """
-        Checks if tensor coefficients are specified and valid. Disables 
-        coefficient computation if valid.
-        """
-        # If the tensors are there
-        check = 0
-        # if not self.tensor_coefficients:
-        # 	print('ldkjf')
-        for row in self.tensor_coefficients:
-            for val in row:
-                if not val:
-                    check = check + 1
-        
-        if check == 0:
-            self.compute_coefficients = False
-    
-    def para_check(self) -> None:
-        """
-        Performs parameter checks for essential simulation settings and updates 
-        the exit status accordingly.
-        """
-        if not self.time_steps:
-            self.exit_status = 1
-            print('Number of time steps aren"t satisfied.')
-        
-        if not self.x or not self.z:
-            self.exit_status = 1
-            print('No source location is specified.')
-        
-        if not self.f0:
-            self.exit_status = 1
-            print('No source frequency is specified.')
-        
-        # in case theta or phi aren't specified we can assign defaults
-        if not self.theta:
-            self.theta = 0
-        
-        # if y is specified but not phi
-        if self.y and not self.phi:
-            self.phi = 0
-        
-# ------------------------------------------------------------------------------
-class AnimatedGif:
-    """
-    A class to create an animated GIF from a series of images.
-
-    :param size: The size of the animated GIF in pixels (width, height), 
-        defaults to (640, 480)
-    :type size: Tuple[int, int], optional
-
-    Attributes:
-        fig (matplotlib.figure.Figure): The figure object for the animation.
-        images (List): A list of image frames to be included in the GIF.
-        background (List): Background image data.
-        source_location (List[int, int]): The location of the source point in 
-        the plot.
-        nx (int): Width of the plot.
-        nz (int): Height of the plot.
-        output_format (int): Format of the output file. 0 for GIF, 1 for other 
-        formats.
-    """
-    def __init__(self, size=(640,480) ):
-        """
-        Initialize the AnimatedGif class with a figure size.
-        """
-        self.fig = plt.figure()
-        self.fig.set_size_inches(size[0]/100, size[1]/100)
-        ax = self.fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        self.images = []
-        self.background = []
-        self.source_location = []
-        self.nx = size[0]
-        self.nz = size[1]
-        self.output_format = 0
-
-    def add(self, image, label='', extent=None ):
-        """
-        Adds an image to the animation sequence.
-
-        :param image: The image data to add.
-        :type image: np.ndarray
-        :param label: The label to add to the image, defaults to ''.
-        :type label: str, optional
-        :param extent: The extent of the image, defaults to None.
-        :type extent: Tuple[int, int, int, int], optional
-        """
-        bound = np.max([abs(np.min(image)),abs(np.max(image))])
-        plt_im = plt.imshow(
-            image,cmap='seismic',
-            animated=True,
-            extent=(0, (self.nx), (self.nz), 0),
-            vmin=-bound,vmax=bound
-        )
-        plt_bg = plt.imshow(
-            self.background,
-            alpha = 0.3,
-            extent=extent,
-            animated = True
-        )
-        plt.scatter(
-            self.source_location[0],
-            self.source_location[1],
-            marker = '*',
-            s = 30,
-            linewidths = 1,
-            edgecolor = (0.2, 0.2, 0.2, 1 )
-        )
-        plt_txt = plt.text(
-            extent[0] + 20,
-            extent[2] + 20,
-            label,
-            color='red'
-        ) # Lower left corner
-        self.images.append([plt_im, plt_bg, plt_txt])
-
-    def save(self, filename, frame_rate = 50):
-        """
-        Save the animated GIF.
-
-        :param filename: The name of the output file.
-        :type filename: str
-        :param frame_rate: The frame rate of the animation, defaults to 50.
-        :type frame_rate: int, optional
-        """
-        animation = anim.ArtistAnimation(self.fig,
-                                        self.images,
-                                        interval = frame_rate,
-                                        blit = True
-                                        )
-        if self.output_format == 1:
-            animation.save(filename, dpi = 300)
-        else:
-            animation.save(filename, dpi = 300, writer = 'imagemagick')
+# Courant-Friedrichs-Levy condition
+CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D. 
 
 # ------------------------------------------------------------------------------
 def kband_check(modelclass, domain):
@@ -477,12 +105,11 @@ def kband_check(modelclass, domain):
             f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
         )
 
-
 # -------------------------- Function Definitions ------------------------------
 def read_dat(
         fn: str, 
         channel: str, 
-        domain: Domain, 
+        domain, 
         is_complex: bool, 
         single: bool =False
     ) -> np.ndarray:
@@ -554,41 +181,41 @@ def read_dat(
 # ============================== Useful Functions =============================
 # =============================================================================
 
-def image2int(image_filename: str) -> np.ndarray:
-    """
-    Convert an image file into an integer array where each unique RGB color 
-    is mapped to a unique integer.
+# def image2int(image_filename: str) -> np.ndarray:
+#     """
+#     Convert an image file into an integer array where each unique RGB color 
+#     is mapped to a unique integer.
 
-    This function reads an image from a file, converts RGB colors to a single 
-    integer value by combining the RGB channels, then maps each unique color in
-    the image to a unique integer. This can be useful for image analysis tasks 
-    where colors represent different categories or labels.
+#     This function reads an image from a file, converts RGB colors to a single 
+#     integer value by combining the RGB channels, then maps each unique color in
+#     the image to a unique integer. This can be useful for image analysis tasks 
+#     where colors represent different categories or labels.
 
-    :param image_filename: The path to the image file.
-    :type image_filename: str
-    :return: A 2D array where each element represents a unique integer mapping 
-        of the original RGB colors.
-    :rtype: np.ndarray
+#     :param image_filename: The path to the image file.
+#     :type image_filename: str
+#     :return: A 2D array where each element represents a unique integer mapping 
+#         of the original RGB colors.
+#     :rtype: np.ndarray
 
-    The conversion of RGB to a single value is performed using the formula: 
-    65536*red + 255*green + blue. Note that this function assumes the input 
-    image is in a format readable by matplotlib.image.imread (e.g., PNG, JPG), 
-    and that it has three color channels (RGB).
-    """
-    # read the image
-    img = mpimg.imread(image_filename)
+#     The conversion of RGB to a single value is performed using the formula: 
+#     65536*red + 255*green + blue. Note that this function assumes the input 
+#     image is in a format readable by matplotlib.image.imread (e.g., PNG, JPG), 
+#     and that it has three color channels (RGB).
+#     """
+#     # read the image
+#     img = mpimg.imread(image_filename)
 
-    # Convert RGB to a single value
-    rgb_int = np.array(65536*img[:,:,0] +  255*img[:,:,1] + img[:,:,2])
+#     # Convert RGB to a single value
+#     rgb_int = np.array(65536*img[:,:,0] +  255*img[:,:,1] + img[:,:,2])
 
-    # Get the unique values of the image
-    rgb_uni = np.unique(rgb_int)
+#     # Get the unique values of the image
+#     rgb_uni = np.unique(rgb_int)
 
-    # mat_id = np.array( range(0, len(rgb_uni) ) )
-    for ind in range(0, len(rgb_uni) ):
-        rgb_int[ rgb_int == rgb_uni[ind] ] = ind
+#     # mat_id = np.array( range(0, len(rgb_uni) ) )
+#     for ind in range(0, len(rgb_uni) ):
+#         rgb_int[ rgb_int == rgb_uni[ind] ] = ind
 
-    return rgb_int.astype(int)
+#     return rgb_int.astype(int)
 
 # ------------------------------------------------------------------------------
 # After computing tensor coefficients we want to append them to the given text
@@ -663,17 +290,13 @@ def str2complex(strsplit: list) -> np.ndarray:
     return(complex_vector)
         
 def append_coefficients(
-        prjfile: str, tensor: np.ndarray, CP: str = None, dt : float = 1.0 
+        project_file: str, 
+        tensor: np.ndarray, tensor_name: str = None , 
+        dt : float = 1.0
     ):
     """
-    Appends coefficients to a project file based on the provided tensor, 
-    optionally using a line identifier.
-    
-    This function reads a project file, appending new coefficients derived from 
-    a tensor to it. The coefficients are appended based on a line identifier 
-    (`CP`), which specifies the type of modeling (e.g., 'C' for stiffness, 'P' 
-    for permittivity). The function also appends the time step (`dt`) for each 
-    modeling type specified by `CP`.
+    Appends coefficients to a project JSON file based on the provided tensor 
+    along with the time step. 
     
     Note: The project file is updated in place, with the original file replaced by 
     the modified one. The `tensor` can be either a complex or a real numpy array. The function 
@@ -681,44 +304,43 @@ def append_coefficients(
     original file, which requires that the script has permissions to execute 
     system commands.
     
-    :param prjfile: The path to the project file to be modified.
-    :type prjfile: str
+    :param project_file: The path to the project file to be modified.
+    :type project_file: str
     :param tensor: A numpy array containing the tensor coefficients to append.
     :type tensor: np.ndarray
-    :param CP: The line identifier indicating the type of modeling ('C' or 'P'), optional.
-    :type CP: str, optional
+    :param tensor_name: The parameter that the tensor describes. Available 
+        options are Stiffness, Permittivity, Conductivity
+    :type tensor_name: 
     :param dt: The time step to append for the modeling type, defaults to 1.
     :type dt: float
+    :param seismic: Flag if the seismic or the electromagnetic coefficients are 
+        going to be written,
+    
     :return: None
     """
-    newfile = 'newfile.txt'
+    with open(project_file, 'r') as file:
+        data = json.load(file)
     
-    with open(prjfile, 'r') as ogprj, open(newfile, 'a') as temp:
-        # Determine modeling type based on CP
-        mt = 'S' if CP == 'C' else 'E'
-        
-        for line in ogprj.readlines():
-            if line.startswith(CP):
-                line = line.strip().split(',')
-                if np.iscomplexobj(tensor):
-                    temp.write(
-                        CP + ',' + \
-                            complex2str(tensor[int(float(line[1])), :]) + \
-                                '\n'
-                    )
-                else:
-                    temp.write(
-                        CP + ',' + \
-                            ','.join(map(str, tensor[int(float(line[1])), :])) + \
-                                '\n'
-                    )
-            elif line.startswith(mt) and line[2:4] == 'dt':
-                temp.write(mt + ',dt,' + str(dt) + '\n')
-            else:
-                temp.write(line)
+    id = tensor[:,0].astype(int)
+    tensor_name = tensor_name.capitalize()
     
-    # Replace the original project file with the new file
-    call('mv ' + newfile + ' ' + prjfile, shell=True)
+    if tensor_name not in ['Stiffness', 'Permittivity', 'Conductivity']:
+        raise ValueError(
+            f"""You have input {tensor_name} as the input. The tensor_name must be 
+            either 'Stiffness', 'Permittivity', 'Conductivity'. This is case 
+            invariant, but spelling must be accurate."""
+        )
+    
+    if tensor_name == 'Stiffness':
+        modeltype = 'Seismic'
+    else:
+        modeltype = 'Electromagnetic'
+    
+    for ind in id:
+        data[modeltype][f'{tensor_name}_Coefficients'][ind] = tensor[ind,:]
+    
+    with open(project_file, 'w') as file:
+        json.dump(data, file, indent=4)
 
 # ==============================================================================
 # ========================= Read/Assign Project File ===========================
@@ -726,8 +348,8 @@ def append_coefficients(
 # ------------------------------------------------------------------------------
 def loadproject(
         project_file: str, 
-        domain: Domain, material: Material, seismic: Model, electromag: Model
-    ) -> tuple[Domain, Material, Model, Model]:
+        domain, material, seismic, electromag
+    ):
     """
     Loads project settings from a project file and assigns values to domain, 
     material, seismic, and electromagnetic objects.
@@ -751,243 +373,137 @@ def loadproject(
     """
     # domain, material, seismic, electromag are the objects that we will assign
     # values to
-    f = open(project_file)
+    with open(project_file, 'r') as file:
+        data = json.load(file)
+    
+    # ----------------------------- Domain Values ------------------------------
+    (
+        domain.dim, domain.nx, domain.ny, domain.nz, 
+        domain.dx, domain.dy, domain.dz, domain.cpml, 
+        domain.nmats, domain.imfile 
+    ) = list(data['Domain'].values())
+    im,__ = image2int(data['Domain']['image_file'])
+    domain.geometry = im.transpose().astype(int)
+    
+    # ---------------------------- Seismic Values ------------------------------
+    seismic.dt, seismic.time_steps = list(data['Seismic']['Time_Parameters'].values())
+    (
+        seismic.x, seismic.y, seismic.z, 
+        seismic.xind, seismic.yind, seismic.zind,
+        seismic.f0, seismic.theta, seismic.phi, 
+        seismic.source_amplitude, seismic.source_type    
+    ) = list(data['Seismic']['Source'].values())
+    
 
-    # Let the if train begin
-    for line in f:
-        if line[0] == 'I':
-            # There's a trailing new line value
-            im = image2int(line[2:-1])
-            domain.geometry = im.transpose().astype(int)
-            # Get the image file
-            domain.imfile = line[2:-1]
         
-        # All domain inputs must be input except for ny and dy
-        if line[0] == 'D':
-            temp = line.split(',')
-            
-            if temp[1] == 'dim':
-                domain.dim = float( (temp[2].rsplit())[0])
-            if temp[1] == 'nx':
-                domain.nx = int( (temp[2].rsplit())[0])
-            if temp[1] == 'ny':
-                try:
-                    domain.ny = int( (temp[2].rsplit())[0])
-                except:
-                    pass
-            if temp[1] == 'nz':
-                domain.nz = int( (temp[2].rsplit())[0])
-            if temp[1] == 'dx':
-                domain.dx = float( (temp[2].rsplit())[0])
-            if temp[1] == 'dy':
-                try:
-                    domain.dy = float( (temp[2].rsplit())[0])
-                except:
-                    pass
-            if temp[1] == 'dz':
-                domain.dz = float( (temp[2].rsplit())[0])
-            if temp[1] == 'cpml':
-                domain.cpml = int( (temp[2].rsplit())[0])
-            # if temp[1] == 'write':
-            #     domain.write = temp[2].rsplit()
-            if temp[1] == 'nmats':
-                domain.nmats = int( (temp[2].rsplit())[0])
-            if temp[1] == 'cpml_alpha':
-                domain.cpml_attenuation = float( (temp[2].rsplit())[0])
-        
-        if line[0] == 'S':
-            temp = line.split(',')
-            if temp[1] == 'dt':
-                try :
-                    seismic.dt = float( (temp[2].rsplit())[0])
-                except:
-                    pass
-            if temp[1] == 'time_steps':
-                seismic.time_steps = float( (temp[2].rsplit())[0])
-            if temp[1] == 'x':
-                seismic.x = float( (temp[2].rsplit())[0])
-            if temp[1] == 'y':
-                seismic.y = float( (temp[2].rsplit())[0])
-            if temp[1] == 'z':
-                seismic.z = float( (temp[2].rsplit())[0])
-            if temp[1] == 'f0':
-                seismic.f0 = float( (temp[2].rsplit())[0])
-            if temp[1] == 'theta':
-                seismic.theta = float( (temp[2].rsplit())[0])
-            if temp[1] == 'phi':
-                seismic.phi = float( (temp[2].rsplit())[0])
+    electromag.dt, electromag.time_steps = list(data['Seismic']['Time_Parameters'].values())
+    (
+        electromag.x, electromag.y, electromag.z,
+        electromag.xind, electromag.yind, electromag.zind,
+        electromag.f0, electromag.theta, electromag.phi,
+        electromag.source_amplitude, electromag.source_type    
+    ) = list(data['Electromagnetic']['Source'].values())
 
-        if line[0] == 'E':
-            temp = line.split(',')
-            if temp[1] == 'dt':
-                try:
-                    electromag.dt = float( (temp[2].rsplit())[0])
-                except:
-                    pass
-            if temp[1] == 'time_steps':
-                electromag.time_steps = float( (temp[2].rsplit())[0])
-            if temp[1] == 'x':
-                electromag.x = float( (temp[2].rsplit())[0])
-            if temp[1] == 'y':
-                electromag.y = float( (temp[2].rsplit())[0])
-            if temp[1] == 'z':
-                electromag.z = float( (temp[2].rsplit())[0])
-            if temp[1] == 'f0':
-                electromag.f0 = float( (temp[2].rsplit())[0])
-            if temp[1] == 'theta':
-                electromag.theta = float( (temp[2].rsplit())[0])
-            if temp[1] == 'phi':
-                electromag.phi = float( (temp[2].rsplit())[0])
-
-        if line[0] == 'M':
-            line = line[0:-1]
-            temp = line.split(',')
-            if temp[1] == '0':
-                material.material_list = temp[1:]
-                material.rgb = temp[3]
-            else:
-                material.material_list = np.row_stack( (material.material_list, temp[1:]))
-                material.rgb = np.append( material.rgb, temp[3] )
-
-        if line[0] == 'C':
-            temp = line.split(',')
-            # We need to remove the '\n' at the end. Whether the coefficients are
-            # given results in a different string
-            try:
-                temp[-1] = temp[-1].rsplit()[0]
-            except:
-                temp[-1] = ''
-
-            if temp[1] == '0' or temp[1] == '0.0':
-                seismic.tensor_coefficients = temp[1:]
-            else:
-                seismic.tensor_coefficients = np.row_stack((seismic.tensor_coefficients, temp[1:]))
-
-        # Permittivity coefficients
-        if line[0] == 'P':
-            if 'j' in line:
-                is_complex = True 
-            else: 
-                is_complex = False 
-            
-            temp = line.split(',')
-            try:
-                temp[-1] = temp[-1].rsplit()[0] # An index error will be given if coefficients are provided
-            except:
-                temp[-1] = ''
-
-            if temp[1] == '0' or temp[1] == '0.0':
-                if is_complex:
-                    electromag.tensor_coefficients = str2complex(temp[1:])
-                else:
-                    electromag.tensor_coefficients = temp[1:]
-                
-            else:
-                if is_complex:
-                    electromag.tensor_coefficients = np.row_stack( 
-                        (electromag.tensor_coefficients, str2complex(temp[1:]) )
-                    )
-                else:
-                    electromag.tensor_coefficients = np.row_stack( 
-                        (electromag.tensor_coefficients, temp[1:])
-                    )
-                    
-        # Attenuation coefficients
-        if line[0] == 'A':
-            temp = line.split(',')
-            try: 
-                seismic.attenuation_coefficients = np.row_stack(
-                    (
-                        seismic.attenuation_coefficients,
-                        np.array(temp[2:5], dtype = float)
-                    )
-                )
-            except:
-                seismic.attenuation_coefficients = np.array(
-                    temp[2:5], dtype = float
-                )
-                
-            # electromag.fref = float(temp[8])
-            seismic.fref = float(temp[5])
-
-    f.close()
+    # --------------------------- Indexed Values -------------------------------    
+    # preallocate
+    seismic.stiffness_coefficients = np.zeros([domain.nmats, 23])
+    seismic.attenuation_coefficients = np.zeros([domain.nmats,3])
+    seismic.fref = np.zeros([domain.nmats])
+    electromag.permittivity_coefficients = np.zeros([domain.nmats,7])
+    electromag.conductivity_coefficients = np.zeros([domain.nmats,7])
+    material.rgb = np.zeros([domain.nmats], dtype='U11')
+    material.material_list =np.zeros([domain.nmats], dtype = object)
+    for ind in range(domain.nmats):
+        # First do seismic
+        coefs = list(data['Seismic']['Stiffness_Coefficients'][ind].values())
+        seismic.stiffness_coefficients[ind,:] = np.array(coefs)
+        coefs = list(data['Seismic']['Attenuation'][ind].values())
+        seismic.attenuation_coefficients[ind,:] = np.array(coefs[2:-1])
+        seismic.fref[ind] = coefs[-1]
+        # Now do electromag
+        coefs = list(data['Electromagnetic']['Permittivity'][ind].values())
+        electromag.permittivity_coefficients[ind,:] = np.array(coefs)
+        coefs = list(data['Electromagnetic']['Conductivity'][ind].values())
+        electromag.conductivity_coefficients[ind,:] = np.array(coefs)
+        # Material values
+        vals = list(data['Materials'][ind].values())
+        del vals[2]
+        material.material_list[ind,] = np.array(vals, dtype = object)
+        material.rgb[ind] = data['Materials'][ind]['rgb']
+    
     seismic.is_seismic = True 
     electromag.is_seismic = False
+    material.sort_material_list() 
     return domain, material, seismic, electromag
 
 
 # ------------------------------------------------------------------------------
 # Make sure variables are in the correct type for Fortran
-def prepme(
-        model_object: Model, 
-        domain: Domain, 
-        complex_tensor: bool = True
-    ) -> tuple:
-    """
-    Prepare modeling objects and domain configurations for simulation, ensuring
-    that all parameters are in the correct format for Fortran processing.
+# def prepme(
+#         model_object: Model, 
+#         domain: Domain, 
+#         # complex_tensor: bool = True
+#     ) -> tuple:
+#     """
+#     Prepare modeling objects and domain configurations for simulation, ensuring
+#     that all parameters are in the correct format for Fortran processing.
 
-    This function adjusts the type of various parameters in the modeling and domain objects,
-    such as converting time steps to integers or ensuring that tensor coefficients are in the
-    correct numerical format (complex or float). Additionally, it arranges source and domain
-    parameters in the correct order based on the dimensionality of the domain.
+#     This function adjusts the type of various parameters in the modeling and domain objects,
+#     such as converting time steps to integers or ensuring that tensor coefficients are in the
+#     correct numerical format (complex or float). Additionally, it arranges source and domain
+#     parameters in the correct order based on the dimensionality of the domain.
 
-    :param model_object: The modeling object containing simulation parameters and configurations.
-    :param domain: The domain object containing spatial configurations and parameters.
-    :param complex_tensor: A flag indicating whether the tensor coefficients should be treated as complex numbers.
-    :type complex_tensor: bool
-    :return: A tuple containing the updated modeling object and domain object.
-    :rtype: tuple
+#     :param model_object: The modeling object containing simulation parameters and configurations.
+#     :param domain: The domain object containing spatial configurations and parameters.
+#     :param complex_tensor: A flag indicating whether the tensor coefficients should be treated as complex numbers.
+#     :type complex_tensor: bool
+#     :return: A tuple containing the updated modeling object and domain object.
+#     :rtype: tuple
 
-    The function specifically adjusts parameters for compatibility with Fortran-based
-    simulation engines, accounting for differences in array indexing and data types.
-    """
-    # Check if there are no errors and the coefficients have been computed
-    model_object.time_steps = int(model_object.time_steps)
-    model_object.f0 = float(model_object.f0)
-    model_object.theta = float(model_object.theta)
-    model_object.x = float(model_object.x)
-    model_object.z = float(model_object.z)
-    # We don't want to get rid of the complex coefficients if they are there, but we need 
-    # make sure that we are only using the real components if we aren't solving for the complex
-    # equations
-    model_object.tensor_coefficients_original = model_object.tensor_coefficients.copy()
-    if not complex_tensor:
-        model_object.tensor_coefficients = model_object.tensor_coefficients.astype(float)
+#     The function specifically adjusts parameters for compatibility with Fortran-based
+#     simulation engines, accounting for differences in array indexing and data types.
+#     """
+#     # Check if there are no errors and the coefficients have been computed
+#     model_object.time_steps = int(model_object.time_steps)
+#     model_object.f0 = float(model_object.f0)
+#     model_object.theta = float(model_object.theta)
+#     model_object.x = float(model_object.x)
+#     model_object.z = float(model_object.z)
+#     # We don't want to get rid of the complex coefficients if they are there, but we need 
+#     # make sure that we are only using the real components if we aren't solving for the complex
+#     # equations
+#     model_object.tensor_coefficients_original = model_object.tensor_coefficients.copy()
+#     if not complex_tensor:
+#         model_object.tensor_coefficients = model_object.tensor_coefficients.astype(float)
     
-    # Put source and domain parameters in correct order
-    if domain.dim == 2.5:
-        # There are additional values we need to assign
-        domain.ny = int(domain.ny)
-        domain.dy = float(domain.dy)
-        model_object.y = float(model_object.y)
-        model_object.phi = float(model_object.phi)
+#     # Put source and domain parameters in correct order
+#     if domain.dim == 2.5:
+#         # There are additional values we need to assign
+#         domain.ny = int(domain.ny)
+#         domain.dy = float(domain.dy)
+#         model_object.y = float(model_object.y)
+#         model_object.phi = float(model_object.phi)
 
-        model_object.src = np.array(
-            [
-                model_object.x/domain.dx,
-                model_object.y/domain.dy,
-                model_object.z/domain.dz
-            ]
-        ).astype(int)
-    else:
-        model_object.src = np.array(
-            [
-                model_object.x/domain.dx,
-                model_object.z/domain.dz
-            ]
-        ).astype(int)
+#         model_object.src = np.array(
+#             [
+#                 model_object.x/domain.dx,
+#                 model_object.y/domain.dy,
+#                 model_object.z/domain.dz
+#             ]
+#         ).astype(int)
+#     else:
+#         model_object.src = np.array(
+#             [
+#                 model_object.x/domain.dx,
+#                 model_object.z/domain.dz
+#             ]
+#         ).astype(int)
 
-    return(model_object, domain)
-
-# ------------------------------------------------------------------------------
-# Append coefficients
-def coefs2prj(model_object, material, domain, modeltype):
-    pass
+#     return(model_object, domain)
 
 
 # ------------------------------------------------------------------------------
-def airsurf(material: Material, domain: Domain, N: int = 2) -> np.ndarray:
+def airsurf(material, domain, N: int = 2) -> np.ndarray:
     """
     Generates a gradient matrix to simulate the air surface in a domain, based 
     on material properties.
@@ -1062,13 +578,477 @@ def airsurf(material: Material, domain: Domain, N: int = 2) -> np.ndarray:
         gradcomp[ gradcomp == 0] = 1
     else:
         gradcomp = np.ones([int(domain.nx), int(domain.nz) ])
-
+    
+    f = FortranFile('density_gradient.dat', 'w')
+    f.write_record(gradcomp)
+    f.close()
+        
     return(gradcomp)
+
+def cpmlcompute(
+        modelclass, 
+        domain, 
+        direction: str, 
+        half: bool = False, 
+    ) -> None:
+    """
+    Computes CPML parameters for a given direction and updates model/domain.
+
+    :param modelclass: The model class instance to update.
+    :param domain: The domain class instance to update.
+    :param direction: Direction to compute CPML ('x', 'y', or 'z').
+    :param half: Flag to compute half CPML parameters. Defaults to False.
+    :type modelclass: Model
+    :type domain: Domain
+    :type direction: str
+    :type half: bool
+    """
+    global NP, NPA, sig_opt_scalar, kappa_max
+
+    # For 2D models, we don't need to compute the cpml in the y-direction
+    if domain.dim == 2 and direction == 'y':
+        return 
+    
+    nx = domain.nx + 2*domain.cpml
+    nz = domain.nz + 2*domain.cpml
+    if domain.dim == 2.5:
+        ny = domain.ny + 2*domain.cpml
+        deltamin = np.min([domain.dx, domain.dy, domain.dz]) 
+    else:
+        deltamin = np.min([domain.dx, domain.dz]) 
+
+    # Allocate space
+    if direction == 'x':
+        N = int(nx)
+        dx = float(domain.dx)
+    elif direction == 'y':
+        N = int(ny)
+        dx = float(domain.dy) 
+    else:
+        N = int(nz)
+        dx = float(domain.dz)
+    
+    # -----------------------------------------------------------------------------
+    # Compute the distance along the absorbing boundary relative to the end of the 
+    # original model space. 
+    dist = dx * np.arange(0, domain.cpml)
+    if half:
+        dist = dist + dx/2
+    
+    dist = dx*domain.cpml - dist
+    dist = dist/(dx*domain.cpml)
+
+    # Compute the maximum sigma, and alpha values for the CPML.  
+    if modelclass.is_seismic:
+        alpha_max = np.pi*modelclass.f0
+        quasi_cp_max = 0.7 * deltamin / (2.0 * modelclass.dt)
+        sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
+         # This seems to work well even at higher frequencies
+        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
+            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt, is_seismic = True
+        )
+    else:
+        # We will use the maximum permittivity coefficient and assume that the 
+        # magnetic permeability is 1. We can use a different value
+        sig_max = sig_opt_scalar * \
+            ((NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
+        alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
+        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
+            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
+        )
+
+    # Save the results to a fortran binary
+    if half:
+        sigma.tofile('sigma' + direction + '_half_cpml.dat')
+        kappa.tofile('kappa' + direction + '_half_cpml.dat')
+        alpha.tofile('alpha' + direction + '_half_cpml.dat')
+        acoeff.tofile('acoef' + direction + '_half_cpml.dat')
+        bcoeff.tofile('bcoef' + direction + '_half_cpml.dat')
+    else:
+        sigma.tofile('sigma' + direction + '_cpml.dat')
+        kappa.tofile('kappa' + direction + '_cpml.dat')
+        alpha.tofile('alpha' + direction + '_cpml.dat')
+        acoeff.tofile('acoef' + direction + '_cpml.dat')
+        bcoeff.tofile('bcoef' + direction + '_cpml.dat')
+        
+# -----------------------------------------------------------------------------
+def cpml_parameters(
+        sig_max: float, 
+        alpha_max: float, 
+        kappa_max: float, 
+        distance, 
+        N: int, 
+        dt: float,
+        is_seismic = False,
+    ):
+    """
+    """
+    kappa = np.ones([N])
+    alpha = np.zeros([N])
+    sigma = np.zeros([N])
+    acoeff = np.zeros([N])
+    bcoeff = np.zeros([N])
+
+    # Compute in the x, and z directions
+    for ind in range(0, len(distance)):
+        # From 0
+        sigma[ind] = sig_max * (distance[ind]**NP)
+        kappa[ind] = 1.0 + (kappa_max - 1.0) * distance[ind]**NP
+        alpha[ind] = alpha_max * (1 - distance[ind])**NPA
+        # From the end 
+        sigma[-(ind+1)] = sig_max*distance[ind]**NP
+        kappa[-(ind+1)] = 1 + (kappa_max - 1) * distance[ind]**NP
+        alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
+        
+        if is_seismic:
+            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * dt)
+            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * dt)
+        else:
+            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
+            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * (dt/eps0) )
+            
+
+    # Compute the a-coefficients 
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
+            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+
+    return sigma, kappa, alpha, acoeff, bcoeff
+
+# -----------------------------------------------------------------------------
+def ecpml_parameters2(domain, modelclass, dist, direction):
+    """
+    Compute the boundary values for variable permittivity and conductivity values at
+    the boundary. 
+    """
+    global mu0, NP, NPA
+
+    nx = domain.nx + 2 * domain.cpml 
+    nz = domain.nz + 2 * domain.cpml 
+    
+    if direction == 'x':
+        perm_ind = 1
+        cond_ind = 7
+        nx -= 1
+    if direction == 'z':
+        perm_ind = 6
+        cond_ind = 12
+        nz -= 1
+    
+    sigma = np.zeros([nx, nz])
+    alpha = sigma.copy() 
+    kappa = np.ones([nx, nz])
+    acoeff = sigma.copy() 
+    bcoeff = sigma.copy() 
+
+    m,n = domain.geometry.shape
+
+    for ii in range(0, domain.cpml):
+        for jj in range(domain.cpml, nz-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[domain.geometry[0,jj-domain.cpml]][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0 and cond1 == 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0 and cond2 == 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            alpha_max1 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
+            alpha_max2 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+
+            #!!! This is for testing 
+            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            
+            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
+            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
+            kappa_max1 = 5.0
+            kappa_max2 = 5.0
+            #!!!
+            sigma[ii,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[-(ii+1),jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[ii,jj] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[-(ii+1),jj] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[ii,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
+
+            bcoeff[ii,jj] = np.exp( 
+                -( (sigma[ii,jj] / kappa[ii,jj]) + alpha[ii,jj] ) * (modelclass.dt/eps0)
+            )
+            bcoeff[-(ii+1),jj] = np.exp( 
+                -( (sigma[-(ii+1),jj] / kappa[-(ii+1),jj] + alpha[-(ii+1),jj]) * (modelclass.dt/eps0) )
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][cond_ind].real
+
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0 and cond2 == 0.0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0 and cond2 == 0.0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag            
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+
+            #!!! This is for testing 
+            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
+            
+            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
+            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
+            kappa_max1 = 5.0
+            kappa_max2 = 5.0
+            #!!!
+            sigma[jj,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[jj,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[jj,ii] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[jj,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[jj,ii] = 1.0 + (kappa_max - 1.0) * dist[ii]**NP
+            kappa[jj,-(ii+1)] = 1 + (kappa_max - 1) * dist[ii]**NP
+
+            bcoeff[jj,ii] = np.exp( 
+                -(sigma[jj,ii] / kappa[jj,ii] + alpha[jj,ii]) * modelclass.dt
+            )
+            bcoeff[jj,-(ii+1)] = np.exp( 
+                -(sigma[jj,-(ii+1)] / kappa[jj,-(ii+1)] + alpha[jj,-(ii+1)]) * modelclass.dt
+            )
+
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1.0) / \
+        (kappa[indices] * sigma[indices] + kappa[indices]**2 * alpha[indices] )
+
+    return sigma, alpha, kappa, acoeff, bcoeff
+ 
+# -----------------------------------------------------------------------------
+def ecpml_parameters3(domain, modelclass, dist, direction):
+    """
+    """
+    global mu0, NP, NPA
+    nx = domain.nx + 2 * domain.cpml 
+    ny = domain.ny + 2 * domain.cpml
+    nz = domain.nz + 2 * domain.cpml
+    if direction == 'x':
+        perm_ind = 1
+        cond_ind = 7
+        nx -= 1
+    if direction == 'y':
+        perm_ind = 4
+        cond_ind = 10
+        ny -= 1
+    if direction == 'z':
+        perm_ind = 6
+        cond_ind = 12
+        nz -= 1
+    
+    sigma = np.zeros([nx, ny, nz])
+    alpha = sigma.copy() 
+    kappa = np.ones([nx, ny, nz])
+    acoeff = sigma.copy() 
+    bcoeff = sigma.copy()
+
+    m,n = domain.geometry.shape
+
+    for ii in range(0, domain.cpml):
+        for jj in range(domain.cpml, nz-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[
+                domain.geometry[0,jj-domain.cpml]
+            ][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[
+                domain.geometry[-1,jj-domain.cpml]
+            ][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[
+                domain.geometry[-1,jj-domain.cpml]
+            ][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
+            
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
+
+            sigma[ii,:,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[-(ii+1),:,jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[ii,:,jj] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[-(ii+1),:,jj] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[ii,:,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[-(ii+1),:,jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
+
+            bcoeff[ii,:,jj] = np.exp( 
+                -(sigma[ii,:,jj] / kappa[ii,:,jj] + alpha[ii,:,jj]) * modelclass.dt
+            )
+            bcoeff[-(ii+1),:,jj] = np.exp( 
+                -(sigma[-(ii+1),:,jj] / kappa[-(ii+1),:,jj] + alpha[-(ii+1),:,jj]) * modelclass.dt
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            perm1 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,0]
+            ][perm_ind]
+            cond1 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,0]
+            ][cond_ind].real
+            perm2 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,-1]
+            ][perm_ind]
+            cond2 = modelclass.tensor_coefficients_original[
+                domain.geometry[jj-domain.cpml,-1]
+            ][cond_ind].real
+            if cond1 > 0:
+                sig_max1 = cond1
+            elif perm1.imag > 0:
+                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
+            else:
+                sig_max1 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm1.real) )
+            
+            if cond2 > 0:
+                sig_max2 = cond2
+            elif perm2.imag > 0:
+                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
+            else:
+                sig_max2 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm2.real) )
+
+            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+            if perm1.imag == 0.0:
+                alpha_max1 = 0.02
+            else:
+                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+            if perm2.imag == 0.0:
+                alpha_max2 = 0.02
+            else:
+                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
+            
+            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
+            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
+
+            sigma[jj,:,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+            sigma[jj,:,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+            alpha[jj,:,ii] = alpha_max1 * (1 - dist[ii])**NPA
+            alpha[jj,:,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
+            kappa[jj,:,ii] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+            kappa[jj,:,-(ii+1)] = 1 + (kappa_max2 - 1) * dist[ii]**NP
+
+            bcoeff[jj,ii] = np.exp( 
+                -(sigma[jj,:,ii] / kappa[jj,:,ii] + alpha[jj,:,ii]) * modelclass.dt
+            )
+            bcoeff[jj,:,-(ii+1)] = np.exp( 
+                -(sigma[jj,:,-(ii+1)] / kappa[jj,:,-(ii+1)] + alpha[jj,:,-(ii+1)]) * modelclass.dt
+            )
+
+        for jj in range(domain.cpml, nx-domain.cpml):
+            for kk in range(domain.cpml, nz-domain.cpml):
+                perm = modelclass.tensor_coefficients_original[
+                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
+                ][perm_ind]
+                cond = modelclass.tensor_coefficients_original[
+                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
+                ][cond_ind].real
+                if cond > 0:
+                    sig_max = cond
+                elif perm.imag > 0:
+                    sig_max = eps0 * modelclass.f0 * np.sqrt(perm).imag
+                else:
+                    sig_max =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm.real) )
+
+                # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
+                if perm.imag == 0.0:
+                    alpha_max = 0.02
+                else:
+                    alpha_max = modelclass.f0 * np.sqrt(perm1).imag / 2
+
+
+                kappa_max = 1 + (alpha_max / modelclass.f0) * np.sqrt(mu0 * perm.real)
+                sigma[jj,ii,kk] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
+                sigma[jj,-(ii+1),kk] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
+                alpha[jj,ii,kk] = alpha_max1 * (1 - dist[ii])**NPA
+                alpha[jj,-(ii+1),kk] = alpha_max2 * (1 - dist[ii])**NPA
+                kappa[jj,ii,kk] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
+                kappa[jj,-(ii+1),kk] = 1 + (kappa_max2 - 1) * dist[ii]**NP
+
+                bcoeff[jj,ii,kk] = np.exp( 
+                    -(sigma[ii,jj] / kappa[ii,jj] + alpha[ii,jj]) * modelclass.dt
+                )
+                bcoeff[jj,-(ii+1),kk] = np.exp( 
+                    -(sigma[jj,-(ii+1),kk] / kappa[jj,-(ii+1),kk] + alpha[jj,-(ii+1),kk]) * modelclass.dt
+                )
+
+    
+    alpha[np.where(alpha < 0.0)] = 0.0
+    indices = np.where(np.abs(sigma) > 1.0e-6)
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
+        (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+
+    return sigma, alpha, kappa, acoeff, bcoeff
 
 # ------------------------------------------------------------------------------
 def rcxgen(
         rgb: list, 
-        domain: Domain, material: Material, 
+        domain, material, 
         filename: str = 'receivers.xyz'
     ):
     """
@@ -1153,7 +1133,7 @@ def coherdt(
         self.dz = None
         self.cpml = None
         self.write = None
-        self.imfile = None
+        self.image_file = None
         self.exit_status = 1
 
         # Flag to specify whether the all inputs are fulfilled
@@ -1284,7 +1264,7 @@ def movingsrc(sf: np.ndarray, txlocs: np.ndarray) -> None:
 
 # ----------------------------- Plotting Functions -----------------------------
 def indvar(
-        model_object: Model, domain: Domain
+        model_object, domain
     ) -> tuple[np.ndarray, Optional[np.ndarray], np.ndarray, np.ndarray]:
     """
     Generates spatial and temporal grids based on domain and model object 
@@ -1324,7 +1304,7 @@ def indvar(
 
 # ------------------------------------------------------------------------------
 def parameter_profile_1d(
-        domain: Domain, material: Material, model: Model, 
+        domain, material, model, 
         indice: int, parameter: str = 'velocity'
     ):
     """

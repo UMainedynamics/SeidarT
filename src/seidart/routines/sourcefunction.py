@@ -115,10 +115,8 @@ def writesrc(fn: str, srcarray: np.ndarray) -> None:
     f.close()
 
 # ------------------------------------------------------------------------------
-def sourcefunction(
-        modelclass: Model, 
-        factor: float, 
-        source_type: str, 
+def pointsource(
+        modelclass,  
         multimodal: bool = False
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -139,15 +137,18 @@ def sourcefunction(
     """
     # Create the source 
     N = int(modelclass.time_steps)
-    timevec = np.linspace(1, N, num = N ) * \
-        float(modelclass.dt)
+    timevec = np.linspace(1, N, num = N ) * float(modelclass.dt)
     f0 = float(modelclass.f0)
     
     # Create the source function
     if multimodal:
-        srcfn = factor * multimodesrc(timevec, f0, source_type)
+        srcfn = modelclass.amplitude * multimodesrc(
+            timevec, modelclass.f0, modelclass.source_type
+        )
     else:
-        srcfn = factor * wavelet(timevec, f0, source_type)
+        srcfn = modelclass.amplitude * wavelet(
+            timevec, modelclass.f0, modelclass.source_type
+        )
     # rotate 
     theta = np.pi * modelclass.theta * 180
     phi = np.pi * modelclass.phi * 180
