@@ -9,6 +9,7 @@ import argparse
 import numpy as np
 import matplotlib.image as mpimg
 from typing import Tuple
+from scipy.io import FortranFile
 import json 
 
 __all__ = [
@@ -32,7 +33,7 @@ def generate_template(nmats, **kwargs):
             "dy": 1,
             "dz": None,
             "cpml": 10,
-            "nmats": 5,
+            "nmats": nmats,
             "image_file": None
         },
         "Materials": [
@@ -49,30 +50,31 @@ def generate_template(nmats, **kwargs):
             } for i in range(nmats)
         ],
         "Seismic": {
-            "Time_Parameters": {
-                "dt": None,
-                "time_steps": 1
-            },
-            "Attenuation": [
-                {
-                    "id": i,
-                    "name": None,
-                    "alpha_x": 0.0,
-                    "alpha_y": 0.0,
-                    "alpha_z": 0.0,
-                    "reference_frequency": 1.0
-                } for i in range(nmats)
-            ],
             "Source": {
+                "dt": None,
+                "time_steps": 1,
                 "x": 1.0,
                 "y": 1.0,
                 "z": 1.0,
+                "xind": None,
+                "yind": None,
+                "zind": None,
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
                 "amplitude": 1.0,
                 "source_type": None
             },
+            "Attenuation": [
+                {
+                    "id": i,
+                    "name": None,
+                    "gamma_x": 0.0,
+                    "gamma_y": 0.0,
+                    "gamma_z": 0.0,
+                    "reference_frequency": 1.0
+                } for i in range(nmats)
+            ],
             "Stiffness_Coefficients": [
                 {
                     "id": i,
@@ -97,26 +99,27 @@ def generate_template(nmats, **kwargs):
                     "c55": 0.0,
                     "c56": 0.0,
                     "c66": 0.0,
-                    "density": 0.0
+                    "rho": 0.0
                 } for i in range(nmats)
             ]
         },
         "Electromagnetic": {
-            "Time_Parameters": {
-                "dt": None,
-                "time_steps": None
-            },
             "Source": {
+                "dt": None,
+                "time_steps": None,
                 "x": 1.0,
                 "y": 1.0,
                 "z": 1.0,
+                "xind": None,
+                "yind": None,
+                "zind": None,
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
                 "amplitude": 1.0,
                 "source_type": None
             },
-            "Permittivity": [
+            "Permittivity_Coefficients": [
                 {
                     "id": i,
                     "e11": 0.0,
@@ -127,7 +130,7 @@ def generate_template(nmats, **kwargs):
                     "e33": 0.0
                 } for i in range(nmats)
             ],
-            "Conductivity": [
+            "Conductivity_Coefficients": [
                 {
                     "id": i,
                     "s11": 0.0,
@@ -201,13 +204,13 @@ def set_value_by_id(data, section, id_value, field, value):
     - data (dict): The dictionary to update.
     - section (str): The top-level section to look for the id (e.g., 'Materials' or 'Seismic').
     - id_value (int): The id to look for.
-    - field (str): The field to update (e.g., 'rgb' or 'Attenuation.alpha_x').
+    - field (str): The field to update (e.g., 'rgb' or 'Attenuation.gamma_x').
     - value: The value to set.
     """
     # Find the dictionary in the section where 'id' matches id_value
     for item in data[section]:
         if item['id'] == id_value:
-            # Split the field if it's a nested field (like 'Attenuation.alpha_x')
+            # Split the field if it's a nested field (like 'Attenuation.gamma_x')
             keys = field.split('.')
             d = item
             for key in keys[:-1]:
@@ -233,7 +236,7 @@ def update_json(template, updates):
         # Tuple with id at second index
         ("Materials", 0, "rgb"): "255/0/0",   
         # Tuple with id at third index
-        ("Seismic", "Attenuation", 1, "alpha_x"): 0.1,  
+        ("Seismic", "Attenuation", 1, "gamma_x"): 0.1,  
         # Dot notation
         "Domain.nx": 800,  
         # Underscore notation
@@ -302,11 +305,28 @@ def image2int(imfilename: str) -> Tuple[np.ndarray, np.ndarray]:
         rgb = rgb.astype(int)
     
     rgb_int = rgb_int.astype(int)
-    rgb_int.T.tofile('geometry.dat')
+    f = FortranFile('geometry.dat', 'w')
+    f.write_record(rgb_int)
+    f.close()
     
     return( rgb_int, rgb)
 
 # ------------------------------------------------------------------------------
+def readwrite_json(jsonfile: str, data: dict = None):
+    """
+    
+    """
+    if data:
+        with open(jsonfile, 'w') as file:
+            json.dump(data, file, indent = 4)
+    else:
+        with open(jsonfile, 'r') as file:
+            data = json.load(file)
+        return(data)
+    
+    file.close()
+# ------------------------------------------------------------------------------
+
 def prjbuild(
         image_file: str, 
         outputjson: str

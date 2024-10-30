@@ -142,11 +142,11 @@ def pointsource(
     
     # Create the source function
     if multimodal:
-        srcfn = modelclass.amplitude * multimodesrc(
+        srcfn = modelclass.source_amplitude * multimodesrc(
             timevec, modelclass.f0, modelclass.source_type
         )
     else:
-        srcfn = modelclass.amplitude * wavelet(
+        srcfn = modelclass.source_amplitude * wavelet(
             timevec, modelclass.f0, modelclass.source_type
         )
     # rotate 

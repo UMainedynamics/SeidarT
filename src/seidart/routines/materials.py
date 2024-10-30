@@ -197,7 +197,7 @@ def get_seismic(
     """
 
     m = len(material.temp)
-    stiffness_coefficients = np.zeros([m, 23])
+    stiffness_coefficients = np.zeros([m, 22])
 
     # Adjust the stiffness tensor according to the pressure and temperature 
     # conditions for ice
@@ -258,8 +258,7 @@ def get_seismic(
         
         # Assign the values        
         C = np.round(C)
-        stiffness_coefficients[ind, :] = (
-            ind, 
+        self.stiffness_coefficients.loc[ind] = np.array([
             C[0,0], C[0,1], C[0,2], C[0,3], C[0,4], C[0,5],
                     C[1,1], C[1,2], C[1,3], C[1,4], C[1,5],
                             C[2,2], C[2,3], C[2,4], C[2,5],
@@ -267,10 +266,8 @@ def get_seismic(
                                             C[4,4], C[4,5],
                                                     C[5,5], 
             density
-        )
+        ])
     
-    # The model class is mutable so no need to return it
-    self.stiffness_coefficients = stiffness_coefficients
     
 
 # -----------------------------------------------------------------------------
@@ -292,8 +289,8 @@ def get_perm(
     
     m = len(material.temp)
     # We will always compute the complex tensor. 
-    permittivity_coefficients = np.zeros([m, 7], dtype = complex)
-    conductivity_coefficients = np.zeros([m, 7])
+    permittivity_coefficients = np.zeros([m, 6], dtype = complex)
+    conductivity_coefficients = np.zeros([m, 6])
     
     # Adjust the stiffness tensor according to the pressure and temperature 
     # conditions for ice
@@ -334,17 +331,22 @@ def get_perm(
                 material.lwc[ind], material.material[ind]
             )[1]
         
+        # Convert back to real
+        permittivity = permittivity.real 
+        conductivity = conductivity.real
+        
         if material.is_anisotropic[ind]:
+            
             euler = read_ang(material.angfile[ind])
             p = len(euler[:,0])
             
             pvoigt = np.zeros([3,3])
+            cvoigt = np.zeros([3,3])
             preuss = np.zeros([3,3])
-            permittivity = np.zeros([3,3])
+            creuss = np.zeros([3,3])
             
-            # Assume a constant pressure of 0.1 MPa
-            
-            S = np.linalg.inv(permittivity)
+            Sp = np.linalg.inv(permittivity)
+            Sc = np.linalg.inv(conductivity)
             
             for k in range(0, p):
                 R = rotator_zxz(euler[k,:] )
@@ -352,44 +354,40 @@ def get_perm(
                 Ri = np.linalg.inv(R)
                 #!!!!! We need to do the same for conductivity.  
                 pvoigt = pvoigt + ( np.matmul( R, np.matmul(permittivity, R.T) ) )
-                preuss = preuss + ( np.matmul( Ri, np.matmul(S, Ri.T) ) )
+                cvoigt = cvoigt + ( np.matmul( R, np.matmul(conductivity, R.T) ) )
+                preuss = preuss + ( np.matmul( Ri, np.matmul(Sp, Ri.T) ) )
+                creuss = creuss + ( np.matmul( Ri, np.matmul(Sc, Ri.T) ) )
             
             pvoigt = pvoigt/p
+            cvoigt = cvoigt/p
             preuss = preuss/p 
+            creuss = creuss/p 
             preuss = np.linalg.inv(preuss) 
+            creuss = np.linalg.inv(creuss) 
             
             # Calculate the hill average 
             permittivity = (pvoigt + preuss)/2
-            
-            # Convert back to real
-            permittivity = permittivity.real 
-            conductivity = conductivity.real
+            conductivity = (cvoigt + creuss)/2
             
             # Check to make sure the permittivity tensor is positive definite
             eigenvalues, eigenvectors = np.linalg.eigh(permittivity)
             if np.sum(eigenvalues <= 0) > 0:
                 print('Permittivity tensor is not positive definite.')
                 
-        permittivity_coefficients[ind, :] = np.array(
+        self.permittivity_coefficients.loc[ind] = np.array(
             [
-                ind,
                 permittivity[0,0], permittivity[0,1], permittivity[0,2],
                 permittivity[1,1], permittivity[1,2],
                 permittivity[2,2]
             ]
         )
-        conductivity_coefficients[ind, :] = np.array(
+        self.conductivity_coefficients.loc[ind] = np.array(
             [
-                ind,
                 conductivity[0,0], conductivity[0,1], conductivity[0,2],
                 conductivity[1,1], conductivity[1,2],
                 conductivity[2,2]
             ] 
         )
-    
-    # The model class is mutable so no need to return it
-    self.permittivity_coefficients = permittivity_coefficients 
-    self.conductivity_coefficients = conductivity_coefficients
 
 # -----------------------------------------------------------------------------
 def rho_water_correction(temperature: float = 0.0) -> float:

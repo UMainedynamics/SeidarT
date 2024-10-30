@@ -12,13 +12,12 @@ import copy
 import json
 
 import seidart.routines.materials as mf
-from seidart.routines.prjbuild import image2int
+from seidart.routines.prjbuild import image2int, update_json, readwrite_json
 
 __all__ = [
     'read_dat',
     'complex2str',
     'str2complex',
-    'append_coefficients',
     'loadproject',
     'airsurf',
     'cpmlcompute',
@@ -32,9 +31,8 @@ __all__ = [
     'agc',
     'correct_geometric_spreading',
     'exponential_gain',
-    'kband_check',
     'parameter_profile_1d',
-    'CFL',
+    'CFL', 'clight',
 ]
 
 # --------------------------------- Globals ------------------------------------
@@ -56,61 +54,11 @@ Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 # Courant-Friedrichs-Levy condition
 CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D. 
 
-# ------------------------------------------------------------------------------
-def kband_check(modelclass, domain):
-    '''
-    Check to make sure the discretization values of the domain satisfy the 
-    wavenumber bandlimiter as described in Volvcan et al. (2024).
-
-    :param modelclass:
-    :type modelclass: Model 
-    :param material: 
-    :type material: Material 
-    :param domain:
-    :type domain: Domain
-    '''
-    
-    if modelclass.is_seismic:
-        velocities = np.zeros([domain.nmats, 4])
-        for ind in range(domain.nmats):
-            velocities[ind,:] = mf.tensor2velocities(
-                modelclass.tensor_coefficients[ind,1:-1].astype(float), 
-                modelclass.tensor_coefficients[ind,-1].astype(float), 
-                seismic = True
-            )
-    else: 
-        velocities = np.zeros([domain.nmats, 3])
-        for ind in range(domain.nmats):
-            velocities[ind,:] = mf.tensor2velocities(
-                modelclass.tensor_coefficients[ind,1:7].real, seismic = False
-            )
-    
-    lambda_values = velocities/modelclass.f0
-    # For things such as air and water, there will be zero valued velocities
-    # which will be taken as the step_limit. Remove the zero values.
-    lambda_values = lambda_values[lambda_values > 0]
-    step_limit = lambda_values.min()/4 
-    modelclass.step_limit = step_limit 
-    if domain.dim == 2.5:
-        step_max = np.array([domain.dx, domain.dy, domain.dz]).max() 
-    else: 
-        step_max = np.array([domain.dx, domain.dz]).max()
-    
-    if step_max > step_limit:
-        print(
-            f'Wavenumber bandlimit is not met. Reduce maximum spatial step to {step_limit}'
-        )
-    else:
-        print(
-            f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
-        )
-
 # -------------------------- Function Definitions ------------------------------
 def read_dat(
         fn: str, 
         channel: str, 
         domain, 
-        is_complex: bool, 
         single: bool =False
     ) -> np.ndarray:
     """
@@ -130,8 +78,6 @@ def read_dat(
     :param domain: The domain object that contains dimensions (dim, nx, ny, nz) 
         of the data.
     :type domain: Domain
-    :param is_complex: A flag indicating if the data is complex.
-    :type is_complex: bool
     :param single: A flag indicating if the data should be read in 
         single precision. Defaults to False (double precision).
     :type single: bool
@@ -151,72 +97,29 @@ def read_dat(
         NY = domain.ny
         NZ = domain.nx
     else:
+        NZ = domain.nx #! This should be nx and the next one should be nz
         NX = domain.nz
-        NZ = domain.nx
     #
 
     with FortranFile(fn, 'r') as f:
-        if is_complex:
-            if single:
-                dat = f.read_reals(dtype=np.float32)#.reshape(nx, nz)
-                dat = dat[:(NX*NZ)] + 1j * dat[(NX*NZ):]
-            else:
-                # Read complex data directly as double precision
-                dat = f.read_complex(dtype=np.complex128)#.reshape(nx, nz)
+        if single:
+            dat = f.read_reals(dtype = np.float32)
+            # dat = np.fromfile(fn, dtype = np.float32)
         else:
-            if single:
-                dat = f.read_reals(dtype = np.float32)
-            else:
-                dat = f.read_reals(dtype = np.float64)
+            dat = f.read_reals(dtype = np.float64)
+            # dat = np.fromfile(fn, dtype = np.float64)
 
     if domain.dim == 2.5:
         dat = dat.reshape(NX, NY, NZ)
     else:
         dat = dat.reshape(NX, NZ)
-
+    
     f.close()
     return(dat)
 
 # =============================================================================
 # ============================== Useful Functions =============================
 # =============================================================================
-
-# def image2int(image_filename: str) -> np.ndarray:
-#     """
-#     Convert an image file into an integer array where each unique RGB color 
-#     is mapped to a unique integer.
-
-#     This function reads an image from a file, converts RGB colors to a single 
-#     integer value by combining the RGB channels, then maps each unique color in
-#     the image to a unique integer. This can be useful for image analysis tasks 
-#     where colors represent different categories or labels.
-
-#     :param image_filename: The path to the image file.
-#     :type image_filename: str
-#     :return: A 2D array where each element represents a unique integer mapping 
-#         of the original RGB colors.
-#     :rtype: np.ndarray
-
-#     The conversion of RGB to a single value is performed using the formula: 
-#     65536*red + 255*green + blue. Note that this function assumes the input 
-#     image is in a format readable by matplotlib.image.imread (e.g., PNG, JPG), 
-#     and that it has three color channels (RGB).
-#     """
-#     # read the image
-#     img = mpimg.imread(image_filename)
-
-#     # Convert RGB to a single value
-#     rgb_int = np.array(65536*img[:,:,0] +  255*img[:,:,1] + img[:,:,2])
-
-#     # Get the unique values of the image
-#     rgb_uni = np.unique(rgb_int)
-
-#     # mat_id = np.array( range(0, len(rgb_uni) ) )
-#     for ind in range(0, len(rgb_uni) ):
-#         rgb_int[ rgb_int == rgb_uni[ind] ] = ind
-
-#     return rgb_int.astype(int)
-
 # ------------------------------------------------------------------------------
 # After computing tensor coefficients we want to append them to the given text
 # file. In order to do this, we need to create a new file then move it to the
@@ -289,58 +192,6 @@ def str2complex(strsplit: list) -> np.ndarray:
     
     return(complex_vector)
         
-def append_coefficients(
-        project_file: str, 
-        tensor: np.ndarray, tensor_name: str = None , 
-        dt : float = 1.0
-    ):
-    """
-    Appends coefficients to a project JSON file based on the provided tensor 
-    along with the time step. 
-    
-    Note: The project file is updated in place, with the original file replaced by 
-    the modified one. The `tensor` can be either a complex or a real numpy array. The function 
-    handles these differently when appending to the file. This function relies on an external command (`mv`) to replace the 
-    original file, which requires that the script has permissions to execute 
-    system commands.
-    
-    :param project_file: The path to the project file to be modified.
-    :type project_file: str
-    :param tensor: A numpy array containing the tensor coefficients to append.
-    :type tensor: np.ndarray
-    :param tensor_name: The parameter that the tensor describes. Available 
-        options are Stiffness, Permittivity, Conductivity
-    :type tensor_name: 
-    :param dt: The time step to append for the modeling type, defaults to 1.
-    :type dt: float
-    :param seismic: Flag if the seismic or the electromagnetic coefficients are 
-        going to be written,
-    
-    :return: None
-    """
-    with open(project_file, 'r') as file:
-        data = json.load(file)
-    
-    id = tensor[:,0].astype(int)
-    tensor_name = tensor_name.capitalize()
-    
-    if tensor_name not in ['Stiffness', 'Permittivity', 'Conductivity']:
-        raise ValueError(
-            f"""You have input {tensor_name} as the input. The tensor_name must be 
-            either 'Stiffness', 'Permittivity', 'Conductivity'. This is case 
-            invariant, but spelling must be accurate."""
-        )
-    
-    if tensor_name == 'Stiffness':
-        modeltype = 'Seismic'
-    else:
-        modeltype = 'Electromagnetic'
-    
-    for ind in id:
-        data[modeltype][f'{tensor_name}_Coefficients'][ind] = tensor[ind,:]
-    
-    with open(project_file, 'w') as file:
-        json.dump(data, file, indent=4)
 
 # ==============================================================================
 # ========================= Read/Assign Project File ===========================
@@ -371,10 +222,34 @@ def loadproject(
     types of configurations (e.g., 'I' for images, 'D' for domain configurations, 'S' for
     seismic modeling parameters, etc.).
     """
+    stiffness_columns = np.array([
+            "c11", "c12", "c13", "c14", "c15", "c16",
+            "c22", "c23", "c24", "c25", "c26",
+            "c33", "c34", "c35", "c36",
+            "c44", "c45", "c46", 
+            "c55", "c56",
+            "c66", "rho"
+    ])
+    attenuation_columns = np.array([
+        'gamma_x', 'gamma_y', 'gamma_z', 'reference_frequency'
+    ])
+    conductivity_columns = np.array([
+            "s11", "s12", "s13", 
+            "s22", "s23", 
+            "s33"
+    ])
+    permittivity_columns = np.array([
+            "e11", "e12", "e13", 
+            "e22", "e23", 
+            "e33"
+    ])
+    material_columns = np.array([
+        'id', 'Name', 'RGB', 'Temperature', 'Density', 'Porosity', 
+        'Water_Content', 'is_anisotropic', 'ANGfiles'
+    ])
     # domain, material, seismic, electromag are the objects that we will assign
     # values to
-    with open(project_file, 'r') as file:
-        data = json.load(file)
+    data = readwrite_json(project_file)
     
     # ----------------------------- Domain Values ------------------------------
     (
@@ -386,18 +261,16 @@ def loadproject(
     domain.geometry = im.transpose().astype(int)
     
     # ---------------------------- Seismic Values ------------------------------
-    seismic.dt, seismic.time_steps = list(data['Seismic']['Time_Parameters'].values())
     (
+        seismic.dt, seismic.time_steps,
         seismic.x, seismic.y, seismic.z, 
         seismic.xind, seismic.yind, seismic.zind,
         seismic.f0, seismic.theta, seismic.phi, 
         seismic.source_amplitude, seismic.source_type    
     ) = list(data['Seismic']['Source'].values())
     
-
-        
-    electromag.dt, electromag.time_steps = list(data['Seismic']['Time_Parameters'].values())
     (
+        electromag.dt, electromag.time_steps,
         electromag.x, electromag.y, electromag.z,
         electromag.xind, electromag.yind, electromag.zind,
         electromag.f0, electromag.theta, electromag.phi,
@@ -406,101 +279,46 @@ def loadproject(
 
     # --------------------------- Indexed Values -------------------------------    
     # preallocate
-    seismic.stiffness_coefficients = np.zeros([domain.nmats, 23])
-    seismic.attenuation_coefficients = np.zeros([domain.nmats,3])
+    
+    seismic.stiffness_coefficients = pd.DataFrame(
+        np.zeros([domain.nmats, 22]), columns = stiffness_columns
+    )
+    seismic.attenuation_coefficients = pd.DataFrame(
+        np.zeros([domain.nmats,4]), columns = attenuation_columns
+    )
+    electromag.permittivity_coefficients = pd.DataFrame(
+        np.zeros([domain.nmats,6]), columns = permittivity_columns
+    )
+    electromag.conductivity_coefficients = pd.DataFrame(
+        np.zeros([domain.nmats,6]), columns = conductivity_columns
+    )
+    
     seismic.fref = np.zeros([domain.nmats])
-    electromag.permittivity_coefficients = np.zeros([domain.nmats,7])
-    electromag.conductivity_coefficients = np.zeros([domain.nmats,7])
-    material.rgb = np.zeros([domain.nmats], dtype='U11')
-    material.material_list =np.zeros([domain.nmats], dtype = object)
+    material.material_list =pd.DataFrame(
+        np.zeros([domain.nmats, 9], dtype = object), columns = material_columns
+    )
     for ind in range(domain.nmats):
         # First do seismic
         coefs = list(data['Seismic']['Stiffness_Coefficients'][ind].values())
-        seismic.stiffness_coefficients[ind,:] = np.array(coefs)
+        seismic.stiffness_coefficients.loc[ind] = np.array(coefs[1:])
         coefs = list(data['Seismic']['Attenuation'][ind].values())
-        seismic.attenuation_coefficients[ind,:] = np.array(coefs[2:-1])
-        seismic.fref[ind] = coefs[-1]
+        seismic.attenuation_coefficients.loc[ind] = np.array(coefs[2:])
         # Now do electromag
-        coefs = list(data['Electromagnetic']['Permittivity'][ind].values())
-        electromag.permittivity_coefficients[ind,:] = np.array(coefs)
-        coefs = list(data['Electromagnetic']['Conductivity'][ind].values())
-        electromag.conductivity_coefficients[ind,:] = np.array(coefs)
+        coefs = list(data['Electromagnetic']['Permittivity_Coefficients'][ind].values())
+        electromag.permittivity_coefficients.loc[ind] = np.array(coefs[1:])
+        coefs = list(data['Electromagnetic']['Conductivity_Coefficients'][ind].values())
+        electromag.conductivity_coefficients.loc[ind] = np.array(coefs[1:])
         # Material values
         vals = list(data['Materials'][ind].values())
-        del vals[2]
-        material.material_list[ind,] = np.array(vals, dtype = object)
-        material.rgb[ind] = data['Materials'][ind]['rgb']
+        material.material_list.loc[ind] = vals
+    
+    seismic.project_file = project_file 
+    electromag.project_file = project_file
     
     seismic.is_seismic = True 
     electromag.is_seismic = False
     material.sort_material_list() 
     return domain, material, seismic, electromag
-
-
-# ------------------------------------------------------------------------------
-# Make sure variables are in the correct type for Fortran
-# def prepme(
-#         model_object: Model, 
-#         domain: Domain, 
-#         # complex_tensor: bool = True
-#     ) -> tuple:
-#     """
-#     Prepare modeling objects and domain configurations for simulation, ensuring
-#     that all parameters are in the correct format for Fortran processing.
-
-#     This function adjusts the type of various parameters in the modeling and domain objects,
-#     such as converting time steps to integers or ensuring that tensor coefficients are in the
-#     correct numerical format (complex or float). Additionally, it arranges source and domain
-#     parameters in the correct order based on the dimensionality of the domain.
-
-#     :param model_object: The modeling object containing simulation parameters and configurations.
-#     :param domain: The domain object containing spatial configurations and parameters.
-#     :param complex_tensor: A flag indicating whether the tensor coefficients should be treated as complex numbers.
-#     :type complex_tensor: bool
-#     :return: A tuple containing the updated modeling object and domain object.
-#     :rtype: tuple
-
-#     The function specifically adjusts parameters for compatibility with Fortran-based
-#     simulation engines, accounting for differences in array indexing and data types.
-#     """
-#     # Check if there are no errors and the coefficients have been computed
-#     model_object.time_steps = int(model_object.time_steps)
-#     model_object.f0 = float(model_object.f0)
-#     model_object.theta = float(model_object.theta)
-#     model_object.x = float(model_object.x)
-#     model_object.z = float(model_object.z)
-#     # We don't want to get rid of the complex coefficients if they are there, but we need 
-#     # make sure that we are only using the real components if we aren't solving for the complex
-#     # equations
-#     model_object.tensor_coefficients_original = model_object.tensor_coefficients.copy()
-#     if not complex_tensor:
-#         model_object.tensor_coefficients = model_object.tensor_coefficients.astype(float)
-    
-#     # Put source and domain parameters in correct order
-#     if domain.dim == 2.5:
-#         # There are additional values we need to assign
-#         domain.ny = int(domain.ny)
-#         domain.dy = float(domain.dy)
-#         model_object.y = float(model_object.y)
-#         model_object.phi = float(model_object.phi)
-
-#         model_object.src = np.array(
-#             [
-#                 model_object.x/domain.dx,
-#                 model_object.y/domain.dy,
-#                 model_object.z/domain.dz
-#             ]
-#         ).astype(int)
-#     else:
-#         model_object.src = np.array(
-#             [
-#                 model_object.x/domain.dx,
-#                 model_object.z/domain.dz
-#             ]
-#         ).astype(int)
-
-#     return(model_object, domain)
-
 
 # ------------------------------------------------------------------------------
 def airsurf(material, domain, N: int = 2) -> np.ndarray:
@@ -531,10 +349,9 @@ def airsurf(material, domain, N: int = 2) -> np.ndarray:
     the surface.
     """
     # This can be generalized a little better, but for now...
-    airnum = material.material_list[material.material_list[:,1] == 'air', 0]
+    airnum = np.where(material.material == 'air')[0][0].astype(int)
 
     if airnum:
-        airnum = int(airnum[0])
         gradmatrix = (domain.geometry != airnum).astype(int)
         # Take the gradient in both directions
         gradz = np.diff(gradmatrix, axis = 0)

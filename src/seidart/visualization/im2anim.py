@@ -16,12 +16,11 @@ import subprocess
 
 # =============================================================================
 def build_animation(
-        prjfile, 
+        project_file, 
         channel, 
         delay, 
         numsteps, 
         alpha = 0.3, 
-        is_complex: bool = False,
         is_single_precision: bool = True,
         plottype: str = 'magnitude'
     ):
@@ -32,18 +31,14 @@ def build_animation(
     be:
     
         'magnitude', 
-        'phase' (complex only), 
-        'energy_density (complex only)'
     
     For seismic simulations, plottype can be:
     
         'magnitude',
         'quiver'
     
-
-    
-    :param prjfile: The full file path for the project file.
-    :type prjfile: str
+    :param project_file: The full file path for the project file.
+    :type project_file: str
     :param channel: The channel to be used. Available channels are Ex, Ez, Vx, and Vz 
                     for the electric field and seismic velocities, respectively.
     :type channel: str
@@ -55,14 +50,11 @@ def build_animation(
     :param alpha: Change the transparency of the model plotted in the background. 
                   0 is fully transparent, 1 is fully opaque.
     :type alpha: float
-    :param is_complex: Flag indicating whether the data will be complex valued. 
-                       If not flagged but the data is complex, only the real part is used.
-    :type is_complex: bool, optional
+
     :param is_single_precision: Flag indicating whether the data is in single precision.
     :type is_single_precision: bool, optional
     :param plottype: The type of plot to generate. Valid inputs are 'magnitude', 
-                     'phase' (complex only), and 'energy_density' (complex only) for EM; 
-                     'magnitude' and 'quiver' for seismic.
+                     for EM; 'magnitude' and 'quiver' for seismic.
     :type plottype: str, optional
     :return: None
     '''
@@ -76,8 +68,7 @@ def build_animation(
     for fn in files:
         if n == numsteps:
             mag = FDTDImage(
-                prjfile, fn, 
-                is_complex = is_complex, 
+                project_file, fn, 
                 is_single_precision = is_single_precision,
                 plottype = plottype
             )
@@ -111,7 +102,7 @@ if __name__=="__main__":
         latter. """ )
 
     parser.add_argument(
-        '-p','--prjfile', 
+        '-p','--project_file', 
         nargs=1, type=str, required = True,
         help='the full file path for the project file'
     )
@@ -151,12 +142,6 @@ if __name__=="__main__":
     )
     
     parser.add_argument(
-        '-z', '--is_complex', action = 'store_true', required = False,
-        help = """Flag whether the data will be complex valued. If the data is
-        not flagged but is complex, only the real data will be returned. """
-    )
-    
-    parser.add_argument(
         '-D', '--is_double_precision', action = 'store_false', required = False,
         help = """Flag whether the data is in double precision."""
     )
@@ -170,8 +155,7 @@ if __name__=="__main__":
         EM
         --    
             'magnitude', 
-            'phase' (complex only), 
-            'energy_density (complex only)'
+
         Seismic
         -------
             'magnitude',
@@ -181,22 +165,20 @@ if __name__=="__main__":
 
     # Get the arguments
     args = parser.parse_args()
-    prjfile = ''.join(args.prjfile)
+    project_file = ''.join(args.project_file)
     channel = ''.join(args.channel)
     delay = str(args.delay[0])
     num_steps = args.num_steps[0]
     alpha = min([1, args.alpha[0]] )
-    is_complex = args.is_complex
     is_single_precision = args.is_single_precision
     plot_type = args.plot_type[0]
     
     build_animation(
-        prjfile, 
+        project_file, 
         channel, 
         delay, 
         numsteps, 
         alpha, 
-        is_complex,
         is_single_precision,
         plot_type
     )

@@ -10,6 +10,7 @@ import matplotlib as mpl
 
 import argparse
 from seidart.routines.definitions import *
+from seidart.routines.classes import Domain, Material, Model, Model
 import matplotlib.image as mpimg
 
 from glob2 import glob 
@@ -21,12 +22,10 @@ class FDTDImage:
 
     This class provides methods to build and manipulate images generated from FDTD modeling.
 
-    :param prjfile: The full file path for the project file.
-    :type prjfile: str
+    :param project_file: The full file path for the project file.
+    :type project_file: str
     :param inputfile: The name of the input file containing simulation data.
     :type inputfile: str
-    :param is_complex: Indicates if the data is complex valued.
-    :type is_complex: bool
     :param is_single_precision: Indicates if the data is in single precision format.
     :type is_single_precision: bool, optional
     :param plottype: The type of plot to generate ('magnitude', 'quiver', 'phase', 'energy_density').
@@ -34,12 +33,11 @@ class FDTDImage:
     """
     def __init__(
             self, 
-            prjfile, inputfile,
-            is_complex: bool = False, 
+            project_file, inputfile,
             is_single_precision: bool = True,
             plottype: str = 'magnitude'
         ):
-        self.prjfile = prjfile
+        self.project_file = project_file
         self.x = None
         self.z = None
         self.inputfile = inputfile
@@ -56,7 +54,6 @@ class FDTDImage:
         self.nx = None 
         self.nz = None
         # Flags
-        self.is_complex = is_complex
         self.is_single_precision = is_single_precision
         
         # Check the inputs that need to be checked
@@ -77,15 +74,12 @@ class FDTDImage:
         Builds the domain, material, seismic, and electromagnetic models from the project file.
         """
         self.domain, self.material, self.seismic, self.electromag = loadproject(
-            self.prjfile,
+            self.project_file,
             Domain(), 
             Material(),
             Model(),
             Model()
         )
-        
-        if self.is_complex:
-            self.imag_part = None
         
         # Define the channel given the input file name
         self.channel = self.inputfile[0:2]
@@ -175,14 +169,12 @@ class FDTDImage:
             self.xfile, 
             self.channel[0] + 'x', 
             self.domain, 
-            is_complex = False, 
             single = self.is_single_precision
         )
         v = read_dat(
             self.zfile, 
             self.channel[0] + 'z', 
             self.domain, 
-            is_complex = False, 
             single = self.is_single_precision
         )        
         # Set the figure size to be for a full two column width
@@ -232,17 +224,8 @@ class FDTDImage:
             self.inputfile, 
             self.channel, 
             self.domain, 
-            is_complex = self.is_complex, 
             single = self.is_single_precision
         )
-        if self.plottype == 'energy_density':
-            # Convert the complex electric field to the 
-            dat = dat.conj() * dat 
-            dat = dat.real
-        elif self.plottype == 'phase':
-            dat = np.angle(dat)
-        else:
-            dat = dat.real
         
         self.fig = plt.figure(
             figsize = [
@@ -348,7 +331,7 @@ class FDTDImage:
         :type files: list, optional
         """
         # Project file needs to already be assigned in the object
-        if self.prjfile:
+        if self.project_file:
             files.sort()
 
             print('Creating PNG snapshots')

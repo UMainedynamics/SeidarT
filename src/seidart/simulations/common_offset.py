@@ -110,7 +110,6 @@ class CommonOffset(Array):
         Loads and sorts receiver and source locations from a file and adjusts them 
         according to the domain and CPML layer. 
         """
-        
         self.source_xyz = pd.read_csv(self.source_file)
         self.receiver_xyz = pd.read_csv(self.receiver_file)
         
@@ -118,7 +117,6 @@ class CommonOffset(Array):
         # absorbing boundary is corrected for
         # First check to see if the inputs are indices or
         cpml = int(self.domain.cpml)
-        
         
         self.source_xyz = self.source_xyz.to_numpy() 
         self.receiver_xyz = self.receiver_xyz.to_numpy()

@@ -1,13 +1,18 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 import matplotlib.image as mpimg 
-import matplotlib.animation as anim 
+import matplotlib.animation as anim
+import os 
 import os.path 
+from scipy.io import FortranFile
+from subprocess import call
 
 from typing import Optional
 import seidart.routines.materials as mf
 from seidart.routines import sourcefunction
 from seidart.routines.definitions import *
+from seidart.routines.prjbuild import readwrite_json
+import seidart.routines.materials as mf
 
 __all__ = [
     'Domain',
@@ -86,7 +91,7 @@ class Material:
 
     Attributes
     ----------
-    material_list : numpy.ndarray
+    material_list : pd.DataFrame
         An array to store the list of materials.
     material_flag : bool
         A flag indicating whether the materials were read in successfully.
@@ -121,7 +126,7 @@ class Material:
         """
         Initializes the material attributes with default values.
         """
-        self.material_list = np.array([]) # initialize
+        self.material_list = None
         self.material_flag = False # Whether the materials were read in
 
         # We will assign each of the list variables
@@ -144,21 +149,15 @@ class Material:
         """
         Sorts the material list based on the material properties.
         """
-        m = len(self.material_list)
-        self.material = np.zeros([m], dtype = 'U12')
-        self.temp = np.zeros([m], dtype = float)
-        self.rho = np.zeros([m], dtype = float)
-        self.porosity = np.zeros([m], dtype = float)
-        self.lwc = np.zeros([m], dtype = float)
-        self.is_anisotropic = np.zeros([m], dtype = bool)
-        self.angfile = np.zeros([m], dtype = object)
+        self.material = self.material_list['Name'].to_numpy()
+        self.rgb = self.material_list['RGB'].to_numpy()
+        self.temp = self.material_list['Temperature'].to_numpy()
+        self.rho = self.material_list['Density'].to_numpy()
+        self.porosity = self.material_list['Porosity'].to_numpy()
+        self.lwc = self.material_list['Water_Content'].to_numpy()
+        self.is_anisotropic = self.material_list['is_anisotropic'].to_numpy()
+        self.angfile = self.material_list['ANGfiles'].to_numpy()
         
-        for ind in range(m):
-            (
-                __, self.material[ind], self.temp[ind], self.rho[ind], 
-                self.porosity[ind] , self.lwc[ind] , self.is_anisotropic[ind], 
-                self.angfile[ind] 
-            ) = self.material_list[ind]
 
     def parameter_check(self) -> None:
         """
@@ -183,7 +182,7 @@ class Material:
         if check == 0:
             file_check = 0
             for ind in range(0, self.material_list.shape[0]):
-                if self.material_list[ind,6] == 'True' and \
+                if self.material_list['is_anisotropic'][ind] == 'True' and \
                     not self.material_list[ind,7] or \
                         self.material_list[ind,7] == 'n/a':
                     file_check = file_check + 1
@@ -242,16 +241,21 @@ class Model:
         Initializes the Model class by building the initial configuration.
         """
         super().__init__()
+        self.project_file = None
         self.dt = None
         self.time_steps = None
         self.x = None
+        self.xind = None
         self.y = None
+        self.yind = None
         self.z = None
+        self.zind = None
         self.f0 = None
         self.theta = None
         self.phi = None
+        self.source_amplitude = None 
+        self.source_type = None
         self.src = None
-        self.fref = None
         self.attenuation_fadjust = None
         self.exit_status = 0
         self.is_seismic = None
@@ -271,16 +275,57 @@ class Model:
         self.compute_coefficients = True
         self.domain_density = None
         self.air_gradient_integer = 2
-        self.build()
-    
-    def build(self) -> None:
-        """
-        Initializes the simulation model attributes with default values.
-        """
         self.sourcefunction = sourcefunction.pointsource # This will change
         self.get_seismic = mf.get_seismic 
         self.get_perm = mf.get_perm
-            
+        self.CFL = 1/np.sqrt(2) # Default minimum. If the dimension is 2.5, then this will change automatically
+        
+    def kband_check(self, domain):
+        '''
+        Check to make sure the discretization values of the domain satisfy the 
+        wavenumber bandlimiter as described in Volvcan et al. (2024).
+
+        :param material: 
+        :type material: Material 
+        :param domain:
+        :type domain: Domain
+        '''
+        
+        if self.is_seismic:
+            velocities = np.zeros([domain.nmats, 4])
+            for ind in range(domain.nmats):
+                velocities[ind,:] = mf.tensor2velocities(
+                    self.stiffness_coefficients.loc[ind][:-1].to_numpy(), 
+                    self.stiffness_coefficients['rho'][ind], 
+                    seismic = True
+                )
+        else: 
+            velocities = np.zeros([domain.nmats, 3])
+            for ind in range(domain.nmats):
+                velocities[ind,:] = mf.tensor2velocities(
+                    self.permittivity_coefficients.loc[ind].to_numpy().real, seismic = False
+                )
+        
+        lambda_values = velocities/self.f0
+        # For things such as air and water, there will be zero valued velocities
+        # which will be taken as the step_limit. Remove the zero values.
+        lambda_values = lambda_values[lambda_values > 0]
+        step_limit = lambda_values.min()/4 
+        self.step_limit = step_limit 
+        if domain.dim == 2.5:
+            step_max = np.array([domain.dx, domain.dy, domain.dz]).max() 
+        else: 
+            step_max = np.array([domain.dx, domain.dz]).max()
+        
+        if step_max > step_limit:
+            print(
+                f'Wavenumber bandlimit is not met. Reduce maximum spatial step to {step_limit}'
+            )
+        else:
+            print(
+                f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
+            )
+
     # --------------------------------------------------------------------------
     def parameter_check(self) -> None:
         """
@@ -308,12 +353,11 @@ class Model:
             self.phi = 0
     
     # --------------------------------------------------------------------------
-    def status_check(
+    def build(
             self, 
             material: Material, 
             domain: Domain, 
-            projectfile,
-            append_to_json: bool = True
+            recompute_tensors: bool = True
         ) -> None:
         """
         Checks the status of the modeling classes and appends coefficients to the
@@ -323,41 +367,58 @@ class Model:
         :type material: Material
         :param domain: The domain class instance.
         :type domain: Domain
-        :param projectfile: Path to the project file.
-        :type projectfile: str
         :param append_to_json: Flag to append coefficients to the project file. 
                                 Defaults to True.
         :type append_to_json: bool
         """
-        global CFL
+        global clight
         
+        self.xind = int(self.x / domain.dx )
+        self.yind = int(self.y / domain.dy )
+        self.zind = int(self.z / domain.dz )
+                
         # Set the CFL to its max value if it exceeds the 
         if domain.dim == 2.5:
-            CFL = np.min([CFL, 1/np.sqrt(3)])
-        else:
-            CFL = np.min([CFL, 1/np.sqrt(2)])
+            self.CFL = np.min([self.CFL, 1/np.sqrt(3)])
         
         # Make sure all of the initial conditions are input 
         if self.initialcondition_x  is None:
             if domain.dim == 2.5:
-                self.initialcondition_x = np.zeros(domain.nx, domain.ny, domain.nz)
+                self.initialcondition_x = np.zeros([
+                    domain.nx+2*domain.cpml, 
+                    domain.ny+2*domain.cpml, 
+                    domain.nz+2*domain.cpml
+                ])
             else:
-                self.initialcondition_x = np.zeros([domain.nx, domain.nz])
+                self.initialcondition_x = np.zeros([
+                    domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
+                ])
         if self.initialcondition_z  is None:
             if domain.dim == 2.5:
-                self.initialcondition_z = np.zeros([domain.nx, domain.ny, domain.nz])
+                self.initialcondition_z = np.zeros([
+                    domain.nx+2*domain.cpml, 
+                    domain.ny+2*domain.cpml, 
+                    domain.nz+2*domain.cpml
+                ])
             else:
-                self.initialcondition_z = np.zeros([domain.nx, domain.nz])
+                self.initialcondition_z = np.zeros([
+                    domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
+                ])
         if self.initialcondition_y  is None:
             if domain.dim == 2.5:
-                self.initialcondition_y = np.zeros([domain.nx, domain.ny, domain.nz])
+                self.initialcondition_y = np.zeros([
+                    domain.nx+2*domain.cpml, 
+                    domain.ny+2*domain.cpml, 
+                    domain.nz+2*domain.cpml
+                ])
             else:
-                self.initialcondition_y = np.zeros([domain.nx, domain.nz])
-                
+                self.initialcondition_y = np.zeros([
+                    domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
+                ])
         
         if self.exit_status == 0 and \
             material.material_flag and \
-                append_to_json:
+                recompute_tensors:
             # The coefficients aren't provided but the materials are so we can 
             # compute them
             # Assign the materials to their respective corners
@@ -368,14 +429,9 @@ class Model:
                 # We need to compute dt from the Courant number. We can use the 
                 # maximum tensor value, and the maximum density even if they don't 
                 # correspond to the same material.
-                ind = np.where(self.stiffness_coefficients.max() == self.stiffness_coefficients)
-                max_rho = self.stiffness_coefficients[ ind[0][0], -1]
-                self.dt = CFL * np.min([domain.dx, domain.dz]) / np.sqrt(3.0 * self.stiffness_coefficients.max()/max_rho )
-                append_coefficients(
-                    projectfile, 
-                    self.stiffness_coefficients, tensor_name = 'Stiffness', 
-                    dt = self.dt
-                )
+                max_rho = self.stiffness_coefficients["rho"].max()
+                self.dt = self.CFL * np.min([domain.dx, domain.dz]) / \
+                    np.sqrt(3.0 * self.stiffness_coefficients.max().max()/max_rho )
             else:
                 print('Computing the permittivity and conductivity coefficients.')
                 
@@ -385,25 +441,11 @@ class Model:
                     ( clight/ \
                         np.sqrt(np.min(
                             [
-                                self.permittivity_coefficients[:,1].real.astype(float).min(), 
-                                self.permittivity_coefficients[:,4].real.astype(float).min()
+                                self.permittivity_coefficients['e11'].min().real, 
+                                self.permittivity_coefficients['e33'].min().real
                             ]
                         )) 
                     )
-
-                append_coefficients(
-                    projectfile, 
-                    self.permittivity_coefficients, 
-                    tensor_name = 'Permittivity', 
-                    dt = self.dt
-                )
-                append_coefficients(
-                    projectfile, 
-                    self.conductivity_coefficients, 
-                    tensor_name = 'Conductivity', 
-                    dt = self.dt
-                )
-                
             
             # The time step needs to satisfy the Courant number and also have a nyquist
             # that will resolve the source frequency
@@ -413,9 +455,66 @@ class Model:
                     '''Nyquist is not small enough for the source frequency. Change
                     the source frequency or decrease the spatial step size'''
                 )
+        
+        # We need to set the 
+        print("Creating the source function")
+        (
+            __, self.sourcefunction_x, self.sourcefunction_y, 
+            self.sourcefunction_z, __ 
+        ) = self.sourcefunction(self)
+        
+        direction = ['x', 'y', 'z']
+        # Compute CPML
+        print('Computing CPML boundary values and writing outputs to Fortran files.')
+        for d in direction:
+            cpmlcompute(self, domain, d)
+            cpmlcompute(self, domain, d, half = True)
+        
+        # Write out the tensor components to file
+        print('Writing tensor components to individual .dat files.')
+        # Compute the density gradient at boundaries with air. If the model is a
+        # a single material, this will return an error. Booooo, errors!
+        if domain.nmats > 1:
+            self.domain_density = airsurf(material, domain, self.air_gradient_integer)
+        else:
+            self.domain_density = np.ones([domain.nx, domain.nz])
+        
+        # Write out the arrays of tensor coefficients
+        if self.is_seismic:
+            self.tensor2dat(self.stiffness_coefficients, domain)
+            self.tensor2dat(self.attenuation_coefficients, domain)
+        else:
+            self.tensor2dat(self.permittivity_coefficients, domain) 
+            self.tensor2dat(self.conductivity_coefficients, domain)
+            
+    def tensor2dat(self, tensor, domain):
+        """
 
-            print("Finished. Appending to project file.\n")
-    
+        """
+        columns = tensor.columns
+        coef_array = np.zeros([domain.nx, domain.nz])
+        extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
+        for col in columns:
+            for ii in range(domain.nx):
+                for jj in range(domain.nz):
+                    coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
+                    fn = col + '.dat' 
+            
+            if col == 'rho':
+                coef_array = coef_array*self.domain_density
+            
+            # Extend values into the pml
+            extended_array[
+                    domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
+                ] = coef_array
+            extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
+            extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
+            extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
+            extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
+            f = FortranFile(fn, 'w')
+            f.write_record(extended_array.T)
+            f.close()
+        
     # --------------------------------------------------------------------------
     def add_noise(self, domain, scalar_amplitude: float = 1e0):
         """
@@ -451,37 +550,141 @@ class Model:
                     np.random.normal(0, 1, [domain.nx, domain.nz])
     
     # --------------------------------------------------------------------------
-    def run(self, project_file, material, domain):
-        direction = ['x', 'y', 'z']
-        # Compute CPML
-        print('Computing CPML boundary values and writing outputs to Fortran files.')
-        for d in direction:
-            cpmlcompute(self, domain, d)
-            cpmlcompute(self, domain, d, half = True)
+    def save_to_json(self):
+        # First we can append the tensor_coefficients
+        if self.is_seismic:
+            section = "Seismic"
+            self.append_coefficients(self.stiffness_coefficients, "Stiffness")
+        else:
+            section = "Electromagnetic"
+            self.append_coefficients(
+                self.permittivity_coefficients, "Permittivity"
+            )
+            self.append_coefficients(
+                self.conductivity_coefficients, "Conductivity"
+            )
         
-        # Compute the density gradient at boundaries with air. 
-        self.domain_density = airsurf(material, domain, self.air_gradient_integer)
+        # Load the json file as a dictionary so we can edit the fields
+        json_dictionary = readwrite_json(self.project_file)
         
+        # Add the time step 
+        json_dictionary[section]['Source']['dt'] = self.dt
+        json_dictionary[section]['Source']['x'] = self.x
+        json_dictionary[section]['Source']['y'] = self.y
+        json_dictionary[section]['Source']['z'] = self.z
+        json_dictionary[section]['Source']['xind'] = self.xind
+        json_dictionary[section]['Source']['yind'] = self.yind
+        json_dictionary[section]['Source']['zind'] = self.zind
+        json_dictionary[section]['Source']['source_frequency'] = self.f0
+        json_dictionary[section]['Source']['x-z_rotation'] = self.theta
+        json_dictionary[section]['Source']['x-y_rotation'] = self.phi
+        json_dictionary[section]['Source']['amplitude'] = self.source_amplitude
+        json_dictionary[section]['Source']['source_type'] = self.source_type
+        
+        readwrite_json(self.project_file, json_dictionary)
+
+    # --------------------------------------------------------------------------
+    def append_coefficients(
+            self, tensor: np.ndarray, tensor_name: str = None 
+        ):
+        """
+        Appends coefficients to the JSON dictionary based on the provided tensor. 
+        
+        :param tensor: A numpy array containing the tensor coefficients to append.
+        :type tensor: np.ndarray
+        :param tensor_name: The parameter that the tensor describes. Available 
+            options are Stiffness, Permittivity, Conductivity
+        :type tensor_name: 
+        
+        :return: None
+        """
+        if tensor_name not in ['Stiffness', 'Permittivity', 'Conductivity']:
+            raise ValueError(
+                f"""You have input {tensor_name} as the input. The tensor_name must be 
+                either 'Stiffness', 'Permittivity', 'Conductivity'. This is case 
+                invariant, but spelling must be accurate."""
+            )
+        
+        if tensor_name == "Stiffness":
+            section = "Seismic"
+        else: 
+            section = "Electromagnetic"
+        
+        field = f"{tensor_name}_Coefficients"
+        sub_field = tensor.columns.values
+        material_id = np.arange(tensor.shape[0])
+
+        json_dictionary = readwrite_json(self.project_file)     
+        for ii in material_id:
+            for component in sub_field:
+                json_dictionary[section][field][ii][component] = tensor[component][ii]
+        
+        # Make sure the the indice values for the x, y, and z are added
+        readwrite_json(self.project_file, json_dictionary)
+    
+    # --------------------------------------------------------------------------
+    def run(self, num_threads = 1):
+        '''
+        
+        '''
         # Write the initial conditions to their respective .dat files 
         if self.is_seismic:
             M = 'V'
         else:
             M = 'E'
         
-        f = FortranFile(f'initialcondition{M}y.dat', 'w')
-        f.write_record(self.initialcondition_y)
+        f = FortranFile(f'initialcondition{M}x.dat', 'w')
+        f.write_record(self.initialcondition_x.T)
         f.close()
         
         f = FortranFile(f'initialcondition{M}y.dat', 'w')
-        f.write_record(self.initialcondition_y)
+        f.write_record(self.initialcondition_y.T)
         f.close()
         
         f = FortranFile(f'initialcondition{M}z.dat', 'w')
-        f.write_record(self.initialcondition_z)
+        f.write_record(self.initialcondition_z.T)
         f.close()
         
-        call(['seidartfdtd', project_file, f'seismic={self.is_seismic}'])
-
+        # For em models, we need to put in the initial conditions for the magnetic field
+        if not self.is_seismic:
+            for direction in ['x', 'y', 'z']:
+                f = FortranFile(f'initialconditionH{direction}.dat', 'w')
+                f.write_record(self.initialcondition_z)
+                f.close() 
+        
+        # Update the JSON
+        self.save_to_json()
+        
+        # Run it
+        env = os.environ.copy() 
+        env['OMP_NUM_THREADS'] = str(num_threads)
+        call([
+            'seidartfdtd', 
+            self.project_file, 
+            f'seismic={str(self.is_seismic).lower()}'],
+            env=env 
+        )
+    
+    # --------------------------------------------------------------------------
+    def plotsource(self):
+        """
+        """
+        if self.is_seismic:
+            y_units = '(m/s)'
+        else:
+            y_units = ''
+        time_vector = self.dt * np.arange(len(self.sourcefunction_x))
+        fig, (axx, axy, axz) = plt.subplots(nrows = 3)
+        axx.plot(time_vector, self.sourcefunction_x) 
+        axx.set_ylabel('X ' + y_units)
+        axx.set_xlabel('time (s)')
+        axy.plot(time_vector, self.sourcefunction_y)
+        axy.set_ylabel('Y ' + y_units)
+        axy.set_xlabel('time (s)')
+        axz.plot(time_vector, self.sourcefunction_z)
+        axz.set_ylabel('Z ' + y_units)
+        axz.set_xlabel('time (s)')
+        plt.show()
 # ------------------------------------------------------------------------------
 class AnimatedGif:
     """
