@@ -645,25 +645,32 @@ class Model:
         f.write_record(self.initialcondition_z.T)
         f.close()
         
-        # For em models, we need to put in the initial conditions for the magnetic field
-        if not self.is_seismic:
-            for direction in ['x', 'y', 'z']:
-                f = FortranFile(f'initialconditionH{direction}.dat', 'w')
-                f.write_record(self.initialcondition_z)
-                f.close() 
+        # # For em models, we need to put in the initial conditions for the magnetic field
+        # if not self.is_seismic:
+        #     for direction in ['x', 'y', 'z']:
+        #         f = FortranFile(f'initialconditionH{direction}.dat', 'w')
+        #         f.write_record(self.initialcondition_)
+        #         f.close() 
         
         # Update the JSON
         self.save_to_json()
         
         # Run it
-        env = os.environ.copy() 
-        env['OMP_NUM_THREADS'] = str(num_threads)
-        call([
-            'seidartfdtd', 
-            self.project_file, 
-            f'seismic={str(self.is_seismic).lower()}'],
-            env=env 
-        )
+        if num_threads > 1:
+            env = os.environ.copy() 
+            env['OMP_NUM_THREADS'] = str(num_threads)
+            call([
+                'seidartfdtd', 
+                self.project_file, 
+                f'seismic={str(self.is_seismic).lower()}'],
+                env=env 
+            )
+        else:
+            call([
+                'seidartfdtd', 
+                self.project_file, 
+                f'seismic={str(self.is_seismic).lower()}'
+            ])
     
     # --------------------------------------------------------------------------
     def plotsource(self):
