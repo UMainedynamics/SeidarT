@@ -93,7 +93,6 @@ class Material:
     ----------
     material_list : pd.DataFrame
         An array to store the list of materials.
-    material_flag : bool
         A flag indicating whether the materials were read in successfully.
     material : numpy.ndarray or None
         Stores material information.
@@ -127,7 +126,6 @@ class Material:
         Initializes the material attributes with default values.
         """
         self.material_list = None
-        self.material_flag = False # Whether the materials were read in
 
         # We will assign each of the list variables
         self.material = None
@@ -190,9 +188,7 @@ class Material:
             print('Material inputs aren"t satisfied.')
 
         if check == 0:
-            if file_check == 0:
-                self.material_flag = True
-            else:
+            if file_check != 0:
                 print('No .ANG file specified for anisotropic material')
     
 # ------------------------------------------------------------------------------
@@ -416,9 +412,7 @@ class Model:
                     domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
                 ])
         
-        if self.exit_status == 0 and \
-            material.material_flag and \
-                recompute_tensors:
+        if self.exit_status == 0 and recompute_tensors:
             # The coefficients aren't provided but the materials are so we can 
             # compute them
             # Assign the materials to their respective corners

@@ -9,7 +9,7 @@ from seidart.routines.definitions import *
 import dill as pickle
 from scipy.fft import fft2, fftshift
 from matplotlib.colors import TwoSlopeNorm
-
+from seidart.routines.classes import Domain, Material, Model
 # =============================================================================
 class Array:
     def __init__(
@@ -19,9 +19,7 @@ class Array:
             receiver_file: str,
             receiver_indices: bool = False, 
             single_precision: bool = True,
-            is_complex: bool = False,
             csvfile: str = None, 
-            csvfile_c: str = None,       
         ):
         """
         Initializes the Array object with project settings and receiver details.
@@ -43,16 +41,8 @@ class Array:
         :param single_precision: Use single precision for numerical data 
             if True.
         :type single_precision: bool
-        :param is_complex: Treat the data as complex if True.
-        :type is_complex: bool
         :param csvfile: The CSV file containing the set of receiver time series.
-            Either csvfile or csvfile_c can be provided, however, when calling 
-            functions like sectionplot, if only csvfile_c is provided, then the 
-            plot_complex flag must be set to True. 
         :type csvfile: str
-        :param csvfile_c: The CSV file containing the complex valued set of 
-            receiver time series. 
-        :type csvfile_c:
         """
         self.prjfile = prjfile 
         self.channel = channel
@@ -61,7 +51,6 @@ class Array:
         self.receiver_locations = None # The locations in meters
         self.single_precision = single_precision
         self.source_xyz = None 
-        self.is_complex = is_complex
         self.stream = None 
         self.agc_gain_window = None
         self.exaggeration = 0.5
@@ -69,7 +58,6 @@ class Array:
         self.alpha_exponent = 1.0 # Exponential gain parameter
         self.distances = None
         self.csvfile = csvfile
-        self.csvfile_c = csvfile_c
         self.csvfilename = None
         self.pklfilename = None
         self.simulation_type = 'CSG'
@@ -128,15 +116,10 @@ class Array:
                     ]
                 )
         
-        if self.csvfile or self.csvfile_c:
-            if self.csvfile:
-                self.timeseries = pd.read_csv(
-                    self.csvfile, header = None
-                ).to_numpy()
-            if self.csvfile_c:
-                self.timeseries = pd.read_csv(
-                    self.csvfile_c, header = None
-                ).to_numpy()
+        if self.csvfile:
+            self.timeseries = pd.read_csv(
+                self.csvfile, header = None
+            ).to_numpy()
         else:
             # Load the time series for all receivers
             self.getrcx()
@@ -212,8 +195,7 @@ class Array:
     # -------------------------------------------------------------------------
     def getrcx(self):
         """
-        Loads the time series data for all receivers and handles complex data
-        conditions.
+        Loads the time series data for all receivers
         """
         # input rcx as an n-by-2 array integer values for their indices.
         src_ind = (
@@ -226,7 +208,7 @@ class Array:
             )
         else: 
             all_files = glob(
-                self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '..dat'
+                self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '.dat'
             )
         all_files.sort()
         m = len(all_files)
@@ -239,9 +221,7 @@ class Array:
         else:
             n = len(self.receiver_xyz[:,0])
             timeseries = np.zeros([m,n])   
-            
-        timeseries_complex = timeseries.copy()
-        
+                    
         if self.domain.dim == 2.0:
             self.domain.ny = None
         
@@ -251,16 +231,10 @@ class Array:
                     all_files[i], 
                     self.channel, 
                     self.domain, 
-                    self.is_complex, 
                     single = self.single_precision
                 )
                 if n == 1:
                     timeseries[:,i] = npdat.real[
-                        int(self.receiver_xyz[2]), 
-                        int(self.receiver_xyz[1]), 
-                        int(self.receiver_xyz[0])
-                    ]
-                    timeseries_complex[:,i] = npdat.imag[
                         int(self.receiver_xyz[2]), 
                         int(self.receiver_xyz[1]), 
                         int(self.receiver_xyz[0])
@@ -273,27 +247,17 @@ class Array:
                             int(self.receiver_xyz[j,1]),
                             int(self.receiver_xyz[j,0])
                         ]
-                        timeseries_complex[i,j] = npdat.imag[
-                            int(self.receiver_xyz[j,2]),
-                            int(self.receiver_xyz[j,1]),
-                            int(self.receiver_xyz[j,0])
-                        ]
         else:
             for i in range(m):
                 npdat = read_dat(
                     all_files[i], 
                     self.channel, 
                     self.domain, 
-                    self.is_complex,
                     single = self.single_precision
                 )
                 if n == 1:
                     timeseries[i] = npdat.real[
                         int(self.receiver_xyz[2]), int(self.receiver_xyz[0])
-                    ]
-                    timeseries_complex[i] = npdat.imag[
-                        int(self.receiver_xyz[2]), 
-                        int(self.receiver_xyz[0])
                     ]
                 else:
                     for j in range(n):
@@ -302,13 +266,8 @@ class Array:
                             int(self.receiver_xyz[j,2]),
                             int(self.receiver_xyz[j,0])
                         ]
-                        timeseries_complex[i,j] = npdat.imag[
-                            int(self.receiver_xyz[j,2]),
-                            int(self.receiver_xyz[j,0])
-                        ]
         
         # Store both of the time series in the array object
-        self.timeseries_complex = timeseries_complex
         self.timeseries = timeseries
         
     # -------------------------------------------------------------------------
@@ -374,7 +333,6 @@ class Array:
     # -------------------------------------------------------------------------
     def sectionplot(
             self, 
-            plot_complex: bool = False,
             amplitude_correction_type: str = None,
             colormap: str = 'Greys',
             figure_size: Tuple[float, float] = (8,8),
@@ -382,8 +340,6 @@ class Array:
         """
         Creates a grayscale section plot of the time series data.
         
-        :param plot_complex: Plot the complex part of the solution if True.
-        :type plot_complex: bool
         :param amplitude_correction_type: Correct the amplitudes for geometric 
             spreading ('GS') or using an auto gain control function ('AGC'); 
             Default is None.
@@ -393,12 +349,8 @@ class Array:
         :param figure_size: Specify the figure size.
         :type figure_size: Tuple 
         """
-        
-        if plot_complex:
-            # Use complex values 
-            dat = self.timeseries_complex.copy() 
-        else:
-            dat = self.timeseries.copy()
+
+        dat = self.timeseries.copy()
         
         m,n = dat.shape
         time_max = self.dt * m 
@@ -455,7 +407,6 @@ class Array:
     def wiggleplot(
             self, 
             receiver_number: int, 
-            plot_complex: bool = False, 
             plot_background: str = 'none',
             plot_vertical = True,
             positive_fill_color = None,
@@ -470,8 +421,6 @@ class Array:
         :param receiver_number: Specify the indice of the reciever from the 
             receiver file to plot.  
         :type receiver_number: int
-        :param plot_complex: Plot the complex part of the solution if True.
-        :type plot_complex: bool
         :param plot_background: Specify the plot background color. Default is 
             transparent.
         :type plot_background: str
@@ -493,11 +442,7 @@ class Array:
         
         plot_params = {**default_plotspec, **kwargs}
         
-        if plot_complex:
-            # Use complex values 
-            dat = self.timeseries_complex[:,receiver_number]
-        else:
-            dat = self.timeseries[:,receiver_number]
+        dat = self.timeseries[:,receiver_number]
             
         timevector = np.arange(0, len(dat) ) * self.dt 
         
@@ -732,11 +677,9 @@ def main(
         receiver_file: str, 
         channel: str, 
         rind: bool, 
-        is_complex: bool, 
         single_precision: bool, 
         exaggeration: float, 
         gain: int,
-        plot_complex: bool = False,
         plot: bool = False
     ) -> None:
     """
@@ -751,16 +694,12 @@ def main(
     :type channel: str
     :param rind: Flag for coordinate indices.
     :type rind: bool
-    :param is_complex: Flag for complex data handling.
-    :type is_complex: bool
     :param single_precision: Flag for single precision data.
     :type single_precision: bool
     :param exaggeration: Aspect ratio between the x and y axes for plotting.
     :type exaggeration: float
     :param gain: Smoothing length for the data.
     :type gain: int
-    :param plot_complex: Flag to plot complex part of the solution.
-    :type plot_complex: bool
     :param plot: Flag to enable plotting.
     :type plot: bool
     """
@@ -797,12 +736,6 @@ def main(
     )
     
     parser.add_argument(
-        '-z', '--is_complex', action = 'store_true', required = False,
-        help = """Flag whether the data will be complex valued. If the data is
-        not flagged but is complex, only the real data will be returned. """
-    )
-    
-    parser.add_argument(
         '-d', 'double_precision', action = 'store_false', required = False,
         help = '''Flag whether the model outputs are in double precision. 
         Default is single precision. '''
@@ -832,14 +765,6 @@ def main(
     )
     
     parser.add_argument(
-        '-C', '--plot_complex', action = 'store_true', required = False,
-        help = """
-        If flagged, plot the complex part of the solution otherwise default to 
-        the real valued solution. 
-        """
-    )
-    
-    parser.add_argument(
         '-w', '--wiggleplot', required = False, nargs = 1, type = int, 
         help = '''Provide the index of the receiver in the receiver file that 
         you would like to plot as a single 1D time series. The channel provided 
@@ -852,11 +777,9 @@ def main(
     receiver_file = ''.join(args.rcxfile)
     channel = ''.join(args.channel)
     rind = args.index
-    is_complex = args.is_complex
     single_precision = args.double_precision 
     exaggeration = args.exaggeration[0] 
     gain = args.gain[0]
-    plot_complex = args.plot_complex
     plot = args.plot 
     
     array = Array(
@@ -865,7 +788,6 @@ def main(
         receiver_file,
         rind, 
         single_precision = single_precision,
-        is_complex = is_complex
     )
     
     if gain:
@@ -875,7 +797,7 @@ def main(
     if save:
         array.save()
     if plot:
-        array.section_plot(plot_complex = plot_complex)
+        array.section_plot()
 
 
 

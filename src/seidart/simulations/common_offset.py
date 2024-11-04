@@ -19,11 +19,10 @@ class CommonOffset(Array):
     def __init__(
             self, source_file: str, 
             channel: str,
-            prjfile: str, 
+            project_file: str, 
             receiver_file: str,
             receiver_indices: bool = False, 
             single_precision: bool = True,
-            is_complex: bool = False,
             status_check: bool = False
         ):
         """
@@ -34,8 +33,8 @@ class CommonOffset(Array):
         :type source_file: str
         :param channel: The field direction to plot in either V[x,y,z] or E[x,y,z].  
         :type channel: str
-        :param prjfile: The associated project file. 
-        :type prjfile: str
+        :param project_file: The associated project file. 
+        :type project_file: str
         :param receiver_file: The receiver file that contains the receivers locations.
         :type receiver_file: str
         :param receiver_indices: If the receiver and source file are provided as indices then this needs to be flagged as True. Default to is in cartesian coordinates.
@@ -48,12 +47,11 @@ class CommonOffset(Array):
         """
         # super().__init__(source_file, *args, **kwargs)
         self.source_file = source_file
-        self.prjfile = prjfile
+        self.project_file = project_file
         self.channel = channel
         self.receiver_file = receiver_file
         self.receiver_indices = receiver_indices
         self.single_precision = single_precision    
-        self.is_complex = is_complex
         self.exaggeration = 0.5
         self.status_check = status_check
         self.output_basefile = None
@@ -66,13 +64,13 @@ class CommonOffset(Array):
         and receiver configurations.
         """
         self.domain, self.material, self.seismic, self.electromag = loadproject(
-            self.prjfile,
+            self.project_file,
             Domain(), 
             Material(),
             Model(),
             Model()
         )
-        # Let's put a default gain value to not apply any gain to the 
+        # Let's put a default gain value to not apply any gain to the time series
         if 'E' in self.channel:
             self.gain = int(self.electromag.time_steps) 
         else:
@@ -82,21 +80,12 @@ class CommonOffset(Array):
         if self.channel in ['Vx','Vy','Vz']:
             self.is_seismic = True
             self.dt = self.seismic.dt 
-            if self.status_check:
-                prjrun.status_check(
-                    self.seismic, self.material, self.domain, 
-                    self.prjfile, append_to_prjfile = True
-                )
+            self.time_steps = self.seismic.time_steps
         else:
             self.is_seismic = False
             self.dt = self.electromag.dt
-            if self.status_check:
-                prjrun.status_check(
-                    self.electromag, self.material, self.domain, 
-                    self.prjfile, append_to_prjfile = True
-                )
+            self.time_steps = self.electromag.time_steps
         
-         
         # Load the source and receiver locations
         self.source_receiver_xyz()
 
@@ -155,13 +144,10 @@ class CommonOffset(Array):
         time series
 
         """
-        self.timevec, self.fx, self.fy, self.fz, self.srcfn = sourcefunction(
-            self.electromag, 1e7, 'gaus1'
-        )
         n = len(self.source_xyz)
-        self.co_image = np.zeros([len(self.timevec), n])
-        self.co_image_complex = self.co_image.copy()
-
+        self.co_image = np.zeros([self.time_steps, n])
+        
+        
         # Loop through the source locations
         for i in range(n):
             self.receiver_xyz = self.receiver_xyz_all[i,:]
@@ -173,17 +159,14 @@ class CommonOffset(Array):
                 self.seismic.x = self.source[0]
                 self.seismic.y = self.source[1]
                 self.seismic.z = self.source[2]
-                prjrun.runseismic(self.seismic, self.material, self.domain)
+                self.seismic.build(self.material, self.domain)
+                self.seismic.run()
             else:
                 self.electromag.x = self.source[0]
                 self.electromag.y = self.source[1]
                 self.electromag.z = self.source[2]
-                prjrun.runelectromag(
-                    self.electromag, 
-                    self.material, 
-                    self.domain, 
-                    use_complex_equations = self.is_complex
-                )
+                self.electromag.build(self.material, self.domain)
+                self.electromag.run()
             
             # Extract the receiver time series
             self.domain.nx = self.domain.nx + 2 * int(self.domain.cpml)
@@ -205,16 +188,9 @@ class CommonOffset(Array):
                 except OSError as e:
                     print(f"Error removing file: {e.strerror}")
                     
-
             self.co_image[:,i] = self.timeseries
-            # If the desired model is complex, extract the complex time series
-            if self.is_complex:
-                self.co_image_complex[:,i] = self.timeseries_complex
             
-            # Overwrite the self.timeseries and self.timeseries_complex
-            # variables wth the self.co_image variable
-            self.timeseries = self.co_image
-            self.timeseries_complex = self.co_image_complex
+        self.timeseries = self.co_image
         
         if self.output_basefile:
             self.save(output_basefile = self.output_basefile)
