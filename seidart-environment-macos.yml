@@ -7,7 +7,7 @@ dependencies:
   - cmake
   - pip
   - pyevtk
-  - python=3.11.8
+  - python
   - numpy
   - pandas
   - scipy
