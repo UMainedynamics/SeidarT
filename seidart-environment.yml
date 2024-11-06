@@ -15,7 +15,6 @@ dependencies:
   - libgfortran5
   - scipy
   - setuptools
-  - seaborn
   - imagemagick
   - ghostscript
   - glob2
@@ -26,5 +25,6 @@ dependencies:
   - dill 
   - ninja
   - json
+  - json-fortran
   - pip:
       - mplstereonet

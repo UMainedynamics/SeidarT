@@ -18,7 +18,6 @@ dependencies:
   - glob2
   - matplotlib
   - wheel
-  - seaborn
   - scikit-build
   - dill 
   - ninja
