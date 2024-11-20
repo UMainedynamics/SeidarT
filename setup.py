@@ -1,4 +1,31 @@
 from setuptools import setup, find_packages
+import os 
+import shutil 
+import platform
+from setuptools.command.install import install
+
+class CustomInstallCommand(install):
+    def run(self):
+        install.run(self)  # Run the original install command
+        self._post_install()
+    
+    def _post_install(self):
+        env_bin_path = os.path.join(os.getenv('CONDA_PREFIX'), 'bin')
+        if os.path.exists(env_bin_path):
+            system = platform.system().lower()
+            arch = platform.machine().lower()
+            
+            if system == 'darwin' and arch == 'arm64':
+                binary_name = 'seidartfdtd-darwin-arm64'
+            elif system == 'linux' and arch == 'x86_64':
+                binary_name = 'seidartfdtd-linux-x86_64'
+            else:
+                raise RuntimeError("Unsupported platform {}-{}".format(system,arch))
+            
+            src_binary_path = os.path.join('src', 'seidart', 'binaries', binary_name)
+            dest_binary_path = os.path.join(env_bin_path, 'seidartfdtd')
+            shutil.copy(src_binary_path, dest_binary_path)
+
 
 setup(
     name='seidart',
@@ -46,5 +73,8 @@ setup(
         'Natural Language :: English',
         'Development Status :: 4 - Beta'
     ],
-    keywords=['wave propagation', 'seismic', 'radar', 'snow', 'ice']
+    keywords=['wave propagation', 'seismic', 'radar', 'snow', 'ice'],
+    cmdclass={
+        'install': CustomInstallCommand,
+    }
 )
