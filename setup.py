@@ -15,12 +15,18 @@ class CustomInstallCommand(install):
             system = platform.system().lower()
             arch = platform.machine().lower()
             
-            if system == 'darwin' and arch == 'arm64':
-                binary_name = 'seidartfdtd-darwin-arm64'
-            elif system == 'linux' and arch == 'x86_64':
-                binary_name = 'seidartfdtd-linux-x86_64'
-            else:
+            binary_name = f'seidartfdtd-{system}-{arch}'
+            # if system == 'darwin' and arch == 'arm64':
+            #     binary_name = 'seidartfdtd-darwin-arm64'
+            # elif system == 'darwin' and arch == 'x86_64':
+            #     binary_name = 'seidartfdtd-darwin-x86_64'
+            # elif system == 'linux' and arch == 'x86_64':
+            #     binary_name = 'seidartfdtd-linux-x86_64'
+            # else:
+            if system != 'darwin' or system != 'linux':
                 raise RuntimeError("Unsupported platform {}-{}".format(system,arch))
+            else:
+                print(binary_name)
             
             src_binary_path = os.path.join('src', 'seidart', 'binaries', binary_name)
             dest_binary_path = os.path.join(env_bin_path, 'seidartfdtd')
