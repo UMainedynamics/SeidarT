@@ -32,7 +32,7 @@ class CustomInstallCommand(install):
 
 setup(
     name='seidart',
-    version='2.4.1',
+    version='3.0.0',
     license='GPL-3.0-or-later',
     author='Steven Bernsen, Christopher Gerbi',
     author_email='steven.bernsen@maine.edu, christopher.gerbi@maine.edu',

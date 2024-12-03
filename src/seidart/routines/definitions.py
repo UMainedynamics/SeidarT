@@ -349,8 +349,11 @@ def airsurf(material, domain, N: int = 2) -> np.ndarray:
     the surface.
     """
     # This can be generalized a little better, but for now...
-    airnum = np.where(material.material == 'air')[0][0].astype(int)
-
+    try:
+        airnum = np.where(material.material == 'air')[0][0].astype(int)
+    except:
+        airnum = False
+    
     if airnum:
         gradmatrix = (domain.geometry != airnum).astype(int)
         # Take the gradient in both directions

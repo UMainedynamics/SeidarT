@@ -68,7 +68,6 @@ def generate_template(nmats, **kwargs):
             "Attenuation": [
                 {
                     "id": i,
-                    "name": None,
                     "gamma_x": 0.0,
                     "gamma_y": 0.0,
                     "gamma_z": 0.0,
