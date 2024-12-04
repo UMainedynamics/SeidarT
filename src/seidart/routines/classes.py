@@ -353,7 +353,8 @@ class Model:
             self, 
             material: Material, 
             domain: Domain, 
-            recompute_tensors: bool = True
+            recompute_tensors: bool = True,
+            write_tensor: bool = True,
         ) -> None:
         """
         Checks the status of the modeling classes and appends coefficients to the
@@ -465,22 +466,26 @@ class Model:
             cpmlcompute(self, domain, d, half = True)
         
         # Write out the tensor components to file
-        print('Writing tensor components to individual .dat files.')
-        # Compute the density gradient at boundaries with air. If the model is a
-        # a single material, this will return an error. Booooo, errors!
-        if domain.nmats > 1:
-            self.domain_density = airsurf(material, domain, self.air_gradient_integer)
-        else:
-            self.domain_density = np.ones([domain.nx, domain.nz])
-        
-        # Write out the arrays of tensor coefficients
-        if self.is_seismic:
-            self.tensor2dat(self.stiffness_coefficients, domain)
-            self.tensor2dat(self.attenuation_coefficients, domain)
-        else:
-            self.tensor2dat(self.permittivity_coefficients, domain) 
-            self.tensor2dat(self.conductivity_coefficients, domain)
+        if write_tensor:
+            print('Writing tensor components to individual .dat files.')
+            # Compute the density gradient at boundaries with air. If the model is a
+            # a single material, this will return an error. Booooo, errors!
+            if domain.nmats > 1:
+                self.domain_density = airsurf(material, domain, self.air_gradient_integer)
+            else:
+                self.domain_density = np.ones([domain.nx, domain.nz])
             
+            # Write out the arrays of tensor coefficients
+            if self.is_seismic:
+                self.tensor2dat(self.stiffness_coefficients, domain)
+                self.tensor2dat(self.attenuation_coefficients, domain)
+            else:
+                self.tensor2dat(self.permittivity_coefficients, domain) 
+                self.tensor2dat(self.conductivity_coefficients, domain)
+        else:
+            print('Tensor components have already been written to .dat files.')
+            return
+        
     def tensor2dat(self, tensor, domain):
         """
 
@@ -544,7 +549,7 @@ class Model:
                     np.random.normal(0, 1, [domain.nx, domain.nz])
     
     # --------------------------------------------------------------------------
-    def save_to_json(self):
+    def save_to_json(self, jsonfile = None):
         # First we can append the tensor_coefficients
         if self.is_seismic:
             section = "Seismic"
@@ -559,6 +564,9 @@ class Model:
             )
         
         # Load the json file as a dictionary so we can edit the fields
+        # if jsonfile:
+        #     json_dictionary = readwrite_json(jsonfile)
+        # else:
         json_dictionary = readwrite_json(self.project_file)
         
         # Add the time step 
@@ -575,7 +583,10 @@ class Model:
         json_dictionary[section]['Source']['amplitude'] = self.source_amplitude
         json_dictionary[section]['Source']['source_type'] = self.source_type
         
-        readwrite_json(self.project_file, json_dictionary)
+        if jsonfile:
+            readwrite_json(jsonfile, json_dictionary)
+        else:
+            readwrite_json(self.project_file, json_dictionary)
 
     # --------------------------------------------------------------------------
     def append_coefficients(
@@ -617,7 +628,7 @@ class Model:
         readwrite_json(self.project_file, json_dictionary)
     
     # --------------------------------------------------------------------------
-    def run(self, num_threads = 1):
+    def run(self, num_threads = 1, jsonfile = None):
         '''
         
         '''
@@ -647,7 +658,10 @@ class Model:
         #         f.close() 
         
         # Update the JSON
-        self.save_to_json()
+        if not jsonfile:
+            jsonfile = self.project_file 
+        
+        self.save_to_json(jsonfile = jsonfile)
         
         # Run it
         if num_threads > 1:
@@ -655,14 +669,14 @@ class Model:
             env['OMP_NUM_THREADS'] = str(num_threads)
             call([
                 'seidartfdtd', 
-                self.project_file, 
+                jsonfile, 
                 f'seismic={str(self.is_seismic).lower()}'],
                 env=env 
             )
         else:
             call([
                 'seidartfdtd', 
-                self.project_file, 
+                jsonfile, 
                 f'seismic={str(self.is_seismic).lower()}'
             ])
     

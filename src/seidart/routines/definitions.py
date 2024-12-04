@@ -302,7 +302,7 @@ def loadproject(
         coefs = list(data['Seismic']['Stiffness_Coefficients'][ind].values())
         seismic.stiffness_coefficients.loc[ind] = np.array(coefs[1:])
         coefs = list(data['Seismic']['Attenuation'][ind].values())
-        seismic.attenuation_coefficients.loc[ind] = np.array(coefs[2:])
+        seismic.attenuation_coefficients.loc[ind] = np.array(coefs[1:])
         # Now do electromag
         coefs = list(data['Electromagnetic']['Permittivity_Coefficients'][ind].values())
         electromag.permittivity_coefficients.loc[ind] = np.array(coefs[1:])
