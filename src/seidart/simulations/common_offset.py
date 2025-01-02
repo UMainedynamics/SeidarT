@@ -104,10 +104,7 @@ class CommonOffset(Array):
         self.receiver_xyz = pd.read_csv(self.receiver_file)
         
         # We need to make sure the receivers are ordered correctly and the 
-        # absorbing boundary is corrected for
-        # First check to see if the inputs are indices or
-        cpml = int(self.domain.cpml)
-        
+        # absorbing boundary is corrected for        
         self.source_xyz = self.source_xyz.to_numpy() 
         self.receiver_xyz = self.receiver_xyz.to_numpy()
         if self.receiver_xyz.shape[1] == 1:
@@ -135,69 +132,12 @@ class CommonOffset(Array):
                 )
             self.receiver_xyz.astype(int)
         
-        self.source_xyz = self.source_xyz
-        self.receiver_xyz = self.receiver_xyz + cpml
+        # The source value is shifted in the Fortran file to accommodate the 
+        # cpml, but the receivers are not so we must shift them now. 
+        # self.source_xyz = self.source_xyz
+        self.receiver_xyz = self.receiver_xyz + int(self.domain.cpml)
     
-    # -------------------------------------------------------------------------
-    # def co_run(self) -> None:
-    #     """
-    #     Run the electromagnetic or seismic model and extract the receiver 
-    #     time series
-
-    #     """
-    #     n = len(self.source_xyz_all)
-    #     self.co_image = np.zeros([self.time_steps, n])
-        
-        
-    #     # Loop through the source locations
-    #     for i in range(n):
-    #         self.receiver_xyz = self.receiver_xyz_all[i,:]
-    #         self.source_xyz = self.source_xyz_all[i,:]
-
-    #         print(f'Running shot gather for source location {self.source_xyz}')
-    #         # Run the seismic or electromagnetic model
-    #         if self.is_seismic:
-    #             self.seismic.x = self.source_xyz[0]
-    #             self.seismic.y = self.source_xyz[1]
-    #             self.seismic.z = self.source_xyz[2]
-    #             self.seismic.build(self.material, self.domain, recompute_tensors = False)
-    #             self.seismic.run()
-    #         else:
-    #             self.electromag.x = self.source_xyz[0]
-    #             self.electromag.y = self.source_xyz[1]
-    #             self.electromag.z = self.source_xyz[2]
-    #             self.electromag.build(self.material, self.domain, recompute_tensors = False)
-    #             self.electromag.run()
-            
-    #         # Extract the receiver time series
-    #         self.domain.nx = self.domain.nx + 2 * int(self.domain.cpml)
-    #         self.domain.nz = self.domain.nz + 2 * int(self.domain.cpml)
-    #         if self.domain.dim == 2.5:
-    #             self.domain.ny = self.domain.ny + 2 * int(self.domain.cpml)
-            
-    #         self.getrcx() 
-    #         # Put a bandaid on the domain values 
-    #         self.domain.nx = self.domain.nx - 2 * int(self.domain.cpml)
-    #         self.domain.nz = self.domain.nz - 2 * int(self.domain.cpml)
-    #         if self.domain.dim == 2.5:
-    #             self.domain.ny = self.domain.ny - 2 * int(self.domain.cpml)
-            
-    #         # Remove all of the files 
-    #         for file in glob('E*.0*.dat'):
-    #             try:
-    #                 os.remove(file) 
-    #             except OSError as e:
-    #                 print(f"Error removing file: {e.strerror}")
-                    
-    #         self.co_image[:,i] = self.timeseries
-            
-    #     self.timeseries = self.co_image
-        
-    #     if self.output_basefile:
-    #         self.save(output_basefile = self.output_basefile)
-    #     else:
-    #         self.save() 
-
+    
     # -------------------------------------------------------------------------
     def process_source(self, i):
         """
@@ -249,16 +189,28 @@ class CommonOffset(Array):
         if self.domain.dim == 2.5:
             self.domain.ny = self.domain.ny - 2 * int(self.domain.cpml)
 
-        # Remove all of the files
-        for file in glob('E*.0*.dat'):
+        # Remove all of the files 
+        source_ind = self.source_xyz/np.array([self.domain.dx, self.domain.dy, self.domain.dz])
+        if self.domain.dim == 2:
+            pattern_input = '.'.join(source_ind.astype(str)[np.array([0,2])])
+        else:
+            pattern_input = '.'.join(source_ind.astype(str))
+        
+        if self.is_seismic:
+            file_pattern = f'V[x,y,z].0*.{pattern_input}.dat'
+        else:
+            file_pattern = f'E[x,y,z].0*.{pattern_input}.dat'
+        
+        for file in glob(file_pattern):
             try:
                 os.remove(file)
+                os.remove(json_parameterfile)
             except OSError as e:
                 print(f"Error removing file: {e.strerror}")
 
         return self.timeseries
 
-    def co_run(self, parallel=True) -> None:
+    def co_run(self, parallel=False) -> None:
         """
         Run the electromagnetic or seismic model and extract the receiver time 
         series.

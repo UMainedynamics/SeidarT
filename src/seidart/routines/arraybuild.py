@@ -8,8 +8,10 @@ from typing import Tuple
 from seidart.routines.definitions import *
 import dill as pickle
 from scipy.fft import fft2, fftshift
+from scipy.signal import spectrogram, windows
 from matplotlib.colors import TwoSlopeNorm
 from seidart.routines.classes import Domain, Material, Model
+
 # =============================================================================
 class Array:
     def __init__(
@@ -640,7 +642,84 @@ class Array:
         if wavenumber_limits:
             self.ax_fk.set_xlim(wavenumber_limits)
         
-        plt.show() 
+        plt.show()
+    
+    # -------------------------------------------------------------------------
+    def dispersion_analysis(
+            self,
+            d_rcx: float,
+            figure_size: Tuple[float, float] = (10, 8),
+            colormap: str = 'viridis',
+            contour_levels: int = 100,
+            frequency_limits: Tuple[float, float] = None,
+            velocity_limits: Tuple[float, float] = None,
+            time_bandwidth: float = 4.0,  # Time-bandwidth product for DPSS
+            n_tapers: int = 5,  # Number of tapers
+        ):
+        """
+        Compute and plot the dispersion image using multitaper spectral analysis
+        with Scipy's DPSS.
+
+        :param d_rcx: The receiver interval (spacing between receivers).
+        :type d_rcx: float
+        :param time_bandwidth: Time-bandwidth product for DPSS tapers.
+        :type time_bandwidth: float
+        :param n_tapers: Number of DPSS tapers to use.
+        :type n_tapers: int
+        """
+        # Step 1: Preprocess data (multitaper applied per time-series)
+        m, n = self.timeseries.shape
+        fs = 1.0 / self.dt  # Sampling frequency
+        multitaper_spectrum = np.zeros((m, n), dtype=np.complex128)
+
+        for i in range(n):
+            # Generate DPSS tapers
+            tapers = windows.dpss(m, NW=time_bandwidth, Kmax=n_tapers)
+            spectra = []
+            for taper in tapers:
+                # Compute the FFT of the tapered data
+                tapered_data = self.timeseries[:, i] * taper
+                spectrum = np.fft.fft(tapered_data)
+                spectra.append(spectrum)
+            # Average the multitaper spectra
+            multitaper_spectrum[:, i] = np.mean(spectra, axis=0)
+
+        # Step 2: Perform 2D FFT for f-k spectrum
+        fk_spectrum = fftshift(fft2(multitaper_spectrum))
+        freqs = fftshift(np.fft.fftfreq(m, self.dt))
+        wavenumbers = -fftshift(np.fft.fftfreq(n, d_rcx))  # Flip for positive down
+
+        # Step 3: Compute phase velocity (c = f / k)
+        fk_mesh_freq, fk_mesh_k = np.meshgrid(freqs, wavenumbers, indexing='ij')
+        with np.errstate(divide='ignore', invalid='ignore'):
+            phase_velocity = np.abs(fk_mesh_freq / fk_mesh_k)
+
+        # Step 4: Bin amplitude into f-c space
+        if velocity_limits is None:
+            velocity_limits = (0, np.max(phase_velocity[np.isfinite(phase_velocity)]))
+        velocity_bins = np.linspace(*velocity_limits, 500)
+
+        amplitude_fc = np.zeros((len(freqs), len(velocity_bins)))
+        for i, f_row in enumerate(np.abs(fk_spectrum)):
+            c_indices = np.digitize(phase_velocity[i], velocity_bins)
+            for j, c_idx in enumerate(c_indices):
+                if 0 <= c_idx < len(velocity_bins):
+                    amplitude_fc[i, c_idx] += f_row[j]
+
+        # Step 5: Plot the dispersion image
+        self.fig_dispersion, self.ax_dispersion = plt.subplots(figsize=figure_size)
+        contour = self.ax_dispersion.contourf(
+            velocity_bins, freqs, amplitude_fc, cmap=colormap, levels=contour_levels
+        )
+        cbar = self.fig_dispersion.colorbar(contour, ax=self.ax_dispersion, label='Amplitude')
+        self.ax_dispersion.set_xlabel('Phase Velocity (m/s)')
+        self.ax_dispersion.set_ylabel('Frequency (Hz)')
+        if frequency_limits:
+            self.ax_dispersion.set_ylim(frequency_limits)
+        if velocity_limits:
+            self.ax_dispersion.set_xlim(velocity_limits)
+
+        plt.show()
 
     # -------------------------------------------------------------------------
     def save(self, save_object = True, output_basefile = None):
