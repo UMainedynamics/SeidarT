@@ -17,7 +17,7 @@ class Array:
     def __init__(
             self, 
             channel: str,
-            prjfile: str, 
+            project_file: str, 
             receiver_file: str,
             receiver_indices: bool = False, 
             single_precision: bool = True,
@@ -33,8 +33,8 @@ class Array:
         
         :param channel: The data channel to be analyzed.
         :type channel: str
-        :param prjfile: Path to the project file.
-        :type prjfile: str
+        :param project_file: Path to the project file.
+        :type project_file: str
         :param receiver_file: Path to the receiver locations file.
         :type receiver_file: str
         :param receiver_indices: Flag if receiver file contains indices (True) 
@@ -46,7 +46,7 @@ class Array:
         :param csvfile: The CSV file containing the set of receiver time series.
         :type csvfile: str
         """
-        self.prjfile = prjfile 
+        self.project_file = project_file 
         self.channel = channel
         self.receiver_file = receiver_file
         self.receiver_indices = receiver_indices # Flag 
@@ -72,7 +72,7 @@ class Array:
         and receiver configurations.
         """
         self.domain, self.material, self.seismic, self.electromag = loadproject(
-            self.prjfile,
+            self.project_file,
             Domain(), 
             Material(),
             Model(),
@@ -733,7 +733,7 @@ class Array:
         else:
             filename = '-'.join( 
                 [
-                    self.prjfile.split('.')[:-1][0],
+                    self.project_file.split('.')[:-1][0],
                     self.channel, 
                     '-'.join(self.source_xyz.astype(str))
                 ]
@@ -752,7 +752,7 @@ class Array:
 # =============================================================================
 # ============================== Main Function ================================
 def main(
-        prjfile: str, 
+        project_file: str, 
         receiver_file: str, 
         channel: str, 
         rind: bool, 
@@ -765,8 +765,8 @@ def main(
     The main function creating an Array object and triggering plotting or 
     saving actions based on user inputs.
     
-    :param prjfile: Path to the project file.
-    :type prjfile: str
+    :param project_file: Path to the project file.
+    :type project_file: str
     :param receiver_file: Path to the receiver file.
     :type receiver_file: str
     :param channel: Data channel to be analyzed.
@@ -790,7 +790,7 @@ def main(
     )
     
     parser.add_argument(
-        '-p', '--prjfile',
+        '-p', '--project_file',
         nargs = 1, type = str, required = True,
         help = 'The project file path'
     )
@@ -852,7 +852,7 @@ def main(
     
     # Get the arguments
     args = parser.parse_args()
-    prjfile = ''.join(args.prjfile)
+    project_file = ''.join(args.project_file)
     receiver_file = ''.join(args.rcxfile)
     channel = ''.join(args.channel)
     rind = args.index
@@ -863,7 +863,7 @@ def main(
     
     array = Array(
         channel,
-        prjfile, 
+        project_file, 
         receiver_file,
         rind, 
         single_precision = single_precision,

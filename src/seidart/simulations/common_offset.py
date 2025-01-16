@@ -4,6 +4,7 @@ from seidart.routines.definitions import *
 from seidart.routines.classes import Domain, Material, Model
 from seidart.routines.arraybuild import Array
 from glob2 import glob 
+import subprocess
 import os
 
 from concurrent.futures import ThreadPoolExecutor
@@ -190,16 +191,23 @@ class CommonOffset(Array):
             self.domain.ny = self.domain.ny - 2 * int(self.domain.cpml)
 
         # Remove all of the files 
-        source_ind = self.source_xyz/np.array([self.domain.dx, self.domain.dy, self.domain.dz])
+        source_ind = (self.source_xyz/np.array([self.domain.dx, self.domain.dy, self.domain.dz]) ).astype(int)
         if self.domain.dim == 2:
             pattern_input = '.'.join(source_ind.astype(str)[np.array([0,2])])
         else:
             pattern_input = '.'.join(source_ind.astype(str))
         
         if self.is_seismic:
-            file_pattern = f'V[x,y,z].0*.{pattern_input}.dat'
+            file_pattern = f'V[xyz].0*.{pattern_input}.dat'
         else:
-            file_pattern = f'E[x,y,z].0*.{pattern_input}.dat'
+            file_pattern = f'E[xyz].0*.{pattern_input}.dat'
+        
+        files_to_remove = glob(file_pattern)
+        files_to_remove.append(json_filename)
+        
+        if files_to_remove:
+            print(f'Cleaning up files for {file_pattern}')
+            subprocess.run(['rm', '-f'] + files_to_remove)
         
         for file in glob(file_pattern):
             try:

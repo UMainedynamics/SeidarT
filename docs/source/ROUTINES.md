@@ -19,7 +19,196 @@ The *routines* directory contains the primary functionality for building and run
 
 *SeidarT* models are built from a .png file where each unique color corresponds to a different material. There is built in support for a limited number of materials, which can be referenced in the *materials.py* script, however the motivation for building this toolbox is for studying snow and ice so those have much more robust representation. There is room to expand in the material definitions. Building a project starts with *prjbuild* which creates a comma delimited '.prj' file that contains the domain, material, and model configurations for either a seismic or electromagnetic wave propagation model. 
 
-### .prj File <a name="project-file"></a>
+
+Top-Level Dictionary
+====================
+
+This JSON file contains three main sections:
+
+    Domain
+    Materials
+    Seismic
+    Electromagnetic
+
+
+Domain 
+^^^^^^ 
+
+
+The Domain object describes the computational domain and image parameters.
+
+.. list-table:: :header-rows: 1 :widths: 25 75
+
+        Key
+        Description / Value
+        dim
+        Dimensionality of the domain (e.g., 2 for 2D).
+        nx
+        Number of cells in the x direction.
+        ny
+        Number of cells in the y direction.
+        nz
+        Number of cells in the z direction.
+        dx
+        Cell size in the x direction.
+        dy
+        Cell size in the y direction.
+        dz
+        Cell size in the z direction.
+        cpml
+        Thickness (in number of cells) of the Convolutional Perfectly Matched Layer (CPML).
+        nmats
+        Number of distinct material types.
+        image_file
+        Name of an image file used as a reference or mask (englacialwater.png).
+
+Materials
+^^^^^^^^^
+
+The Materials array contains nmats material definitions. Each object has:
+
+.. list-table:: :header-rows: 1 :widths: 15 85
+
+        Key
+        Description / Value
+        id
+        Material identifier (integer).
+        name
+        Descriptive name of the material (e.g., snow, granite, etc.).
+        rgb
+        RGB color code in the form R/G/B.
+        temperature
+        Temperature (in °C or desired unit).
+        density
+        Density (in kg/m^3 or desired unit).
+        porosity
+        Porosity (in percent, fraction, or desired unit).
+        water_content
+        Water content (in percent, fraction, or desired unit).
+        is_anisotropic
+        Boolean indicating if the material has anisotropic properties.
+        euler_angles
+        Euler angles for anisotropic materials (null if isotropic).
+
+Example 
+^^^^^^^
+
+Below is a partial list of the materials from the JSON:
+
+    Material 0:
+        id = 0
+        name = snow
+        rgb = 0/255/255
+        temperature = -5
+        density = 910
+        porosity = 2
+        water_content = 0
+        is_anisotropic = false
+        euler_angles = null
+
+    Material 1:
+        id = 1
+        name = granite
+        rgb = 26/26/26
+        etc...
+
+(.. and so on for all 7 entries.)
+Seismic
+
+The Seismic object contains three parts:
+
+    Source
+    Attenuation
+    Stiffness_Coefficients
+
+Source 
+^^^^^^
+
+.. list-table:: :header-rows: 1 :widths: 20 80
+
+        Key
+        Description / Value
+        dt
+        Time step for the seismic simulation.
+        time_steps
+        Total number of time steps in the seismic simulation.
+        x, y, z
+        Physical location of the source in the domain (in user-defined units).
+        xind, yind, zind
+        Discrete grid indices for the source.
+        source_frequency
+        Dominant frequency of the source wavelet.
+        x-z_rotation, x-y_rotation
+        Rotation angles of the source in degrees (or radians) around the respective axes.
+        amplitude
+        Amplitude of the source wavelet.
+        source_type
+        Wavelet type (e.g., gaus1, Ricker, etc.).
+
+Attenuation ^^^^^^^^^^^
+
+An array of material-specific attenuation parameters. Each object has:
+
+    id: material ID (matching the Materials list).
+    gamma_x, gamma_y, gamma_z: attenuation coefficients in the x, y, z directions.
+    reference_frequency: the frequency at which attenuation parameters are measured or referenced.
+
+Stiffness_Coefficients ^^^^^^^^^^^^^^^^^^^^^^
+
+An array of stiffness tensors for seismic wave propagation. Each entry corresponds to a material ID and provides all components of the (possibly anisotropic) stiffness matrix (C_ij). For isotropic materials, many of these may be zero. Each object includes:
+
+    id: Material ID.
+    c11, c12, c13, c14, c15, c16, c22, c23, ... etc.: Components of the stiffness matrix.
+    rho: Density used in the seismic model (may be repeated from the Materials section if needed).
+
+Electromagnetic
+
+The Electromagnetic object also contains:
+
+    Source
+    Permittivity_Coefficients
+    Conductivity_Coefficients
+
+Source ^^^^^^
+
+.. list-table:: :header-rows: 1 :widths: 20 80
+
+        Key
+        Description / Value
+        dt
+        Time step for the EM simulation.
+        time_steps
+        Total number of time steps.
+        x, y, z
+        Physical location of the EM source in the domain.
+        xind, yind, zind
+        Discrete grid indices for the EM source.
+        source_frequency
+        Frequency of the EM wave.
+        x-z_rotation, x-y_rotation
+        Rotation angles of the source in the x–z or x–y planes.
+        amplitude
+        Amplitude of the EM source.
+        source_type
+        Type of the wavelet/pulse (e.g., gaus1).
+
+Permittivity_Coefficients ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An array of tensors for the relative permittivity of each material. Each entry has:
+
+    id: Material ID.
+    e11, e12, e13, e22, e23, e33: Tensor components for the permittivity.
+
+Conductivity_Coefficients ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An array of tensors for the conductivity of each material. Each entry has:
+
+    id: Material ID.
+    s11, s12, s13, s22, s23, s33: Tensor components for the electrical conductivity.
+
+.. ======================================================
+
+### Project File <a name="project-file"></a>
 
 In a .prj file, there are 8 categories which can be identified by the line prefix. These are:
 

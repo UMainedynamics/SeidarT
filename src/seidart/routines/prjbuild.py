@@ -51,19 +51,19 @@ def generate_template(nmats, **kwargs):
         ],
         "Seismic": {
             "Source": {
-                "dt": None,
-                "time_steps": 1,
+                "dt": 1e-12,
+                "time_steps": 0,
                 "x": 1.0,
                 "y": 1.0,
                 "z": 1.0,
-                "xind": None,
-                "yind": None,
-                "zind": None,
+                "xind": 0,
+                "yind": 0,
+                "zind": 0,
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
                 "amplitude": 1.0,
-                "source_type": None
+                "source_type": "gaus1"
             },
             "Attenuation": [
                 {
@@ -104,19 +104,19 @@ def generate_template(nmats, **kwargs):
         },
         "Electromagnetic": {
             "Source": {
-                "dt": None,
-                "time_steps": None,
+                "dt": 1e-12,
+                "time_steps": 0,
                 "x": 1.0,
                 "y": 1.0,
                 "z": 1.0,
-                "xind": None,
-                "yind": None,
-                "zind": None,
+                "xind": 0,
+                "yind": 0,
+                "zind": 0,
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
                 "amplitude": 1.0,
-                "source_type": None
+                "source_type": "gaus1"
             },
             "Permittivity_Coefficients": [
                 {
@@ -386,7 +386,7 @@ def main():
     parser.add_argument(
         '-o', '--outputjson',
         nargs=1, type=str, required = False, default = 'steven_bernsen_rules.prj',
-        help = """Name of output file path with extension .prj and excluding
+        help = """Name of output file path with extension .json and excluding
         the full path directory."""
     )
 
