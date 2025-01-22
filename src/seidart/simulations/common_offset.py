@@ -203,18 +203,18 @@ class CommonOffset(Array):
             file_pattern = f'E[xyz].0*.{pattern_input}.dat'
         
         files_to_remove = glob(file_pattern)
-        files_to_remove.append(json_filename)
+        files_to_remove.append(json_parameterfile)
         
         if files_to_remove:
             print(f'Cleaning up files for {file_pattern}')
             subprocess.run(['rm', '-f'] + files_to_remove)
         
-        for file in glob(file_pattern):
-            try:
-                os.remove(file)
-                os.remove(json_parameterfile)
-            except OSError as e:
-                print(f"Error removing file: {e.strerror}")
+        # for file in glob(file_pattern):
+        #     try:
+        #         os.remove(file)
+        #         os.remove(json_parameterfile)
+        #     except OSError as e:
+        #         print(f"Error removing file: {e.strerror}")
 
         return self.timeseries
 

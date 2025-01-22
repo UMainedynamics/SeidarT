@@ -5,13 +5,13 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="search" title="Search" href="search.html" /><link rel="next" title="Getting Started" href="getting_started.html" /><link rel="prev" title="Welcome to SeidarT’s documentation!" href="index.html" />
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>SeidarT - SeidarT documentation v2.2.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
+    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
+        <title>SeidarT - SeidarT documentation v3.0.1</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -70,7 +70,7 @@
   <symbol id="svg-sun" viewBox="0 0 24 24">
     <title>Light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
       <circle cx="12" cy="12" r="5"></circle>
       <line x1="12" y1="1" x2="12" y2="3"></line>
       <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -85,22 +85,63 @@
   <symbol id="svg-moon" viewBox="0 0 24 24">
     <title>Dark mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
 </svg>
@@ -114,6 +155,8 @@
   <div class="visually-hidden">Hide table of contents sidebar</div>
 </label>
 
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
 
 
 <div class="page">
@@ -125,13 +168,14 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">SeidarT documentation v2.2.1</div></a>
+      <a href="index.html"><div class="brand">SeidarT documentation v3.0.1</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
         <button class="theme-toggle">
           <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
-          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
@@ -148,7 +192,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">SeidarT documentation v2.2.1</span>
+  <span class="sidebar-brand-text">SeidarT documentation v3.0.1</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -175,19 +219,15 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Standard Routines <span class="raw-html-md"><a name="standard-routines"></a></span></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjrun.html">seidart.routines.prjrun module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
@@ -223,11 +263,17 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/README.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
 <div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
-              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
@@ -237,79 +283,72 @@
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
-        <article role="main">
+        <article role="main" id="furo-main-content">
           <section id="seidart">
-<h1>SeidarT<a class="headerlink" href="#seidart" title="Link to this heading">#</a></h1>
+<h1>SeidarT<a class="headerlink" href="#seidart" title="Link to this heading">¶</a></h1>
 <p>Full documentation appears in the docs folder. We have also created a separate GitHub repo for examples called <a class="reference external" href="https://github.com/UMainedynamics/SeidarT-Recipes">SeidarT-Recipes</a> which can be easily installed via pip.</p>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
 <p>The Seismic and Radar Toolbox (SeidarT) is a collaboration between researchers at the Universities of Maine and Washington to provide an open source platform for forward modeling mechanical and electromagnetic wave propagation. The major objective of the project is to easily and quickly implement isotropic and anisotropic complex geometries and/or velocity structures to develop prior constraints for - not limited too - investigating, estimating, and imaging englacial ice structure, sub-glacial boundary conditions on the sub-regional scale. Larger problems would require the curvature of the Earth to be taken into consideration, but many glacier seismic and radar experiments do not expand into regional parameter estimation and velocity modeling.</p>
 <p>Much of the Staggered Grid FDTD code has been adopted from the <em>SEISMIC_CPML</em> software provided by  <a class="reference external" href="https://geodynamics.org/cig/software/">Computational Infrastucture for Geophysics (CIG)</a>. Further details to the backend numerical code can be found in the [References](#references) section below.</p>
-</section>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<p>The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process. Most users should be fine with the “automatic installation” in the section below.</p>
-<p>SeidarT package binaries are publicly availble on the <a class="reference external" href="https://pypi.org/project/seidart/">PyPi repository</a> and <a class="reference external" href="https://github.com/UMainedynamics/SeidarT">source code</a> can be found on GitHub.</p>
-<section id="auto-installation">
-<h3>“Auto” installation<a class="headerlink" href="#auto-installation" title="Link to this heading">#</a></h3>
-<p>For Windows users, see the VM setup. Unix/Linux users can download the tarball <a class="reference external" href="https://github.com/UMainedynamics/SeidarT/blob/main/install.tar.xz?raw=1">with this link</a>.</p>
-<p>Extract the <em>install</em> directory from the <em>install.tar.gz</em> which includes an install script, <em>full_install.sh</em>, and the <em>seidart-environment.yml</em>. It’s not necessary to know or do much more than execute a few command line entries via a bash terminal or powershell terminal. The install script checks for and installs if necessary the Anaconda/Miniconda package manager. A virtual environment is created to avoid causing system incompatibilities and complicated software dependencies. If Anaconda/Miniconda is not defined in your ‘PATH’ variable than it will be installed using the default install location. After installing the Conda package, the <em>seidart</em> environment is built using pre-defined dependencies in a YAML (Yet Another Markup Language) file. Both <em>Bash</em> executables and Python modules are built during install. In order to use either, the environment must be active. This can be easily done from the <em>Bash</em> command line interface (CLI) using the command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">seidart</span>
-</pre></div>
-</div>
-<p>Documentation for managing conda environments with Miniconda or Anaconda can be found <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">here</a>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found on the <a class="reference external" href="https://docs.anaconda.com/free/navigator/tutorials/manage-environments/">webpage</a>.</p>
-</section>
-<section id="vm-install">
-<h3>VM Install<a class="headerlink" href="#vm-install" title="Link to this heading">#</a></h3>
-<p>There are a few different options for virtual machine software, but <em>VirtualBox</em> is a robust and free VM management software that can be installed on Windows, MacOS, and Linux. Follow the directions to download and install the software from the <a class="reference external" href="https://www.virtualbox.org/">website</a>.</p>
-<p>There are a couple options for creating a virtual machine for <em>SeidarT</em>. The simplest is to download the <a class="reference external" href="https://drive.google.com/drive/folders/1zVzlKLug95wfy6NCwYGtsbD_cJK8CW1S?usp=drive_link">files</a> (~15GB) for the VM clone from Google Drive. The VM clone requires 4 GB of RAM. Currently, the clone is setup as 15 GB of hard disk space which, even though it is a large file, is still limited in capacity. It is recommended that an external drive be used for creating and building models. It is common for a few GB of hard disk space to be used up when running the models which can easily be recovered by deleting the .dat outputs.</p>
-<p>After installing VirtualBox and downloading the VM clone files, launch the VirtualBox software. In the VM manager, click on the <em>Add</em> button and you will be prompted to choose a .vbox file. Navigate to the directory with the VM clone and select it. This will launch a Debian Linux clone with a GNOME desktop environment. The username and password are <em>seidart</em> which can be changed. <a class="reference external" href="https://reintech.io/blog/managing-users-groups-debian-12">Here</a> is an example of how to do so. To get started, open up a <em>Bash</em> terminal and activate the conda environment (see above) and start a Python session by entering into the command line:;</p>
-<blockquote>
-<div><p>python</p>
-</div></blockquote>
-<p>For users that would like to build a VM with more control, different preferences (i.e. hard disk space), for a different flavor of Linux, or using a different VM manager you will need to download the .iso file for the desired Linux then create a new VM. This will prompt you with the setup parameters. Following setup, you can launch your VM and open up a terminal. From here you can follow the <em>Auto Installation</em> (above) or  <em>Manual Installation</em> (below) directions.</p>
+<section id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h3>
+<p>SeidarT was built with the goal of having minimal system dependencies to avoid system updates causing deprecations and incompatability. First, ensure that the GCC compiler is up to date with version 14 or greater. Second, install Miniconda (recommended) or Anaconda by following the directions posted on their <a class="reference external" href="https://docs.anaconda.com/miniconda/install/">install page</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Windows offers the Windows Subsystem for Linux (WSL) which allows users to run a Linux environment without the need for a separate virtual machine or dual boot. <a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install">Setup and Install</a> of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared. If using WSL follow the auto-install or the manual install directions.</p>
+<p>Documentation for managing conda environments with Miniconda or Anaconda can be found <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">here</a>. The full Anaconda release has a GUI called Navigator for managing environments. This can be found on the <a class="reference external" href="https://docs.anaconda.com/free/navigator/tutorials/manage-environments/">webpage</a>.</p>
 </div>
 </section>
-<section id="manual-installation">
-<h3>Manual installation<a class="headerlink" href="#manual-installation" title="Link to this heading">#</a></h3>
-<p>The full repo can be found on GitHub and is hosted on PyPi. <em>SeidarT</em> has been tested on Python 3.11 and is not yet supported with Python 3.12. For users that prefer building virtual environments with Anaconda, the install folder contains the <em>seidart-environment.yml</em> or it can be found in the root directory of the GitHub repo. To clone the directory, you will need to setup a GitHub account then open a bash terminal and enter the command:</p>
-<blockquote>
-<div><p>git clone <a class="reference external" href="mailto:git&#37;&#52;&#48;github&#46;com">git<span>&#64;</span>github<span>&#46;</span>com</a>:UMainedynamics/SeidarT.git</p>
-</div></blockquote>
-<p>Change directories into the install folder</p>
-<blockquote>
-<div><p>cd SeidarT/install</p>
-</div></blockquote>
-<p>Create and build the <em>seidart</em> environment:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">env</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">seidart</span><span class="o">-</span><span class="n">environment</span><span class="o">.</span><span class="n">yml</span>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h3>
+<p><em>SeidarT</em> was built to be installed on 64bit Arm and Intel architectures for Linux and Mac operating systems. For Windows users , <a class="reference external" href="https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux">Windows Subsystem for Linux</a> is recommended. Windows Subsystem for Linux (WSL) which allows users to run a Linux environment without the need for a separate virtual machine or dual boot. <a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install">Setup and Install</a> of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared.  <em>SeidarT</em> has been tested on Fedora, Solus 2, and Debian which covers a variety of flavors of Linux. The dynamical programming language of <strong>Python3</strong> is used as a command line interface to run the more computationally extensive modeling schemes in <strong>Fortran</strong>. There are a number of ways to install this software depending on your desired level of control over the process.</p>
+<p>SeidarT package binaries are publicly availble on the <a class="reference external" href="https://pypi.org/project/seidart/">PyPi repository</a> and <a class="reference external" href="https://github.com/UMainedynamics/SeidarT">source code</a> can be found on GitHub. To get started, clone or download and extract the Github repo. The dropdown in the green “&lt;&gt; Code” will provide the option to download the ZIP file. If cloning via command line you will need to use the HTTPS link. From the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">UMainedynamics</span><span class="o">/</span><span class="n">SeidarT</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
-<p>This will install all dependencies and the latest <em>seidart</em> version found on PyPi. For users who prefer more control in their installation, their is a small list of dependencies that must be met. These are:  <em>gcc</em>&gt;10, <em>gfortran</em>, <em>ghostscript</em>, <em>imagemagick</em>, <em>numpy</em>, <em>pandas</em>, <em>matplotlib</em>, <em>scipy</em>, <em>glob2</em>, <em>pyevtk</em>, <em>mplstereonet</em>. Following install of all dependencies,:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">seidart</span>
+<p>will create the SeidarT folder in the current working folder. Change directories into the root folder (SeidarT) and you will find the environment YAML file for creating the Miniconda/Anaconda environment and install all dependencies. Create the environment from the Bash terminal with the following commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">f</span> <span class="n">seidart</span><span class="o">-</span><span class="n">environment</span><span class="o">.</span><span class="n">yml</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">seidart</span>
 </pre></div>
 </div>
-<p>will pull the latest version and install the package from PyPi.</p>
-<p>Alternatively, if you run into incompatibility with the operating system and the package wheels, you can install locally. To do this, activate your conda environment then navigate to the SeidarT folder. This is the root directory and from here the command:</p>
+<p>To finish installing run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
 </pre></div>
 </div>
-<p>will install dependencies, build wheels based on your OS, and install SeidarT into the environment. For development, or for testing specific repo branches, this method works great. If you want to keep up to date on the version and this is the install method that works for you, pull updates from the main branch first:</p>
+<p>This will install the SeidarT package via source code in the <em>src</em> folder. Many of the standard routines are setup as entry points and can be called via the command line. To easily test if SeidarT was installed, you can call the help menu of one of the routines. For instance,:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prjbuild</span> <span class="o">-</span><span class="n">h</span>
+</pre></div>
+</div>
+<p>If a <strong>command not found</strong> output is returned, make sure that the <em>seidart</em> environment is activated and was activated during the <em>pip install .</em> command. If the problem persists then it is likely an issue with the precompiled binaries. The precompiled binaries are in the <em>src/seidart/binaries</em> folder which will be put in the correct path during the <em>pip</em> install, however it is possible that your system architecture is incompatible even if you are using Mac or Linux. Please submit a ticket on the repository <a class="reference external" href="https://github.com/UMainedynamics/SeidarT/issues">issue tracker</a> This will help accommodate more system architectures and operating systems.</p>
+<p>Building the binaries locally should solve any incompatibilities. To do so, you will need to clone the <em>SeidarT-Backend</em> repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">UMainedynamics</span><span class="o">/</span><span class="n">SeidarT</span><span class="o">-</span><span class="n">Backend</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>Change directories into the SeidarT-Backend folder and activate the <em>seidart</em> environment if it is inactive. You can run the build script via Bash terminal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">build</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>This will create the <em>seidart</em> executable and put them in the binaries folder associated to the environment. You can check to make sure there is only one <em>seidartfdtd</em> executable:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ls $CONDA_PREFIX/bin/seidartfdtd*
+</pre></div>
+</div>
+<p>If you see multiple <em>seidartfdtd</em> files, delete them and recompile again with the <em>build.sh</em> script seen above.</p>
+</section>
+<section id="hardware-requirements">
+<h3>Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Link to this heading">¶</a></h3>
+<p><em>SeidarT</em> was tested and developed on a quad core 5th gen i7 processor with 16 Gb of RAM without any burden on the system so a typical modern laptop is sufficient for many application. When running models with large domains or a high number of time steps, the computational load is increased, however the storage requirements become more significant. It can be easy to fill up 10’s of Gb of storage, but an external drive can resolve that problem. We have tested <em>SeidarT</em> on a limited number of operating systems due to practical considerations. The Apple M chips and previous Intel based Apple computer chips have not been an issue. Firmware and software variations between operating systems are most likely the cause of incompatibility issues. For animations of large models, there may be some limits from graphics cards that can’t sufficiently support them.</p>
+</section>
+<section id="operating-system-requirements">
+<h3>Operating System requirements<a class="headerlink" href="#operating-system-requirements" title="Link to this heading">¶</a></h3>
+<p>All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development.</p>
+</section>
+<section id="upgrading-versions">
+<h3>Upgrading Versions<a class="headerlink" href="#upgrading-versions" title="Link to this heading">¶</a></h3>
+<p>If you want to keep up to date on the version and this is the install method that works for you, pull updates from the main branch first:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">main</span>
 </pre></div>
 </div>
 </section>
-</section>
-<section id="hardware-requirements">
-<h2>Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Link to this heading">#</a></h2>
-<p><em>SeidarT</em> was tested and developed on a quad core 5th gen i7 processor with 16 Gb of RAM without any burden on the system so a typical modern laptop is sufficient for many application. When running models with large domains or a high number of time steps, the computational load is obviously increased, however the storage requirements become more significant. It can be easy to fill up 10’s of Gb of storage, but an external drive can resolve that problem. The Apple M-chips may have compatability issues with particular types of software and Python packages, but we have maintained a relatively simple design along with leveraging some of the most commonly used Python packages which should help to mitigate any issues with computing on an M-chip.</p>
-</section>
-<section id="operating-system-requirements">
-<h2>Operating System requirements<a class="headerlink" href="#operating-system-requirements" title="Link to this heading">#</a></h2>
-<p>All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development.</p>
-<p>Upgrading Versions</p>
 </section>
 </section>
 
@@ -369,15 +408,14 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">SeidarT</a><ul>
-<li><a class="reference internal" href="#introduction">Introduction</a></li>
-<li><a class="reference internal" href="#installation">Installation</a><ul>
-<li><a class="reference internal" href="#auto-installation">“Auto” installation</a></li>
-<li><a class="reference internal" href="#vm-install">VM Install</a></li>
-<li><a class="reference internal" href="#manual-installation">Manual installation</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
 <li><a class="reference internal" href="#hardware-requirements">Hardware Requirements</a></li>
 <li><a class="reference internal" href="#operating-system-requirements">Operating System requirements</a></li>
+<li><a class="reference internal" href="#upgrading-versions">Upgrading Versions</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -390,9 +428,9 @@
     </aside>
   </div>
 </div><script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     </body>

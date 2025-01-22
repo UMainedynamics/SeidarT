@@ -64,6 +64,8 @@ Permittivity values can be found in:
 # =============================================================================
 #                       Define material dictionaries
 # =============================================================================
+# When adding new materials use:
+#   "name":np.array([Vp_min, Vp_max, Vs_min, Vs_max, Perm_min, Perm_max, Cond_min, Cond_max])
 
 isotropic_materials = {
     "air":np.array([343, 343, 0.0, 0.0, 1.0, 1.0, 1.0e-16, 1.0e-15]),

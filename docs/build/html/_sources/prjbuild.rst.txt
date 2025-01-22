@@ -7,18 +7,20 @@ prjbuild
 
 .. code-block:: bash
 
-    prjbuild -i IMAGEFILE -p PROJECTFILE
+    prjbuild -h -i IMAGEFILE -p PROJECTFILE
 
 **Inputs**
 
-* ``-i``: .png file of cross sectional view of study site
+* ``-h,--help``
+
+* ``-i,--imagefile``: .png file of cross sectional view of study site
 
     * No antialiasing
     * Use pixels dimensions proportional to unit dimensions
     * Start with small dimensions (150x150, 200x500), as larger
       dimensions quickly become more time intensive
 
-* ``-p``: filename, including .prj extension
+* ``-o,--output_json``: filename, including .json extension
 
 
 **Outputs**

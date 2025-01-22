@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html" /><link rel="next" title="Units" href="units.html" /><link rel="prev" title="Collaboration" href="collaboration.html" />
+<link rel="search" title="Search" href="search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>Currently available materials - SeidarT documentation v3.0.1</title>
+        <title>seidart.routines.classes module - SeidarT documentation v3.0.1</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -219,19 +219,15 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
 <li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Project File</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjrun.html">seidart.routines.prjrun module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
@@ -241,11 +237,11 @@
 <li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="png-creation.html">Creating a png file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build-docs.html">Building documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="collaboration.html">Collaboration</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Currently available materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="materials_description.html">Currently available materials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="units.html">Units</a></li>
 <li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
 </ul>
@@ -268,7 +264,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/materials_description.rst.txt" title="View this page">
+  <a class="muted-link" href="_sources/seidart.routines.classes.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -288,30 +284,8 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="currently-available-materials">
-<h1>Currently available materials<a class="headerlink" href="#currently-available-materials" title="Link to this heading">¶</a></h1>
-<p><em>SeidarT</em> primarily focuses on ice and snow therefore the bulk properties of these materials can be modeled by changing inputs such as pore space, density, liquid water content, and temperature. Permittivity and stiffness tensors for snow are considered isotropic while ice1h can be either isotropic or anisotropic. All other materials are isotropic, and water and air have non-zero stiffness coefficients except for the values <span class="math notranslate nohighlight">\(C_{ii}\ \forall i=1,2,3\)</span>.</p>
-<p>Isotropic materials beyond ice and snow are also dependent on certain variables. They are computed and bounded by their seismic P and S velocities or their permittivity and conductivity values. We implement an inverse trigonometric function (i.e. <span class="math notranslate nohighlight">\(V_{P\text{mod}} = a \tan \rho + V_{P\text{min}}\)</span>) to scale the seismic velocities between their upper and lower bounds using overburden pressure as an independent variable prior to computing the Lamé constants. Dynamic stress fields and changes in water pressure are have not been incorporated in the computation of the stiffness coefficients. For permittivity and conductivity coefficients, a porosity correction is applied.</p>
-<p>Any permittivity, conductivity, and stiffness values can be directly edited in the project file prior to modeling.</p>
-<p>The current list of materials are:</p>
-<ul class="simple">
-<li><p>air</p></li>
-<li><p>ice1h</p></li>
-<li><p>snow</p></li>
-<li><p>soil</p></li>
-<li><p>water</p></li>
-<li><p>oil</p></li>
-<li><p>dry_sand</p></li>
-<li><p>wet_sand</p></li>
-<li><p>granite</p></li>
-<li><p>gneiss</p></li>
-<li><p>basalt</p></li>
-<li><p>limestone</p></li>
-<li><p>anhydrite</p></li>
-<li><p>coal</p></li>
-<li><p>salt</p></li>
-</ul>
-<p>If higher order bulk property modeling is required, users are encouraged to do so using the ThermoElastic and Seismic Analysis (<a class="reference external" href="https://umaine.edu/mecheng/vel/software/tesa_toolbox/">TESA</a>) toolbox.</p>
+          <section id="seidart-routines-classes-module">
+<h1>seidart.routines.classes module<a class="headerlink" href="#seidart-routines-classes-module" title="Link to this heading">¶</a></h1>
 </section>
 
         </article>
@@ -319,26 +293,8 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="units.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">Units</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="collaboration.html">
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-              <div class="page-info">
-                <div class="context">
-                  <span>Previous</span>
-                </div>
-                
-                <div class="title">Collaboration</div>
-                
-              </div>
-            </a>
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -369,6 +325,5 @@
     <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

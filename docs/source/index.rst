@@ -43,8 +43,6 @@ Welcome to SeidarT's documentation!
    
    CLI.md
    prjbuild
-   sourcefunction
-   prjrun
    arraybuild
    im2anim
    
@@ -54,12 +52,10 @@ Welcome to SeidarT's documentation!
    :maxdepth: 2
    :caption: Module Components:
    
-   ROUTINES.md
+   ROUTINES
    seidart.routines.definitions
    seidart.routines.materials
    seidart.routines.prjbuild
-   seidart.routines.sourcefunction
-   seidart.routines.prjrun
    seidart.routines.arraybuild
    seidart.routines.fabricsynth
    VISUALIZATION.md
