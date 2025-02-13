@@ -32,8 +32,8 @@ def wavelet(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
     """
     
     # Create the wavelet given the parameters
-    a = np.pi**2 * f**2
-    to = 1/f
+    a = (2.0*np.pi*f)**2 
+    to = 1.0/f
     if stype == 'gaus0':
         x = np.exp(-a*(timevec - to)**2)
     if stype == "gaus1":
@@ -47,7 +47,7 @@ def wavelet(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
         x = signal.chirp(timevec, f, to, 20*f, phi = -90)
         g = np.exp(-(a/4)*(timevec - to)**2)
         x = x * g        
-    x = x/x.max()
+    x = x/np.max(np.abs(x))
     return(x)
 
 # ------------------------------------------------------------------------------
@@ -68,10 +68,10 @@ def multimodesrc(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
     # Create a double octave sweep centered at f0 from the addition of multiple
     # sources. 
     # The change will be linear in 1/8 octave steps
-    fmin = f0/4 
-    fmax = f0
-    df = (f0 - f0/2)/8
-    f = np.arange(fmin, fmax, df)
+    # fmin = f0/4 
+    # fmax = f0
+    # df = (f0 - f0/2)/8
+    f = f0 * 2**(np.linspace(-2, 0, 8))
     stf = np.zeros([len(timevec)])
     for freq in f:
         stf = stf + wavelet(timevec, freq, stype)
@@ -149,12 +149,13 @@ def pointsource(
         srcfn = modelclass.source_amplitude * wavelet(
             timevec, modelclass.f0, modelclass.source_type
         )
-    # rotate 
-    theta = np.pi * modelclass.theta * 180
-    phi = np.pi * modelclass.phi * 180
-    forcex = np.sin( theta ) * np.cos( phi ) * srcfn
+    # convert to radians
+    theta = np.pi * modelclass.theta / 180
+    phi = np.pi * modelclass.phi / 180
+    # rotate - theta = 90 is 
+    forcez = np.sin( theta ) * np.cos( phi ) * srcfn
     forcey = np.sin( theta ) * np.sin( phi ) * srcfn
-    forcez = np.cos( theta ) * srcfn
+    forcex = np.cos( theta ) * srcfn
     if modelclass.is_seismic:
         writesrc("seismicsourcex.dat", forcex)
         writesrc("seismicsourcey.dat", forcey)

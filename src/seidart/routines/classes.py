@@ -417,6 +417,8 @@ class Model:
             # The coefficients aren't provided but the materials are so we can 
             # compute them
             # Assign the materials to their respective corners
+            max_vels = np.zeros([domain.nmats])
+            
             if self.is_seismic:
                 print('Computing the stiffness coefficients.')
                 self.get_seismic(self, material)
@@ -424,23 +426,26 @@ class Model:
                 # We need to compute dt from the Courant number. We can use the 
                 # maximum tensor value, and the maximum density even if they don't 
                 # correspond to the same material.
+                
+                for ind in range(domain.nmats):
+                    max_vels[ind] = np.sqrt( (self.stiffness_coefficients.loc[ind]/ \
+                        self.stiffness_coefficients.rho.loc[ind]).max() )
+                    
                 max_rho = self.stiffness_coefficients["rho"].max()
-                self.dt = self.CFL * np.min([domain.dx, domain.dz]) / \
-                    np.sqrt(3.0 * self.stiffness_coefficients.max().max()/max_rho )
+                if domain.dim == 2:
+                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max()
+                else:
+                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max()
             else:
                 print('Computing the permittivity and conductivity coefficients.')
                 
                 self.get_perm(self, material)
-
-                self.dt = CFL * np.min([domain.dx, domain.dz]) / \
-                    ( clight/ \
-                        np.sqrt(np.min(
-                            [
-                                self.permittivity_coefficients['e11'].min().real, 
-                                self.permittivity_coefficients['e33'].min().real
-                            ]
-                        )) 
-                    )
+                
+                for ind in range(domain.nmats):
+                    max_vels[ind] = clight / \
+                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+                        
+                self.dt = CFL * np.min([domain.dx, domain.dz]) / max_vels.max()
             
             # The time step needs to satisfy the Courant number and also have a nyquist
             # that will resolve the source frequency
