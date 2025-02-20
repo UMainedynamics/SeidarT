@@ -7,14 +7,6 @@ Project File
     :local: 
     :depth: 4
  
-
-The *routines* directory contains the primary functionality for building and running models. *Bash* executables and Python modules are built during the install for many of the scripts found in this directory. Those are: 
-
-- prjbuild 
-- prjrun 
-- sourcefunction 
-- arraybuild 
-
 *SeidarT* models are built from a .png file where each unique color corresponds to a different material. There is built in support for a limited number of materials, which can be referenced in the *materials.py* script, however the motivation for building this toolbox is for studying snow and ice so those have much more robust representation. There is room to expand in the material definitions. 
 
 Building a project starts with *prjbuild* which creates a JSON file that contains the domain, material, and model configurations for either a seismic or electromagnetic wave propagation model. Default values are populated in the fields to prevent any errors during the model run. 
@@ -25,6 +17,7 @@ This JSON file contains three main sections:
     - Materials
     - Seismic
     - Electromagnetic
+
 
 .. _domain-inputs: 
 

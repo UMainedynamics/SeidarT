@@ -71,6 +71,9 @@ def generate_template(nmats, **kwargs):
                     "gamma_x": 0.0,
                     "gamma_y": 0.0,
                     "gamma_z": 0.0,
+                    "gamma_yz": 0.0,
+                    "gamma_xz": 0.0,
+                    "gamma_xy": 0.0,
                     "reference_frequency": 1.0
                 } for i in range(nmats)
             ],

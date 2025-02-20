@@ -231,7 +231,7 @@ def loadproject(
             "c66", "rho"
     ])
     attenuation_columns = np.array([
-        'gamma_x', 'gamma_y', 'gamma_z', 'reference_frequency'
+        'gamma_x', 'gamma_y', 'gamma_z', 'gamma_yz', 'gamma_xz', 'gamma_xy', 'reference_frequency'
     ])
     conductivity_columns = np.array([
             "s11", "s12", "s13", 
@@ -284,7 +284,7 @@ def loadproject(
         np.zeros([domain.nmats, 22]), columns = stiffness_columns
     )
     seismic.attenuation_coefficients = pd.DataFrame(
-        np.zeros([domain.nmats,4]), columns = attenuation_columns
+        np.zeros([domain.nmats,7]), columns = attenuation_columns
     )
     electromag.permittivity_coefficients = pd.DataFrame(
         np.zeros([domain.nmats,6]), columns = permittivity_columns

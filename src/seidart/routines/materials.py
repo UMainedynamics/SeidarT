@@ -196,8 +196,52 @@ def anisotropic_boolean(
     return(anisotropic, afile)
 
 # -----------------------------------------------------------------------------
-def vrh(C, S, eulerangles):
+def vrh2(permittivity, conductivity, eulerangles):
+    """
+    
+    """
+    
+    p = len(eulerangles[:,0])
+    
+    pvoigt = np.zeros([3,3])
+    cvoigt = np.zeros([3,3])
+    preuss = np.zeros([3,3])
+    creuss = np.zeros([3,3])
+    
+    Sp = np.linalg.inv(permittivity)
+    Sc = np.linalg.inv(conductivity)
+    
+    for k in range(0, p):
+        R = rotator_zxz(eulerangles[k,:] )
+        Ri = np.linalg.inv(R)
+        #!!!!! We need to do the same for conductivity.  
+        pvoigt = pvoigt + ( np.matmul( R, np.matmul(permittivity, R.T) ) )
+        cvoigt = cvoigt + ( np.matmul( R, np.matmul(conductivity, R.T) ) )
+        preuss = preuss + ( np.matmul( Ri, np.matmul(Sp, Ri.T) ) )
+        creuss = creuss + ( np.matmul( Ri, np.matmul(Sc, Ri.T) ) )
+    
+    pvoigt = pvoigt/p
+    cvoigt = cvoigt/p
+    preuss = preuss/p 
+    creuss = creuss/p 
+    preuss = np.linalg.inv(preuss) 
+    creuss = np.linalg.inv(creuss) 
+    
+    # Calculate the hill average 
+    permittivity = (pvoigt + preuss)/2
+    conductivity = (cvoigt + creuss)/2
+    
+    return permittivity, conductivity
+
+# -----------------------------------------------------------------------------
+def vrh4(C, S, eulerangles):
+    """
+    
+    """
+    
     m, n = eulerangles.shape
+    cvoigt = np.zeros([6,6])
+    creuss = np.zeros([6,6])
     for k in range(m):
         R = rotator_zxz(eulerangles[k,:] )
         M = bond(R)
@@ -722,7 +766,7 @@ def get_seismic(
             Cice = ice_stiffness(material.temp[ind], pressure)
             Sice = np.linalg.inv(Cice)
             if material.is_anisotropic[ind]:
-                C = vrh(Cice, Sice, euler)
+                C = vrh4(Cice, Sice, euler)
             else:
                 print('Computing the homogeneous stiffness coefficients for ice1h.')
                 _,_, C = astiffness2moduli(Cice)
@@ -812,7 +856,7 @@ def snow_stiffness(
 
     # Use fabric-based stiffness if specified
     if use_fabric:
-        C_ice = vrh(C_ice, np.linalg.inv(C_ice), eulerangles)
+        C_ice = vrh4(C_ice, np.linalg.inv(C_ice), eulerangles)
 
     # Compute bulk modulus using the selected method
     if method == "SCA":
@@ -832,7 +876,7 @@ def snow_stiffness(
 
     else:  # Default to Hill estimate
         C_voigt = (1 - porosity) * C_ice + porosity * (1 - lwc) * C_air + porosity * lwc * C_water
-        C_reuss = np.linalg.inv((1 - porosity) * np.linalg.inv(C_ice) + porosity * (1 - lwc) * np.linalg.inv(C_air) + porosity * lwc * np.linalg.inv(C_water))
+        C_reuss = np.linalg.inv( (1 - porosity) * np.linalg.inv(C_ice) + porosity * (1 - lwc) * np.linalg.inv(C_air) + porosity * lwc * np.linalg.inv(C_water))
         C_snow = (C_voigt + C_reuss) / 2
         K_snow, G_snow, _ = astiffness2moduli(C_snow)
 
@@ -1122,36 +1166,7 @@ def get_perm(
         if material.is_anisotropic[ind]:
             
             euler = read_ang(material.angfile[ind])
-            p = len(euler[:,0])
-            
-            pvoigt = np.zeros([3,3])
-            cvoigt = np.zeros([3,3])
-            preuss = np.zeros([3,3])
-            creuss = np.zeros([3,3])
-            
-            Sp = np.linalg.inv(permittivity)
-            Sc = np.linalg.inv(conductivity)
-            
-            for k in range(0, p):
-                R = rotator_zxz(euler[k,:] )
-            
-                Ri = np.linalg.inv(R)
-                #!!!!! We need to do the same for conductivity.  
-                pvoigt = pvoigt + ( np.matmul( R, np.matmul(permittivity, R.T) ) )
-                cvoigt = cvoigt + ( np.matmul( R, np.matmul(conductivity, R.T) ) )
-                preuss = preuss + ( np.matmul( Ri, np.matmul(Sp, Ri.T) ) )
-                creuss = creuss + ( np.matmul( Ri, np.matmul(Sc, Ri.T) ) )
-            
-            pvoigt = pvoigt/p
-            cvoigt = cvoigt/p
-            preuss = preuss/p 
-            creuss = creuss/p 
-            preuss = np.linalg.inv(preuss) 
-            creuss = np.linalg.inv(creuss) 
-            
-            # Calculate the hill average 
-            permittivity = (pvoigt + preuss)/2
-            conductivity = (cvoigt + creuss)/2
+            permittivity, conductivity = vrh2(permittivity, conductivity, euler)
             
             # Check to make sure the permittivity tensor is positive definite
             eigenvalues, eigenvectors = np.linalg.eigh(permittivity)
