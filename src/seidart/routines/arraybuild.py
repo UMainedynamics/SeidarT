@@ -19,7 +19,6 @@ class Array:
             channel: str,
             project_file: str, 
             receiver_file: str,
-            receiver_indices: bool = False, 
             single_precision: bool = True,
             csvfile: str = None, 
         ):
@@ -49,7 +48,7 @@ class Array:
         self.project_file = project_file 
         self.channel = channel
         self.receiver_file = receiver_file
-        self.receiver_indices = receiver_indices # Flag 
+        self.receiver_indices = None
         self.receiver_locations = None # The locations in meters
         self.single_precision = single_precision
         self.source_xyz = None 
@@ -169,27 +168,16 @@ class Array:
         # If the receiver file contains values that are relative to the 
         # cartesian space of the domain, we want to change them to the indices
         # of the 
-        if not self.receiver_indices:
-            self.receiver_locations = xyz / \
-                np.array(
-                    [
-                        float(self.domain.dx), 
-                        float(self.domain.dy), 
-                        float(self.domain.dz) 
-                    ]
-                )
-            xyz.round().astype(int)
-        else: 
-            self.receiver_locations = xyz * \
-                np.array(
-                    [
-                        float(self.domain.dx), 
-                        float(self.domain.dy), 
-                        float(self.domain.dz) 
-                    ]
-                )
         
-        self.receiver_xyz = xyz + cpml
+        self.receiver_indices = (xyz / \
+            np.array(
+                [
+                    float(self.domain.dx), 
+                    float(self.domain.dy), 
+                    float(self.domain.dz) 
+                ]
+            )).astype(int) + cpml
+        self.receiver_xyz = xyz.copy()
         # The following line is to make this compatible with the CommonOffset 
         # object setup. 
         self.receiver_xyz_all = self.receiver_xyz.copy()
@@ -214,14 +202,14 @@ class Array:
             )
         all_files.sort()
         m = len(all_files)
-        if len(self.receiver_xyz) == 1:
+        if len(self.receiver_indices) == 1:
             n = 1
             timeseries = np.zeros([m])
             # Sometimes the 1 row array needs to be
-            if self.receiver_xyz.ndim == 2:
-                self.receiver_xyz = self.receiver_xyz[0]
+            if self.receiver_indices.ndim == 2:
+                self.receiver_indices = self.receiver_indices[0]
         else:
-            n = len(self.receiver_xyz[:,0])
+            n = len(self.receiver_indices[:,0])
             timeseries = np.zeros([m,n])   
                     
         if self.domain.dim == 2.0:
@@ -237,17 +225,17 @@ class Array:
                 )
                 if n == 1:
                     timeseries[:,i] = npdat.real[
-                        int(self.receiver_xyz[2]), 
-                        int(self.receiver_xyz[1]), 
-                        int(self.receiver_xyz[0])
+                        int(self.receiver_indices[2]), 
+                        int(self.receiver_indices[1]), 
+                        int(self.receiver_indices[0])
                     ]
                 else:
                     for j in range(0, n):
                         # Don't forget x is columns and z is rows
                         timeseries[i,j] = npdat.real[
-                            int(self.receiver_xyz[j,2]),
-                            int(self.receiver_xyz[j,1]),
-                            int(self.receiver_xyz[j,0])
+                            int(self.receiver_indices[j,2]),
+                            int(self.receiver_indices[j,1]),
+                            int(self.receiver_indices[j,0])
                         ]
         else:
             for i in range(m):
@@ -259,14 +247,14 @@ class Array:
                 )
                 if n == 1:
                     timeseries[i] = npdat.real[
-                        int(self.receiver_xyz[2]), int(self.receiver_xyz[0])
+                        int(self.receiver_indices[2]), int(self.receiver_indices[0])
                     ]
                 else:
                     for j in range(n):
                         # Don't forget x is columns and z is rows
                         timeseries[i,j] = npdat.real[
-                            int(self.receiver_xyz[j,2]),
-                            int(self.receiver_xyz[j,0])
+                            int(self.receiver_indices[j,2]),
+                            int(self.receiver_indices[j,0])
                         ]
         
         # Store both of the time series in the array object
@@ -283,17 +271,9 @@ class Array:
             source_xyz = self.source_xyz.copy()
         
         if self.domain.dim == '2.0':
-            self.distances = (
-                source_xyz[:,(0,2)]  - \
-                    (self.receiver_xyz_all[:,(0,2)] - self.domain.cpml) * \
-                        np.array([self.domain.dx, self.domain.dz])
-            )**2
+            self.distances = (source_xyz[:,(0,2)]  - self.receiver_xyz[:,(0,2)]  )**2
         else: 
-            self.distances = (
-                source_xyz - \
-                    (self.receiver_xyz_all - self.domain.cpml) * \
-                        np.array([self.domain.dx, self.domain.dy, self.domain.dz])
-            )**2
+            self.distances = (source_xyz - self.receiver_xyz)**2
         
         self.distances = np.sqrt(np.sum(self.distances,axis = 1))
     
@@ -331,6 +311,37 @@ class Array:
             self.exp_corrected_timeseries = dat.copy() 
         
         return dat
+
+
+
+    # -------------------------------------------------------------------------
+    def alpha_attenuation(self, direction = 'z', material_indice = 0):
+            # Get the attenuation coefficient 
+            gamma = self.seismic.attenuation_coefficients[f'gamma_{direction}'][material_indice]
+            
+            # Compute the phase velocity for the given direction
+            
+
+            if Q:
+                alpha = 2*np.pi * fc / (2*Q*phase_velocity)
+            else:
+                alpha = np.pi * fc * gamma / phase_velocity 
+            
+            return alpha
+
+    # -------------------------------------------------------------------------
+    def amplitude_calculation(self, distance, alpha, A0 = 1, spreading = "spherical"):
+            dA = np.exp(-alpha * distance)
+            
+            if spreading == "spherical":
+                dG = 1 / distance if distance > 0 else 1
+            elif spreading == "cylindrical":
+                dG = 1 / np.sqrt(ditance) if distance > 0 else 1 
+            else:
+                dG = 1 
+            
+            At = A0 * dA *dG
+            return At, dA, dG 
 
     # -------------------------------------------------------------------------
     def sectionplot(

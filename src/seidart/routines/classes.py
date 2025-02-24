@@ -705,6 +705,27 @@ class Model:
         axz.set_ylabel('Z ' + y_units)
         axz.set_xlabel('time (s)')
         plt.show()
+
+    # --------------------------------------------------------------------------
+    def get_christoffel_matrix(self, material_indice, direction):
+        direction_map = {
+            'x':  np.array([1, 0, 0]),
+            'y':  np.array([0, 1, 0]),
+            'z':  np.array([0, 0, 1]),
+            'xy': np.array([1, 1, 0]) / np.sqrt(2),
+            'xz': np.array([1, 0, 1]) / np.sqrt(2),
+            'yz': np.array([0, 1, 1]) / np.sqrt(2)
+        }
+
+        if direction not in direction_map:
+            raise ValueError("Invalid direction. Choose from 'x', 'y', 'z', 'xy', 'xz', or 'yz'.")
+
+        n = direction_map[direction]  # Get the propagation unit vector
+        
+        # Extract stiffness coefficients from the specified row
+        row = self.stiffness_coefficients.iloc[row_idx]
+        
+
 # ------------------------------------------------------------------------------
 class AnimatedGif:
     """
