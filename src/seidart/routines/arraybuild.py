@@ -312,16 +312,15 @@ class Array:
         
         return dat
 
-
-
     # -------------------------------------------------------------------------
-    def alpha_attenuation(self, direction = 'z', material_indice = 0):
+    def alpha_attenuation(self, phase_velocity, direction = 'z', material_indice = 0, fc = None):
             # Get the attenuation coefficient 
             gamma = self.seismic.attenuation_coefficients[f'gamma_{direction}'][material_indice]
             
+            if not fc:
+                fc = self.seis.f0
+                
             # Compute the phase velocity for the given direction
-            
-
             if Q:
                 alpha = 2*np.pi * fc / (2*Q*phase_velocity)
             else:

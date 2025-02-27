@@ -44,12 +44,12 @@ mu_r = 1.0
 # These can be changed for control over the cpml parameters
 #CPML
 #----
-sig_opt_scalar = 1.2
-alpha_max_scalar = 1.0
-NP = 2  # Numerical parameter for CPML
-NPA = 2  # Additional numerical parameter for CPML
-kappa_max = 5  # Max value for CPML parameter
-Rcoef = 0.0010  # Reflection coefficient, used for seismic only
+# sig_opt_scalar = 1.2
+# alpha_max_scalar = 1.0
+# NP = 2  # Numerical parameter for CPML
+# NPA = 2  # Additional numerical parameter for CPML
+# kappa_max = 5  # Max value for CPML parameter
+# Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
 # Courant-Friedrichs-Levy condition
 CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D. 
@@ -255,7 +255,10 @@ def loadproject(
     (
         domain.dim, domain.nx, domain.ny, domain.nz, 
         domain.dx, domain.dy, domain.dz, domain.cpml, 
-        domain.nmats, domain.imfile 
+        domain.nmats, 
+        domain.sig_opt_scalar, domain.alpha_max_scalar, domain.kappa_max,
+        domain.NP, domain.NPA, domain.Rcoef,
+        domain.imfile 
     ) = list(data['Domain'].values())
     im,__ = image2int(data['Domain']['image_file'])
     domain.geometry = im.transpose().astype(int)
@@ -409,7 +412,7 @@ def cpmlcompute(
         modelclass, 
         domain, 
         direction: str, 
-        half: bool = False, 
+        half: bool = False,
     ) -> None:
     """
     Computes CPML parameters for a given direction and updates model/domain.
@@ -423,7 +426,6 @@ def cpmlcompute(
     :type direction: str
     :type half: bool
     """
-    global NP, NPA, sig_opt_scalar, kappa_max
 
     # For 2D models, we don't need to compute the cpml in the y-direction
     if domain.dim == 2 and direction == 'y':
@@ -462,19 +464,21 @@ def cpmlcompute(
     if modelclass.is_seismic:
         alpha_max = np.pi*modelclass.f0
         quasi_cp_max = 0.7 * deltamin / (2.0 * modelclass.dt)
-        sig_max = - np.log(Rcoef) * (NP+1) * quasi_cp_max / (2.0 * domain.cpml )
+        sig_max = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max / (2.0 * domain.cpml )
          # This seems to work well even at higher frequencies
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt, is_seismic = True
+            sig_max, alpha_max, domain.kappa_max, 
+            dist, N, domain.NP, domain.NPA, modelclass.dt, is_seismic = True
         )
     else:
         # We will use the maximum permittivity coefficient and assume that the 
         # magnetic permeability is 1. We can use a different value
-        sig_max = sig_opt_scalar * \
-            ((NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        alpha_max = alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
+        sig_max = domain.sig_opt_scalar * \
+            ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
+        alpha_max = domain.alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, kappa_max, dist, N, modelclass.dt
+            sig_max, alpha_max, domain.kappa_max, 
+            dist, N, domain.NP, domain.NPA, modelclass.dt
         )
 
     # Save the results to a fortran binary
@@ -498,6 +502,8 @@ def cpml_parameters(
         kappa_max: float, 
         distance, 
         N: int, 
+        NP: int,
+        NPA: int, 
         dt: float,
         is_seismic = False,
     ):

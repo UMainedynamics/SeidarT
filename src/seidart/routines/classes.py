@@ -39,6 +39,14 @@ class Domain:
         self.dz = None
         self.cpml = None
         self.cpml_attenuation = 0.0 # Default attenuation in the cpml region. Higher is more attenuation.
+        # CPML parameters for the domain
+        self.sig_opt_scalar = None
+        self.alpha_opt_scalar = None 
+        self.NP = None 
+        self.NPA = None 
+        self.kappa_max = 5 
+        self.Rcoef = None # Seismic only parameter
+        # Some more values that might be of interest 
         self.write = None
         self.image_file = None
         self.exit_status = 1
@@ -433,9 +441,9 @@ class Model:
                     
                 max_rho = self.stiffness_coefficients["rho"].max()
                 if domain.dim == 2:
-                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max()
+                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max() / 2
                 else:
-                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max()
+                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max() / 2
             else:
                 print('Computing the permittivity and conductivity coefficients.')
                 
@@ -483,7 +491,9 @@ class Model:
             # Write out the arrays of tensor coefficients
             if self.is_seismic:
                 self.tensor2dat(self.stiffness_coefficients, domain)
-                self.tensor2dat(self.attenuation_coefficients, domain)
+                # gamma/attenuation coefficients need to be scaled by the 
+                # dominant frequency of the source
+                self.tensor2dat(self.attenuation_coefficients * self.f0, domain)
             else:
                 self.tensor2dat(self.permittivity_coefficients, domain) 
                 self.tensor2dat(self.conductivity_coefficients, domain)
@@ -716,15 +726,211 @@ class Model:
             'xz': np.array([1, 0, 1]) / np.sqrt(2),
             'yz': np.array([0, 1, 1]) / np.sqrt(2)
         }
-
-        if direction not in direction_map:
-            raise ValueError("Invalid direction. Choose from 'x', 'y', 'z', 'xy', 'xz', or 'yz'.")
-
-        n = direction_map[direction]  # Get the propagation unit vector
+                
+        # Handle string input (predefined directions)
+        if isinstance(direction, str):
+            if direction not in direction_map:
+                raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
+            n = direction_map[direction]
         
-        # Extract stiffness coefficients from the specified row
-        row = self.stiffness_coefficients.iloc[row_idx]
+        # Handle unit vector input
+        elif isinstance(direction, np.ndarray) and direction.shape == (3,):
+            n = direction
+        else:
+            raise TypeError("Direction must be either a string ('x', 'y', ...) or a 3-element numpy array.")
         
+        # Normalize direction vector
+        if np.linalg.norm(n) == 0:
+            raise ValueError("Propagation vector cannot be zero.")
+        n = n / np.linalg.norm(n)
+        
+        # Convert 6x6 Voigt tensor to 3x3x3x3 full tensor
+        voigt_to_tensor = {
+            0: (0, 0), 1: (1, 1), 2: (2, 2),  # Normal components
+            3: (1, 2), 4: (0, 2), 5: (0, 1)   # Shear components
+        }
+        if self.is_seismic:
+            C_full = np.zeros((3, 3, 3, 3))
+            # Extract stiffness coefficients from the specified row
+            row = self.stiffness_coefficients.iloc[material_indice]
+            C = np.array([
+                [row['c11'], row['c12'], row['c13'], row['c14'], row['c15'], row['c16']],
+                [row['c12'], row['c22'], row['c23'], row['c24'], row['c25'], row['c26']],
+                [row['c13'], row['c23'], row['c33'], row['c34'], row['c35'], row['c36']],
+                [row['c14'], row['c24'], row['c34'], row['c44'], row['c45'], row['c46']],
+                [row['c15'], row['c25'], row['c35'], row['c45'], row['c55'], row['c56']],
+                [row['c16'], row['c26'], row['c36'], row['c46'], row['c56'], row['c66']]
+            ])
+            
+            rho = row['rho']  # Extract density
+            for i in range(6):
+                for j in range(6):
+                    i1, i2 = voigt_to_tensor[i]
+                    j1, j2 = voigt_to_tensor[j]
+                    C_full[i1, i2, j1, j2] = C[i, j]
+                    C_full[i2, i1, j1, j2] = C[i, j]
+                    C_full[i1, i2, j2, j1] = C[i, j]
+                    C_full[i2, i1, j2, j1] = C[i, j]
+            # Construct the 3x3 Christoffel matrix
+            Gamma = np.zeros((3, 3))
+            for i in range(3):
+                for j in range(3):
+                    Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
+        else:
+             # Extract permittivity values from the specified row
+            row_epsilon = self.permittivity_coefficients.iloc[material_indice]
+            epsilon = np.array([
+                [row_epsilon['e11'], row_epsilon['e12'], row_epsilon['e13']],
+                [row_epsilon['e12'], row_epsilon['e22'], row_epsilon['e23']],
+                [row_epsilon['e13'], row_epsilon['e23'], row_epsilon['e33']]
+            ])
+
+            # Extract conductivity values from the specified row
+            row_sigma = self.conductivity_coefficients.iloc[material_indice]
+            sigma = np.array([
+                [row_sigma['s11'], row_sigma['s12'], row_sigma['s13']],
+                [row_sigma['s12'], row_sigma['s22'], row_sigma['s23']],
+                [row_sigma['s13'], row_sigma['s23'], row_sigma['s33']]
+            ])
+
+            # Compute the effective permittivity tensor
+            omega = 2 * np.pi * self.f0  # Angular frequency
+            epsilon_eff = epsilon + 1j * sigma / omega  # Complex permittivity
+
+            # Compute inverse of effective permittivity tensor
+            epsilon_eff_inv = np.linalg.inv(epsilon_eff)
+            
+            # Construct the electromagnetic Christoffel matrix
+            Gamma = np.zeros((3, 3), dtype=complex)
+            for i in range(3):
+                for j in range(3):
+                    Gamma[i, j] = np.sum(epsilon_eff_inv[i, :] * n[j] * n)
+        
+        # Compute eigenvalues (which correspond to v^2 for wave propagation)
+        eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+        
+        # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
+        velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
+        
+        # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
+        velocities.sort()
+        
+        return Gamma, eigenvalues, eigenvectors, velocities
+    
+    def christoffel_plot(self, 
+            material_indice, directions = np.array(['x','y','z','yz','xz','xy'])
+        ):
+        angles = np.linspace(0, 2 * np.pi, len(directions), endpoint=False)
+        num_directions = len(directions)
+        
+        # Initialize arrays for wave speeds
+        speeds_p, speeds_s1, speeds_s2 = [], [], []
+        # Step through each direction and compute wave speeds
+        for direction in directions:
+            Gamma = self.get_christoffel_matrix(material_indice, direction)
+            
+            # Compute eigenvalues (which correspond to v^2 for wave propagation)
+            eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+            
+            # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
+            velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
+            
+            # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
+            velocities.sort()
+            
+            # Store velocities
+            speeds_s1.append(velocities[0])  # Slowest S-wave
+            speeds_s2.append(velocities[1])  # Second S-wave
+            speeds_p.append(velocities[2])   # Fastest wave (P-wave)
+        
+         # Convert lists to NumPy arrays
+        speeds_p = np.array(speeds_p)
+        speeds_s1 = np.array(speeds_s1)
+        speeds_s2 = np.array(speeds_s2)
+        
+        # Extend data for closing the radar plot loop
+        angles = np.linspace(0, 2 * np.pi, num_directions, endpoint=False)
+        speeds_p = np.append(speeds_p, speeds_p[0])
+        speeds_s1 = np.append(speeds_s1, speeds_s1[0])
+        speeds_s2 = np.append(speeds_s2, speeds_s2[0])
+        angles = np.append(angles, angles[0])
+        
+        
+    
+    def plot_unit_sphere_wave_speeds(self, material_indice, num_samples=100):
+        """
+        Plot wave speeds on a unit sphere for a given material.
+
+        Parameters:
+            self: The class containing material properties and methods.
+            material_indice (int): Index of the material in the DataFrame.
+            num_samples (int): Number of unit sphere sample points.
+
+        Returns:
+            None (displays figure).
+        """
+        
+        # Generate spherical coordinates (θ = azimuthal, φ = polar)
+        theta = np.linspace(0, 2 * np.pi, num_samples)  # 0 to 360 degrees
+        phi = np.linspace(0, np.pi, num_samples // 2)   # 0 to 180 degrees
+        
+        theta, phi = np.meshgrid(theta, phi)  # Create a meshgrid
+        x = np.sin(phi) * np.cos(theta)
+        y = np.sin(phi) * np.sin(theta)
+        z = np.cos(phi)
+        
+        # Initialize velocity storage
+        Vp_values = np.zeros_like(x)
+        Vs1_values = np.zeros_like(x)
+        Vs2_values = np.zeros_like(x)
+        
+        # Loop over each (θ, φ) direction
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                # Propagation direction (normalized)
+                n = np.array([x[i, j], y[i, j], z[i, j]])
+                n /= np.linalg.norm(n)  # Ensure unit vector
+                
+                # Compute Christoffel matrix for this direction
+                Gamma = self.get_christoffel_matrix(material_indice, n)
+                eigenvalues, _ = np.linalg.eigh(Gamma)  # Solve eigenvalue problem
+                
+                # Compute wave speeds (v = sqrt(eigenvalue))
+                velocities = np.sqrt(np.abs(eigenvalues))
+                velocities.sort()  # Sort eigenvalues into (S1, S2, P)
+                
+                Vs1_values[i, j] = velocities[0]  # Slowest S-wave
+                Vs2_values[i, j] = velocities[1]  # Second S-wave
+                Vp_values[i, j] = velocities[2]   # Fastest P-wave
+        
+        # Find max velocity for annotation
+        max_vp = np.max(Vp_values)
+        max_vs1 = np.max(Vs1_values)
+        max_vs2 = np.max(Vs2_values)
+        
+        # Create figure with subplots
+        fig = plt.figure(figsize=(12, 8))
+        
+        # Plot P-wave velocity
+        ax1 = fig.add_subplot(131, projection='3d')
+        ax1.plot_surface(x, y, z, facecolors=plt.cm.viridis(Vp_values / max_vp), rstride=1, cstride=1, alpha=0.8)
+        ax1.set_title(f'P-Wave Velocity\nMax: {max_vp:.2f} m/s')
+        
+        # Plot S-wave 1 velocity
+        ax2 = fig.add_subplot(132, projection='3d')
+        ax2.plot_surface(x, y, z, facecolors=plt.cm.viridis(Vs1_values / max_vs1), rstride=1, cstride=1, alpha=0.8)
+        ax2.set_title(f'S-Wave 1 Velocity\nMax: {max_vs1:.2f} m/s')
+        
+        # Plot S-wave 2 velocity
+        ax3 = fig.add_subplot(133, projection='3d')
+        ax3.plot_surface(x, y, z, facecolors=plt.cm.viridis(Vs2_values / max_vs2), rstride=1, cstride=1, alpha=0.8)
+        ax3.set_title(f'S-Wave 2 Velocity\nMax: {max_vs2:.2f} m/s')
+        
+        # Adjust layout
+        plt.tight_layout()
+        plt.show()
+        
+        return fig, ax1, ax2, ax3
 
 # ------------------------------------------------------------------------------
 class AnimatedGif:
