@@ -13,6 +13,7 @@ __all__ = [
     'isotropic_permittivity_tensor',
     'porewater_correction',
     'astiffness2moduli',
+    'compute_volume_fractions',
     'bulk_modulus_water',
     'bulk_modulus_air',
     'moduli_basalt',
