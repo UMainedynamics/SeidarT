@@ -235,11 +235,11 @@ def vrh2(permittivity, conductivity, eulerangles):
     return permittivity, conductivity
 
 # -----------------------------------------------------------------------------
-def vrh4(C, S, eulerangles):
+def vrh4(C, eulerangles):
     """
     
     """
-    
+    S = np.linalg.inv(C)
     m, n = eulerangles.shape
     cvoigt = np.zeros([6,6])
     creuss = np.zeros([6,6])
@@ -437,6 +437,13 @@ def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
 # ==============================================================================
 #                                   Seismic
 # ==============================================================================
+def moduli2stiffness(K, G):
+    C = np.zeros([6,6])
+    C[(0,1,2),(0,1,2)] = K + 4*G / 3 
+    C[(0,0,1,1,2,2),(1,2,0,2,0,1)] = K - 2*G/3
+    C[(3,4,5),(3,4,5)] = G
+    return C
+
 # -----------------------------------------------------------------------------
 def astiffness2moduli(C):
     """
@@ -608,20 +615,45 @@ def moduli_sand_silt_clay(
     
     return K, G, rho_eff
 
-def gassmann_bulk_modulus(K_dry, K_mineral, K_fluid, porosity):
+def gassmann_bulk_modulus(K_dry, K_mineral, K_fluid, porosity, small_denominator=1e-12):
     """
     Computes the bulk modulus of a fluid-saturated porous material using Gassmann's equation.
-
-    :param K_dry: Bulk modulus of the dry matrix (Pa)
-    :param K_mineral: Bulk modulus of the solid grains (Pa)
-    :param K_fluid: Bulk modulus of the saturating fluid (Pa)
-    :param porosity: Porosity (fraction, 0 to 1)
-    :return: Saturated bulk modulus (Pa)
+    
+    :param K_dry: Bulk modulus of the dry matrix (Pa).
+    :param K_mineral: Bulk modulus of the solid grains (Pa).
+    :param K_fluid: Bulk modulus of the saturating fluid (Pa).
+    :param porosity: Porosity (fraction, 0 to 1).
+    :param small_denominator: A small threshold to avoid division by zero or negative denominators.
+    :return: Saturated bulk modulus (Pa).
     """
     numerator = (1 - K_dry / K_mineral) ** 2
-    denominator = porosity / K_fluid + (1 - porosity) / K_mineral - (K_dry / K_mineral**2)
-
+    denominator = (porosity / K_fluid) + ((1 - porosity) / K_mineral) - (K_dry / (K_mineral**2))
+    
+    # Check if the denominator is too small or negative.
+    if denominator <= small_denominator:
+        # You can clamp or do some fallback:
+        denominator = small_denominator
+    
     return K_dry + (numerator / denominator)
+
+def compute_dry_bulk_modulus(K_ice, porosity_percent, exponent=2):
+    """
+    Estimate the dry frame bulk modulus (K_dry) for porous snow/ice
+    using the relationship:
+    
+        K_dry = K_ice * (1 - porosity_fraction)**exponent
+        
+    Parameters:
+        K_ice (float): Bulk modulus of ice (Pa).
+        porosity_percent (float): Porosity as a percentage (0-100).
+        exponent (float, optional): Exponent controlling sensitivity. 
+                                    Default is 2.
+    
+    Returns:
+        float: Estimated dry frame bulk modulus (Pa).
+    """
+    porosity_fraction = porosity_percent / 100.0
+    return K_ice * (1 - porosity_fraction) ** exponent
 
 def compute_volume_fractions(porosity, lwc):
     """
@@ -631,6 +663,8 @@ def compute_volume_fractions(porosity, lwc):
     :param lwc: Liquid water content fraction (0 to 1)
     :return: (V_ice, V_air, V_water)
     """
+    # porosity /= 100 
+    # lwc /= 100
     V_air = porosity * (1 - lwc)  # Air fraction
     V_water = porosity * lwc      # Water fraction
     V_ice = 1 - porosity          # Ice fraction
@@ -653,32 +687,31 @@ def eshelby_tensor(C_matrix, aspect_ratio=1.0):
     return S
 
 # -----------------------------------------------------------------------------
-def self_consistent_approximation(C, porosity, tol=1e-6, max_iter=100):
+def self_consistent_approximation(C, C_air, porosity, tol=1e-6, max_iter=100):
     """
     Computes the effective stiffness tensor for highly porous snow using SCA.
-
+    
     :param C: 6x6 stiffness tensor.
     :param porosity: Volume fraction of air (0 to 1).
     :return: 6x6 effective stiffness tensor of porous media.
     """
-
-    C_eff = C.copy()  # Initial guess
-    C_air = np.zeros((6,6))  # Air has negligible stiffness
+    
+    C_eff = (1 - porosity) * C  # Initial guess
     S = eshelby_tensor(C)  # Compute Eshelby tensor for spherical pores
-
+    
     for _ in range(max_iter):
         # Compute the interaction tensor
         P = np.linalg.inv(np.eye(6) + np.matmul(S, (C_air - C_eff)))
-
+        
         # Update the effective stiffness tensor
         C_new = C_eff + porosity * np.matmul((C_air - C_eff), P)
-
+        
         # Convergence check
         if np.linalg.norm(C_new - C_eff) < tol:
             break
-
+        
         C_eff = C_new
-
+    
     return C_eff
 
 # -----------------------------------------------------------------------------
@@ -764,13 +797,12 @@ def get_seismic(
             # Assume a constant pressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
             pressure = 0.1 * 1e-1 # in kbar
-            Cice = ice_stiffness(material.temp[ind], pressure)
-            Sice = np.linalg.inv(Cice)
+            C_ice = ice_stiffness(material.temp[ind], pressure)
             if material.is_anisotropic[ind]:
-                C = vrh4(Cice, Sice, euler)
+                C = vrh4(C_ice, euler)
             else:
                 print('Computing the homogeneous stiffness coefficients for ice1h.')
-                _,_, C = astiffness2moduli(Cice)
+                _,_, C = astiffness2moduli(C_ice)
             # The stiffness matrix needs to be positive definite which means all
             # of the eigenvalues must be positive
             eigenvalues, eigenvectors = np.linalg.eigh(C)
@@ -806,21 +838,22 @@ def get_seismic(
 # -----------------------------------------------------------------------------
 def snow_stiffness(
         temperature, lwc, porosity, pressure=0.0,
-        use_fabric=False, eulerangles=None, method=None
+        use_fabric=False, eulerangles=None, method=None, exponent=2, 
+        epsilon=1e-6, small_denominator=1e-12
     ):
     """
     Computes the effective stiffness tensor for snow using Hill, SCA, or Gassmann's equations.
-
+    
     :param temperature: Temperature in Celsius.
     :param lwc: Liquid water content (% of pore space filled with water).
     :param porosity: Total porosity of the snow (% of volume that is pore space).
     :param pressure: Pressure in Pascals (default: 0 Pa).
     :param use_fabric: If True, fabric-based stiffness is used; otherwise, isotropic stiffness is computed.
     :param eulerangles: (m x 3) array of Euler angles for fabric-based calculations.
-    :param method: Override homogenization method; options: "Hill", "SCA", or "Gassmann".
-        - Default: "Hill" for porosity ≤ 50%.
-        - "SCA" for high porosity (>50%).
-        - "Gassmann" if porosity ≤ 50% and lwc ≥ 80%.
+    :param method: Override homogenization method; options: "Hill", "SCA", "Gassmann", "SCA-Gassmann", etc.
+    :param exponent: Exponent for reducing K_ice (and optionally G_ice) by porosity.
+    :param epsilon: Small regularization for fluid shear terms in Hill or SCA-Hill mixing.
+    :param small_denominator: Threshold to clamp Gassmann's denominator.
     :return: (K_snow, G_snow, C_snow, rho_eff)
         - K_snow: Bulk modulus of snow (Pa).
         - G_snow: Shear modulus of snow (Pa).
@@ -830,14 +863,18 @@ def snow_stiffness(
     # Convert percentage inputs to fractions
     porosity /= 100.0
     lwc /= 100.0
-
+    
     # Determine default method
     if method is None:
-        if porosity <= 0.50:
-            method = "Gassmann" if lwc >= 0.80 else "Hill"
-        else:
+        if porosity <= 0.50 and lwc >= 0.8:
+            method = "Gassmann"
+        elif porosity > 0.5 and lwc > 0.0:
+            method = "SCA-Gassmann" if lwc >= 0.8 else "SCA-Hill"
+        elif porosity > 0.5 and lwc == 0.0:
             method = "SCA"
-
+        else:
+            method = "Hill" 
+    
     # Get properties of water, air, and ice
     K_water, C_water = bulk_modulus_water(temperature)
     rho_water = rho_water_correction(temperature)
@@ -849,40 +886,86 @@ def snow_stiffness(
     C_ice = ice_stiffness(temperature, pressure)
     K_ice, G_ice, C_ice_iso = astiffness2moduli(C_ice)  # Convert to isotropic equivalent if needed
 
+    # If using fabric-based stiffness
+    if use_fabric:
+        # Typically you'd do: S_ice = np.linalg.inv(C_ice)
+        # C_ice = vrh4(C_ice, S_ice, eulerangles)
+        # but depends on your function signature
+        pass
+
     # Compute volume fractions of ice, air, and water
     V_ice, V_air, V_water = compute_volume_fractions(porosity, lwc)
 
     # Compute effective density
     rho_eff = V_ice * ice_density(temperature) + V_air * rho_air + V_water * rho_water
 
-    # Use fabric-based stiffness if specified
-    if use_fabric:
-        C_ice = vrh4(C_ice, np.linalg.inv(C_ice), eulerangles)
+    # Empirical "dry" frame moduli for the porous skeleton
+    K_dry = K_ice * (1 - porosity)**exponent
+    # (Optional) You can do the same for shear:
+    G_dry = G_ice * (1 - porosity)**exponent
 
-    # Compute bulk modulus using the selected method
+    # Now compute the final bulk/shear moduli using your chosen method
     if method == "SCA":
         # Self-Consistent Approximation (SCA) for high porosity
-        C_snow = self_consistent_approximation(C_ice, porosity)
+        C_snow = self_consistent_approximation(C_ice, C_air, porosity)
         K_snow, G_snow, _ = astiffness2moduli(C_snow)
 
     elif method == "Gassmann":
-        # Compute dry bulk modulus
-        K_dry = gassmann_bulk_modulus(K_ice, K_ice, K_air, porosity)
+        # Single-step fluid substitution with water, skipping air.
+        # This is recommended if K_dry is your best estimate of the "dry" skeleton.
+        K_snow = gassmann_bulk_modulus(K_dry, K_ice, K_water, porosity, small_denominator)
+        # Gassmann doesn't change the shear modulus, so keep the "dry" shear
+        G_snow = G_dry
+        C_snow = moduli2stiffness(K_snow, G_snow)
 
-        # Compute saturated bulk modulus using Gassmann's equation
-        K_snow = gassmann_bulk_modulus(K_dry, K_ice, K_water, porosity)
-        G_snow = G_ice  # Gassmann assumes shear modulus does not change with fluid saturation
-        C_snow = C_ice_iso.copy()
-        C_snow[:3, :3] = K_snow  # Update bulk modulus component
-
-    else:  # Default to Hill estimate
-        C_voigt = (1 - porosity) * C_ice + porosity * (1 - lwc) * C_air + porosity * lwc * C_water
-        C_reuss = np.linalg.inv( (1 - porosity) * np.linalg.inv(C_ice) + porosity * (1 - lwc) * np.linalg.inv(C_air) + porosity * lwc * np.linalg.inv(C_water))
-        C_snow = (C_voigt + C_reuss) / 2
+    elif method == "SCA-Gassmann":
+        # 1) SCA to get a better "dry" framework at high porosity
+        C_snow = self_consistent_approximation(C_ice, C_air, porosity)
+        K_dry_sca, G_sca, _ = astiffness2moduli(C_snow)
+        # 2) Now apply Gassmann with water
+        K_snow = gassmann_bulk_modulus(K_dry_sca, K_ice, K_water, porosity, small_denominator)
+        # Shear remains the SCA "dry" shear
+        G_snow = G_sca
+        C_snow = moduli2stiffness(K_snow, G_snow)
+    elif method == "SCA-Hill":
+        # Example: SCA for the dry skeleton, then Hill average with fluid phases
+        C_snow = self_consistent_approximation(C_ice, C_air, porosity)
+        # Regularize fluid shear
+        C_air_reg = C_air.copy()
+        C_water_reg = C_water.copy()
+        for i in range(3, 6):
+            if C_air_reg[i, i] == 0:
+                C_air_reg[i, i] = epsilon
+            if C_water_reg[i, i] == 0:
+                C_water_reg[i, i] = epsilon
+        # Weighted Voigt/Reuss
+        C_voigt = (1 - porosity) * C_snow + porosity * (1 - lwc) * C_air + porosity * lwc * C_water
+        C_reuss = np.linalg.pinv(
+            (1 - porosity) * np.linalg.pinv(C_snow) +
+            porosity * (1 - lwc) * np.linalg.pinv(C_air_reg) +
+            porosity * lwc * np.linalg.pinv(C_water_reg)
+        )
+        C_snow = (C_voigt + C_reuss)/2
         K_snow, G_snow, _ = astiffness2moduli(C_snow)
-
+    else:  # Default to Hill estimate
+        C_air_reg = C_air.copy()
+        C_water_reg = C_water.copy()
+        for i in range(3, 6):
+            if C_air_reg[i, i] == 0:
+                C_air_reg[i, i] = epsilon
+            if C_water_reg[i, i] == 0:
+                C_water_reg[i, i] = epsilon
+        
+        C_voigt = (1 - porosity)*C_ice + porosity*(1 - lwc)*C_air + porosity*lwc*C_water
+        C_reuss = np.linalg.pinv(
+            (1 - porosity)*np.linalg.pinv(C_ice) +
+            porosity*(1 - lwc)*np.linalg.pinv(C_air_reg) +
+            porosity*lwc*np.linalg.pinv(C_water_reg)
+        )
+        C_snow = (C_voigt + C_reuss)/2
+        K_snow, G_snow, _ = astiffness2moduli(C_snow)
+    
     return K_snow, G_snow, C_snow, rho_eff
-
 # -----------------------------------------------------------------------------
 def ice_stiffness(
         temperature: float = None, 
@@ -1036,7 +1119,6 @@ def porewater_correction(
     density = (1-porosity/100)*density + (porosity/100)*rho_wc
 
     return(density, grams_air, grams_water)
-
 
 
 # ==============================================================================
