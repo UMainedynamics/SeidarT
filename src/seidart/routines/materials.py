@@ -762,7 +762,7 @@ def isotropic_stiffness_tensor(
 # -----------------------------------------------------------------------------
 def get_seismic(
         self,
-        material
+        material, snow_method = 'Hill'
     ):
     """
     Calculates seismic stiffness coefficients based on material properties,
@@ -794,7 +794,7 @@ def get_seismic(
             creuss = np.zeros([6,6])
             C = np.zeros([6,6])
             
-            # Assume a constant pressure of 0.1 MPa (Why? because this is 
+            # Assume a constant p ressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
             pressure = 0.1 * 1e-1 # in kbar
             C_ice = ice_stiffness(material.temp[ind], pressure)
@@ -812,10 +812,16 @@ def get_seismic(
                 print('Stiffness tensor is positive definite')            
         elif material.material[ind] == 'snow':
             if material.is_anisotropic[ind]:
-                C_ice = ice_stiffness(material.temp[ind], pressure)
+                __, __, C, density = snow_stiffness(
+                    material.temp[ind], material.lwc, material.porosity,
+                    use_fabric=True, eulerangles=euler, method=snow_method, 
+                    exponent=2, epsilon=1e-6, small_denominator=1e-12
+                )
             else:
-                pass
-                #k_snow, mu_
+                __, __, C, density = snow_stiffness(
+                    material.temp[ind], material.lwc[ind], 
+                    material.porosity[ind], method=snow_method, exponent=3
+                )
         else:
             material_limits = isotropic_materials[ material.material[ind] ]
             C = isotropic_stiffness_tensor(0.1, density, material_limits )
