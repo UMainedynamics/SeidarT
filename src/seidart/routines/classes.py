@@ -749,6 +749,9 @@ class Model:
             0: (0, 0), 1: (1, 1), 2: (2, 2),  # Normal components
             3: (1, 2), 4: (0, 2), 5: (0, 1)   # Shear components
         }
+        # Define a factor for each Voigt index:
+        voigt_factor = {0: 1.0, 1: 1.0, 2: 1.0, 3: 1/np.sqrt(2), 4: 1/np.sqrt(2), 5: 1/np.sqrt(2)}
+        
         if self.is_seismic:
             C_full = np.zeros((3, 3, 3, 3))
             # Extract stiffness coefficients from the specified row
@@ -767,10 +770,11 @@ class Model:
                 for j in range(6):
                     i1, i2 = voigt_to_tensor[i]
                     j1, j2 = voigt_to_tensor[j]
-                    C_full[i1, i2, j1, j2] = C[i, j]
-                    C_full[i2, i1, j1, j2] = C[i, j]
-                    C_full[i1, i2, j2, j1] = C[i, j]
-                    C_full[i2, i1, j2, j1] = C[i, j]
+                    factor = voigt_factor[i] * voigt_factor[j]
+                    C_full[i1, i2, j1, j2] = factor * C[i, j]
+                    C_full[i2, i1, j1, j2] = factor * C[i, j]
+                    C_full[i1, i2, j2, j1] = factor * C[i, j]
+                    C_full[i2, i1, j2, j1] = factor * C[i, j]
             # Construct the 3x3 Christoffel matrix
             Gamma = np.zeros((3, 3))
             for i in range(3):
@@ -817,6 +821,7 @@ class Model:
         
         return Gamma, eigenvalues, eigenvectors, velocities
     
+    # --------------------------------------------------------------------------
     def christoffel_plot(self, 
             material_indice, directions = np.array(['x','y','z','yz','xz','xy'])
         ):
@@ -827,10 +832,10 @@ class Model:
         speeds_p, speeds_s1, speeds_s2 = [], [], []
         # Step through each direction and compute wave speeds
         for direction in directions:
-            Gamma = self.get_christoffel_matrix(material_indice, direction)
+            Gamma, eigenvalues, eigenvectors, velocities = self.get_christoffel_matrix(material_indice, direction)
             
             # Compute eigenvalues (which correspond to v^2 for wave propagation)
-            eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+            # eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
             
             # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
             velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
@@ -854,7 +859,10 @@ class Model:
         speeds_s1 = np.append(speeds_s1, speeds_s1[0])
         speeds_s2 = np.append(speeds_s2, speeds_s2[0])
         angles = np.append(angles, angles[0])
-        
+    
+    # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+
         
     
     def plot_unit_sphere_wave_speeds(self, material_indice, num_samples=100):

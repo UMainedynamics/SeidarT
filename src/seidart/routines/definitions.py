@@ -7,6 +7,8 @@ import os.path
 from typing import Optional
 from subprocess import call
 from scipy.io import FortranFile
+from scipy.signal import hilbert, correlate
+
 import glob2
 import copy
 import json
@@ -28,10 +30,13 @@ __all__ = [
     'stfvec2mat',
     'movingsrc',
     'indvar',
+    'rotate_to_zrt',
+    'compute_envelope',
     'agc',
     'correct_geometric_spreading',
     'exponential_gain',
     'parameter_profile_1d',
+    'plot_3c',
     'CFL', 'clight',
 ]
 
@@ -462,7 +467,7 @@ def cpmlcompute(
 
     # Compute the maximum sigma, and alpha values for the CPML.  
     if modelclass.is_seismic:
-        alpha_max = np.pi*modelclass.f0
+        alpha_max = domain.alpha_max_scalar * np.pi*modelclass.f0
         quasi_cp_max = 0.7 * deltamin / (2.0 * modelclass.dt)
         sig_max = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max / (2.0 * domain.cpml )
          # This seems to work well even at higher frequencies
@@ -1088,7 +1093,7 @@ def movingsrc(sf: np.ndarray, txlocs: np.ndarray) -> None:
     """
     pass  # Implementation yet to be done or specified.
 
-# ----------------------------- Plotting Functions -----------------------------
+# ============================= Plotting Functions =============================
 def indvar(
         model_object, domain
     ) -> tuple[np.ndarray, Optional[np.ndarray], np.ndarray, np.ndarray]:
@@ -1202,7 +1207,319 @@ def parameter_profile_1d(
     z = np.arange(0,n) * domain.dz
     return z, output_values 
 
+# ------------------------------------------------------------------------------
+def plot_3c(time, 
+            data1, 
+            data2=None, 
+            data3=None, 
+            data_label1='Data1',
+            data_label2='Data2',
+            data_label3='Data3',
+            source_wavelet=None, 
+            arrivals1=None, 
+            arrivals2=None,
+            arrivals3=None,
+            component_labels=None,
+            arrival_labels1=None, 
+            arrival_labels2=None,
+            arrival_labels3=None,
+            arrival_colors1=None, 
+            arrival_colors2=None,
+            arrival_colors3=None,
+            color_data1='black', 
+            color_data2='blue',
+            color_data3='green',
+            envelope_color1='lightgray', 
+            envelope_color2='lightgray',
+            envelope_color3='lightgray',
+            figsize=(10, 8),
+            show_legend=True,
+            xlims = None,
+            envelope_pad_width=50):
+    """
+    Plot 3-component seismograms with vertical dashed lines for expected arrival times.
+    
+    For each component channel, the function will:
+      1. Optionally cross-correlate the channel with a provided source wavelet.
+      2. Compute a power envelope (via Hilbert transform with padding to reduce edge effects).
+      3. Plot the envelope as a shaded region and overlay the cross-correlated seismogram.
+      
+    The function supports up to three datasets:
+      - data1 is required.
+      - data2 and data3 are optional.
+      
+    Separate arrival times, labels, and line colors can be specified for each dataset.
+    
+    Parameters
+    ----------
+    time : numpy.ndarray
+        1D array of time values.
+    data1 : numpy.ndarray
+        2D array (n_samples x 3) for the first set of seismogram components.
+    data2 : numpy.ndarray, optional
+        2D array (n_samples x 3) for the second set of seismogram components.
+    data3 : numpy.ndarray, optional
+        2D array (n_samples x 3) for the third set of seismogram components.
+    source_wavelet : numpy.ndarray, optional
+        1D array containing the source wavelet. If provided, cross correlation is performed.
+    arrivals1 : dict or list/tuple, optional
+        Arrival times for data1. If a list/tuple, must have 3 elements in order [P, S1, S2].
+    arrivals2 : dict or list/tuple, optional
+        Arrival times for data2. If a list/tuple, must have 3 elements in order [P, S1, S2].
+    arrivals3 : dict or list/tuple, optional
+        Arrival times for data3. If a list/tuple, must have 3 elements in order [P, S1, S2].
+    component_labels : list of str, optional
+        Labels for the 3 components. Default is ['Vertical', 'Radial', 'Transverse'].
+    arrival_labels1 : dict, optional
+        Arrival labels for data1. Default is {'P': 'P1', 'S1': 'S1_1', 'S2': 'S2_1'}.
+    arrival_labels2 : dict, optional
+        Arrival labels for data2. Default is {'P': 'P2', 'S1': 'S1_2', 'S2': 'S2_2'}.
+    arrival_labels3 : dict, optional
+        Arrival labels for data3. Default is {'P': 'P3', 'S1': 'S1_3', 'S2': 'S2_3'}.
+    arrival_colors1 : dict, optional
+        Colors for vertical dashed lines for data1 arrivals. Default is {'P': 'red', 'S1': 'red', 'S2': 'red'}.
+    arrival_colors2 : dict, optional
+        Colors for vertical dashed lines for data2 arrivals. Default is {'P': 'blue', 'S1': 'blue', 'S2': 'blue'}.
+    arrival_colors3 : dict, optional
+        Colors for vertical dashed lines for data3 arrivals. Default is {'P': 'green', 'S1': 'green', 'S2': 'green'}.
+    color_data1 : str, optional
+        Color for the data1 trace (default 'black').
+    color_data2 : str, optional
+        Color for the data2 trace (default 'blue').
+    color_data3 : str, optional
+        Color for the data3 trace (default 'green').
+    envelope_color1 : str, optional
+        Fill color for the envelope of data1 (default 'lightgray').
+    envelope_color2 : str, optional
+        Fill color for the envelope of data2 (default 'lightgray').
+    envelope_color3 : str, optional
+        Fill color for the envelope of data3 (default 'lightgray').
+    figsize : tuple, optional
+        Figure size.
+    envelope_pad_width : int, optional
+        Padding width (in samples) for the Hilbert transform envelope computation.
+    
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The figure handle.
+    """
+    # Set default component labels if not provided.
+    if component_labels is None:
+        component_labels = [r'$\mathrm{Vertical}$', r'$\mathrm{Radial}$', r'$\mathrm{Transverse}$']
+    
+    # Process arrivals for data1.
+    if arrivals1 is not None:
+        if isinstance(arrivals1, (list, tuple, np.ndarray)):
+            if len(arrivals1) != 3:
+                raise ValueError("arrivals1 must have three elements: [P, S1, S2].")
+            arrivals1 = {'P': arrivals1[0], 'S1': arrivals1[1], 'S2': arrivals1[2]}
+    # Process arrivals for data2.
+    if arrivals2 is not None:
+        if isinstance(arrivals2, (list, tuple, np.ndarray)):
+            if len(arrivals2) != 3:
+                raise ValueError("arrivals2 must have three elements: [P, S1, S2].")
+            arrivals2 = {'P': arrivals2[0], 'S1': arrivals2[1], 'S2': arrivals2[2]}
+    # Process arrivals for data3.
+    if arrivals3 is not None:
+        if isinstance(arrivals3, (list, tuple, np.ndarray)):
+            if len(arrivals3) != 3:
+                raise ValueError("arrivals3 must have three elements: [P, S1, S2].")
+            arrivals3 = {'P': arrivals3[0], 'S1': arrivals3[1], 'S2': arrivals3[2]}
+    
+     # Set default arrival labels.
+    if arrival_labels1 is None:
+        arrival_labels1 = {'P': r'$P_{1}$', 'S1': r'$S_{1,1}$', 'S2': r'$S_{2,1}$'}
+    if arrival_labels2 is None:
+        arrival_labels2 = {'P': r'$P_{2}$', 'S1': r'$S_{1,2}$', 'S2': r'$S_{2,2}$'}
+    if arrival_labels3 is None:
+        arrival_labels3 = {'P': r'$P_{3}$', 'S1': r'$S_{1,3}$', 'S2': r'$S_{2,3}$'}
+        
+    # Set default arrival colors.
+    if arrival_colors1 is None:
+        arrival_colors1 = {'P': 'red', 'S1': 'red', 'S2': 'red'}
+    if arrival_colors2 is None:
+        arrival_colors2 = {'P': 'blue', 'S1': 'blue', 'S2': 'blue'}
+    if arrival_colors3 is None:
+        arrival_colors3 = {'P': 'green', 'S1': 'green', 'S2': 'green'}
+    
+    # Create figure with 3 subplots (one per component).
+    fig, axs = plt.subplots(3, 1, figsize=figsize, sharex=True)
+    
+    # Loop over the three components.
+    for i in range(3):
+        # Process data1.
+        if source_wavelet is not None:
+            cc1 = correlate(data1[:, i], source_wavelet, mode='same')
+            cc1 = cc1 / np.max(np.abs(cc1))
+        else:
+            cc1 = data1[:, i]
+        try:
+            env1 = compute_envelope(cc1, pad_width=envelope_pad_width)
+        except ValueError:
+            env1 = np.abs(hilbert(cc1))
+        axs[i].fill_between(time, -env1, env1, color=envelope_color1, alpha=0.4)
+        axs[i].plot(time, cc1, color=color_data1, label=data_label1 if i == 0 else None, lw = 2, alpha = 0.75)
+        
+        # Process data2 if provided.
+        if data2 is not None:
+            if source_wavelet is not None:
+                cc2 = correlate(data2[:, i], source_wavelet, mode='same')
+                cc2 = cc2 / np.max(np.abs(cc2))
+            else:
+                cc2 = data2[:, i]
+            try:
+                env2 = compute_envelope(cc2, pad_width=envelope_pad_width)
+            except ValueError:
+                env2 = np.abs(hilbert(cc2))
+            axs[i].fill_between(time, -env2, env2, color=envelope_color2, alpha=0.4)
+            axs[i].plot(time, cc2, color=color_data2, label=data_label2 if i == 0 else None, lw = 2, alpha = 0.75)
+        
+        # Process data3 if provided.
+        if data3 is not None:
+            if source_wavelet is not None:
+                cc3 = correlate(data3[:, i], source_wavelet, mode='same')
+                cc3 = cc3 / np.max(np.abs(cc3))
+            else:
+                cc3 = data3[:, i]
+            try:
+                env3 = compute_envelope(cc3, pad_width=envelope_pad_width)
+            except ValueError:
+                env3 = np.abs(hilbert(cc3))
+            axs[i].fill_between(time, -env3, env3, color=envelope_color3, alpha=0.4)
+            axs[i].plot(time, cc3, color=color_data3, label=data_label3 if i == 0 else None, lw = 2, alpha = 0.75)
+        
+        axs[i].set_ylabel(component_labels[i], fontsize=12)
+        axs[i].grid(True, linestyle='--', alpha=0.5)
+        
+        # Plot vertical dashed lines for arrivals in data1.
+        if arrivals1 is not None:
+            for key, atime in arrivals1.items():
+                lbl = arrival_labels1[key] if i == 0 else None
+                axs[i].axvline(atime, color=arrival_colors1.get(key, 'red'), linestyle='--', label=lbl)
+        
+        # Plot vertical dashed lines for arrivals in data2.
+        if data2 is not None and arrivals2 is not None:
+            for key, atime in arrivals2.items():
+                lbl = arrival_labels2[key] if i == 0 else None
+                axs[i].axvline(atime, color=arrival_colors2.get(key, 'blue'), linestyle='-.', label=lbl)
+        
+        # Plot vertical dashed lines for arrivals in data3.
+        if data3 is not None and arrivals3 is not None:
+            for key, atime in arrivals3.items():
+                lbl = arrival_labels3[key] if i == 0 else None
+                axs[i].axvline(atime, color=arrival_colors3.get(key, 'green'), linestyle=':', label=lbl)
+        
+        # Add legend only on the first subplot.
+        if i == 0:
+            if show_legend:
+                axs[i].legend(loc='upper right')
+    
+    if xlims is not None:
+        for ax in axs:
+            ax.set_xlim(xlims)
+    
+    axs[-1].set_xlabel("Time (s)", fontsize = 12)
+    fig.tight_layout()
+    return fig, axs
+
 # ============================ Processing Functions ============================
+def compute_envelope(signal, pad_width=50):
+    """
+    Compute the amplitude envelope of a signal using the Hilbert transform.
+    Pads the signal (using reflection) to reduce edge effects, then removes the pad.
+    """
+    if len(signal) < 2*pad_width:
+        raise ValueError("Signal too short for the given pad_width.")
+    padded = np.pad(signal, pad_width, mode='reflect')
+    analytic = hilbert(padded)
+    envelope = np.abs(analytic)
+    # Remove the padded regions.
+    return envelope[pad_width:-pad_width]
+
+# --------------------------------------------------------------------------
+def rotate_to_zrt(data, source=None, receiver=None, direction=None):
+    """
+    Rotate seismogram data from Cartesian (vx, vy, vz) to Z, R, T components.
+    
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Array of shape (n_samples, 3) containing the seismogram data in (vx, vy, vz).
+    source : array_like, optional
+        Source coordinates as a 3-element array [x, y, z].
+    receiver : array_like, optional
+        Receiver coordinates as a 3-element array [x, y, z].
+    direction : array_like, optional
+        Propagation direction vector (3 elements). If provided, its horizontal 
+        projection is used to define the radial direction.
+        
+    Returns
+    -------
+    rotated_data : numpy.ndarray
+        Array of shape (n_samples, 3) containing the rotated seismogram data in (Z, R, T).
+    
+    Notes
+    -----
+    - If 'direction' is provided, it is normalized and its horizontal (x,y) components
+    are used for the radial direction.
+    - If 'direction' is not provided, both 'source' and 'receiver' must be given. The 
+    horizontal difference (receiver - source) is used to compute the azimuth.
+    - The vertical unit vector is assumed to be [0, 0, 1].
+    - The transverse component is computed as the cross product of the vertical and radial directions.
+    """
+    # Determine the radial unit vector
+    if direction is not None:
+        direction = np.asarray(direction, dtype=float)
+        norm_dir = np.linalg.norm(direction)
+        if norm_dir == 0:
+            raise ValueError("The provided direction vector has zero length.")
+        direction_normalized = direction / norm_dir
+        
+        # Use the horizontal projection of the direction vector for the radial component
+        radial_h = np.array([direction_normalized[0], direction_normalized[1], 0.0])
+        norm_radial_h = np.linalg.norm(radial_h)
+        if norm_radial_h < 1e-8:
+            # If the horizontal part is nearly zero, choose an arbitrary horizontal direction.
+            radial_unit = np.array([1.0, 0.0, 0.0])
+        else:
+            radial_unit = radial_h / norm_radial_h
+    elif source is not None and receiver is not None:
+        source = np.asarray(source, dtype=float)
+        receiver = np.asarray(receiver, dtype=float)
+        horizontal_diff = receiver[:2] - source[:2]  # Only x and y components
+        norm_horizontal = np.linalg.norm(horizontal_diff)
+        if norm_horizontal < 1e-8:
+            # If source and receiver are nearly vertically aligned, choose an arbitrary horizontal direction.
+            radial_unit = np.array([1.0, 0.0, 0.0])
+        else:
+            radial_unit = np.array([horizontal_diff[0] / norm_horizontal,
+                                    horizontal_diff[1] / norm_horizontal, 0.0])
+    else:
+        raise ValueError("Either 'direction' or both 'source' and 'receiver' must be provided.")
+    
+    # Define the vertical unit vector (assumed to be [0, 0, 1])
+    Z_unit = np.array([0.0, 0.0, 1.0])
+    # Compute the transverse unit vector as the cross product of Z and radial
+    T_unit = np.cross(Z_unit, radial_unit)
+    norm_T = np.linalg.norm(T_unit)
+    if norm_T < 1e-8:
+        # If T is degenerate (should rarely happen), use an alternative horizontal direction.
+        T_unit = np.array([0.0, 1.0, 0.0])
+    else:
+        T_unit = T_unit / norm_T
+    
+    # Build the rotation matrix.
+    # Each row is one of the new unit vectors, so that:
+    #   rotated_data = [Z, R, T] = data @ rotation_matrix.T
+    rotation_matrix = np.vstack([Z_unit, radial_unit, T_unit])
+    
+    # Apply the rotation matrix to each sample in the seismogram.
+    rotated_data = np.dot(data, rotation_matrix.T)
+    
+    return rotated_data
+    
+# ------------------------------------------------------------------------------
 def agc(ts: np.ndarray, k: int, agctype: str) -> np.ndarray:
     """
     Applies auto-gain control (AGC) normalization to a time series using a 

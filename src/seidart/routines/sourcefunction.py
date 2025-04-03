@@ -5,6 +5,7 @@ from scipy import signal
 import matplotlib.pyplot as plt 
 from scipy.io import FortranFile 
 import scipy.signal
+from scipy.signal import hilbert, correlate
 from typing import Tuple 
 
 __all__ = [
@@ -165,6 +166,9 @@ def pointsource(
         writesrc("electromagneticsourcey.dat", forcey)
         writesrc("electromagneticsourcez.dat", forcez)
     
+    modelclass.sourcefunction_x = forcex
+    modelclass.sourcefunction_y = forcey
+    modelclass.sourcefunction_z = forcez
     return timevec, forcex, forcey, forcez, srcfn
     
 # ------------------------------------------------------------------------------

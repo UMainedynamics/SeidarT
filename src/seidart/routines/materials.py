@@ -787,18 +787,12 @@ def get_seismic(
 
         if material.material[ind] == 'ice1h':
             print('Computing the stiffness for anisotropic material ice1h.')
-            euler = read_ang(material.angfile[ind])
-            p = len(euler[:,0])
-
-            cvoigt = np.zeros([6,6])
-            creuss = np.zeros([6,6])
-            C = np.zeros([6,6])
-            
             # Assume a constant p ressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
             pressure = 0.1 * 1e-1 # in kbar
             C_ice = ice_stiffness(material.temp[ind], pressure)
             if material.is_anisotropic[ind]:
+                euler = read_ang(material.angfile[ind])
                 C = vrh4(C_ice, euler)
             else:
                 print('Computing the homogeneous stiffness coefficients for ice1h.')
