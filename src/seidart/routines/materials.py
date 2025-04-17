@@ -12,6 +12,7 @@ __all__ = [
     'isotropic_stiffness_tensor',
     'isotropic_permittivity_tensor',
     'porewater_correction',
+    'moduli2stiffness',
     'astiffness2moduli',
     'compute_volume_fractions',
     'bulk_modulus_water',
@@ -21,7 +22,8 @@ __all__ = [
     'moduli_gneiss',
     'moduli_sand_silt_clay',
     'snow_stiffness',
-    'ice_stiffness',
+    'ice_stiffness_petrenko',
+    'ice_stiffness_gagnon',
     'ice_permittivity',
     'ice_density',
     'tensor2velocities',
@@ -413,15 +415,23 @@ def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
         temp[1,1:] = T[3:5]
         temp[2,2] = T[5]
         T = np.triu(temp).T + np.triu(temp, 1)
-    if T.shape == (21,):
+    if T.shape == (21,) or T.shape == (22,): # First case is a numpy array and second is a dataframe
         temp = np.zeros([6,6])
-        temp[0,:] = T[0:6] 
-        temp[1,1:] = T[6:11]
-        temp[2,2:] = T[11:15]
-        temp[3,3:] = T[15:18]
-        temp[4,4:] = T[18:20]
-        temp[5,5] = T[20] 
-        T = np.triu(temp).T + np.triu(temp, 1)     
+        if isinstance(T, pd.DataFrame):
+            rho = T['rho']
+            vpv = np.sqrt(T['c33']/rho)
+            vph = np.sqrt(T['c11']/rho)
+            vsv = np.sqrt(T['c44']/rho)
+            vsh = np.sqrt( (T['c11'] - T['c12'] )/(2*rho))
+            return vpv, vph, vsv, vsh
+        else:
+            temp[0,:] = T[0:6] 
+            temp[1,1:] = T[6:11]
+            temp[2,2:] = T[11:15]
+            temp[3,3:] = T[15:18]
+            temp[4,4:] = T[18:20]
+            temp[5,5] = T[20] 
+            T = np.triu(temp).T + np.triu(temp, 1)
     if seismic:
         vpv = np.sqrt( T[2,2]/rho )
         vph = np.sqrt( T[0,0]/rho )
@@ -445,38 +455,66 @@ def moduli2stiffness(K, G):
     return C
 
 # -----------------------------------------------------------------------------
-def astiffness2moduli(C):
+import numpy as np
+
+def astiffness2moduli(C, transversely_isotropic=True):
     """
-    Computes the isotropic bulk and shear modulus from an anisotropic stiffness tensor using Hill's average.
+    Computes the isotropic bulk and shear modulus from an anisotropic stiffness tensor
+    using Hill's average for a transversely isotropic stiffness tensor.
     
     Parameters:
-        C (numpy array): 6x6 stiffness tensor in Voigt notation (Pa)
+        C (numpy.ndarray): 6x6 stiffness tensor in Voigt notation (Pa)
     
     Returns:
-        (K_iso, mu_iso): Tuple of isotropic bulk and shear moduli (Pa)
+        (K_iso, mu_iso, C_isotropic): Tuple of isotropic bulk modulus (Pa), shear modulus (Pa),
+                                      and the 6x6 isotropic stiffness tensor (Pa)
     """
-    # Voigt Average
-    K_V = (1/9) * (C[0,0] + C[1,1] + C[2,2]) + (2/9) * (C[0,1] + C[0,2] + C[1,2])
-    mu_V = (1/15) * (C[0,0] + C[1,1] + C[2,2] - C[0,1] - C[0,2] - C[1,2]) + (1/5) * (C[3,3] + C[4,4] + C[5,5])
-
-    # Compliance tensor (inverse of stiffness tensor)
     S = np.linalg.inv(C)
-
-    # Reuss Average
-    K_R = 1 / ((1/9) * (S[0,0] + S[1,1] + S[2,2]) + (2/9) * (S[0,1] + S[0,2] + S[1,2]))
-    mu_R = 1 / (5 * ((4/15) * (S[0,0] + S[1,1] + S[2,2] - S[0,1] - S[0,2] - S[1,2]) + (3/5) * (S[3,3] + S[4,4] + S[5,5])))
-
-    # Hill Average
-    K_iso = (K_V + K_R) / 2
-    mu_iso = (mu_V + mu_R) / 2
     
-    C_isotropic = np.zeros([6,6])
-    lambda_ = K_iso - 2 * mu_iso / 3
-    # Fill in the bulk/shear moduli components
-    C_isotropic[:3, :3] = lambda_  # λ terms
-    np.fill_diagonal(C_isotropic[:3, :3], K_iso + 4 * mu_iso / 3)  # K + 4/3 μ on the diagonal
-    np.fill_diagonal(C_isotropic[3:, 3:], mu_iso)  # Shear moduli (μ) for Voigt indices 4,5,6
+    if transversely_isotropic:
+        # --- Voigt average for bulk modulus ---
+        Kv = (C[0,0] + C[0,1] + 2*C[0,2] + 2*C[2,2] + 2*C[3,3]) / 6  # fixed typo in parens
+
+        # --- Reuss average for bulk modulus (approximate form for TI) ---
+        # Use compliance-based version to be safe
+        Kr = 1 / (S[0,0] + S[1,1] + S[2,2] + 2 * (S[0,1] + S[0,2] + S[1,2]))  # matches isotropic form
+
+        # --- Voigt average for shear modulus ---
+        mu_V = (2*C[5,5] + C[3,3] + C[4,4] + C[3,3]) / 5  # general TI, no assumption about c44=c55
+
+        # --- Reuss average for shear modulus ---
+        mu_R = 5 / (2/C[5,5] + 1/C[3,3] + 1/C[4,4] + 1/C[3,3])  # same terms in reciprocal
+    else:
+        # --- Voigt average ---
+        K_V = (C[0,0] + C[1,1] + C[2,2] + 2 * (C[0,1] + C[0,2] + C[1,2])) / 9
+        mu_V = ((C[0,0] + C[1,1] + C[2,2] - C[0,1] - C[0,2] - C[1,2]) +
+                3 * (C[3,3] + C[4,4] + C[5,5])) / 15
+
+        # --- Reuss average ---
+        K_R = 1 / (S[0,0] + S[1,1] + S[2,2] + 2 * (S[0,1] + S[0,2] + S[1,2]))
+        mu_R = 15 / ((4 * (S[0,0] + S[1,1] + S[2,2] - S[0,1] - S[0,2] - S[1,2])) +
+                     3 * (S[3,3] + S[4,4] + S[5,5]))
+
+        Kv = K_V
+        Kr = K_R
+
+    # --- Hill averages ---
+    K_iso = (Kv + Kr) / 2
+    mu_iso = (mu_V + mu_R) / 2
+
+    # --- Construct isotropic stiffness tensor ---
+    C_isotropic = np.zeros((6, 6))
+    lam = K_iso - 2 * mu_iso / 3
+
+    for i in range(3):
+        for j in range(3):
+            C_isotropic[i, j] = lam
+        C_isotropic[i, i] = lam + 2 * mu_iso
+
+    C_isotropic[3:, 3:] = np.eye(3) * mu_iso
+
     return K_iso, mu_iso, C_isotropic
+
     
 # -----------------------------------------------------------------------------
 def bulk_modulus_water(T):
@@ -762,7 +800,7 @@ def isotropic_stiffness_tensor(
 # -----------------------------------------------------------------------------
 def get_seismic(
         self,
-        material, snow_method = 'Hill'
+        material, snow_method = 'Hill', ice_method = 'Petrenko'
     ):
     """
     Calculates seismic stiffness coefficients based on material properties,
@@ -790,7 +828,11 @@ def get_seismic(
             # Assume a constant p ressure of 0.1 MPa (Why? because this is 
             # approximately 1 ATM)
             pressure = 0.1 * 1e-1 # in kbar
-            C_ice = ice_stiffness(material.temp[ind], pressure)
+            if ice_method == 'Gagnon':
+                C_ice = ice_stiffness_gagnon(material.temp[ind], pressure)
+            else:
+                C_ice = ice_stiffness_petrenko(material.temp[ind], pressure)
+            
             if material.is_anisotropic[ind]:
                 euler = read_ang(material.angfile[ind])
                 C = vrh4(C_ice, euler)
@@ -839,7 +881,7 @@ def get_seismic(
 def snow_stiffness(
         temperature, lwc, porosity, pressure=0.0,
         use_fabric=False, eulerangles=None, method=None, exponent=2, 
-        epsilon=1e-6, small_denominator=1e-12
+        epsilon=1e-6, small_denominator=1e-12, ice_method = 'Petrenko'
     ):
     """
     Computes the effective stiffness tensor for snow using Hill, SCA, or Gassmann's equations.
@@ -883,7 +925,11 @@ def snow_stiffness(
     G_water = 0.0  # Water has no shear strength
 
     # Compute ice stiffness tensor and bulk/shear moduli
-    C_ice = ice_stiffness(temperature, pressure)
+    if ice_method == 'Gagnon':
+        C_ice = ice_stiffness_gagnon(temperature, pressure)
+    else: 
+        C_ice = ice_stiffness_petrenko(temperature, pressure)
+    
     K_ice, G_ice, C_ice_iso = astiffness2moduli(C_ice)  # Convert to isotropic equivalent if needed
 
     # If using fabric-based stiffness
@@ -966,8 +1012,88 @@ def snow_stiffness(
         K_snow, G_snow, _ = astiffness2moduli(C_snow)
     
     return K_snow, G_snow, C_snow, rho_eff
+
 # -----------------------------------------------------------------------------
-def ice_stiffness(
+def ice_stiffness_petrenko(temperature: float, pressure = 0) -> np.ndarray:
+    """
+    Calculate the 6×6 stiffness tensor (in Voigt notation) for ice Ih based on
+    empirical formulas similar to those given in "Physics of Ice" by Petrenko & Whitworth.
+    
+    Parameters:
+        temperature (float): Temperature in °C.
+        pressure (float): Pressure in kbar.
+        
+    Returns:
+        np.ndarray: 6×6 stiffness tensor in Pa.
+        
+    Note:
+        The five independent elastic constants for hexagonal ice are C11, C12, C13, C33, and C44.
+        The sixth constant, C66, is given by (C11 - C12)/2.
+        The formulas below use linear (or quadratic) pressure and temperature derivatives.
+        The coefficients here are only examples—please check with the actual values from
+        "Physics of Ice" for your application.
+    """
+    # Example reference values at T0 = 0 °C and P0 = 0 kbar (in GPa)
+    C11_0 = 11.0    # GPa
+    C12_0 = 5.0     # GPa
+    C13_0 = 4.5     # GPa
+    C33_0 = 11.5    # GPa
+    C44_0 = 3.2     # GPa
+    
+    # Temperature derivatives (example values, in GPa/°C)
+    dC11_dT = -0.05  
+    dC12_dT = -0.03  
+    dC13_dT = -0.03  
+    dC33_dT = -0.05  
+    dC44_dT = -0.02  
+    
+    # Pressure derivatives (example values, in GPa/kbar)
+    dC11_dP = 0.4    
+    dC12_dP = 0.3    
+    dC13_dP = 0.35   
+    dC33_dP = 0.5    
+    dC44_dP = 0.1    
+    
+    # Calculate the elastic constants at the given temperature and pressure
+    # (Assuming linear dependence; if quadratic terms are needed, add them accordingly)
+    C11 = C11_0 + dC11_dT * temperature + dC11_dP * pressure
+    C12 = C12_0 + dC12_dT * temperature + dC12_dP * pressure
+    C13 = C13_0 + dC13_dT * temperature + dC13_dP * pressure
+    C33 = C33_0 + dC33_dT * temperature + dC33_dP * pressure
+    C44 = C44_0 + dC44_dT * temperature + dC44_dP * pressure
+    
+    # For hexagonal ice, C66 is given by (C11 - C12)/2.
+    C66 = (C11 - C12) / 2.0
+    
+    # Convert from GPa to Pa (1 GPa = 1e9 Pa)
+    conv = 1e9
+    C11 *= conv
+    C12 *= conv
+    C13 *= conv
+    C33 *= conv
+    C44 *= conv
+    C66 *= conv
+    
+    # Build the 6x6 stiffness tensor in Voigt notation.
+    # The tensor for hexagonal symmetry (ice Ih) is:
+    # [ [ C11, C12, C13,   0,   0,   0 ],
+    #   [ C12, C11, C13,   0,   0,   0 ],
+    #   [ C13, C13, C33,   0,   0,   0 ],
+    #   [   0,   0,   0, C44,   0,   0 ],
+    #   [   0,   0,   0,   0, C44,   0 ],
+    #   [   0,   0,   0,   0,   0, C66] ]
+    C = np.zeros((6,6))
+    C[0,0] = C11; C[0,1] = C12; C[0,2] = C13
+    C[1,0] = C12; C[1,1] = C11; C[1,2] = C13
+    C[2,0] = C13; C[2,1] = C13; C[2,2] = C33
+    C[3,3] = C44
+    C[4,4] = C44
+    C[5,5] = C66
+    
+    return C
+
+# -----------------------------------------------------------------------------
+def ice_stiffness_gagnon(
         temperature: float = None, 
         pressure: float = 0.0
     ) -> np.ndarray:
@@ -984,11 +1110,11 @@ def ice_stiffness(
     :return: The stiffness tensor for ice.
     :rtype: np.ndarray
     """
-
+    
     # Allocate space for the stiffness tensor
     C = np.zeros([6,6])
     
-    C[0,0] = 136.813 - 0.28940*temperature - 0.00178270*(temperature**2) \
+    C[0,0] = 136.813 - 0.28941*temperature - 0.00178270*(temperature**2) \
       + 4.6648*pressure - 0.13501*(pressure**2) 
     C[0,1] = 69.4200 - 0.14673*temperature - 0.00090362*(temperature**2) \
       + 5.0743*pressure + .085917*(pressure**2)
@@ -1010,7 +1136,7 @@ def ice_stiffness(
     C[5,5] = (C[0,0] - C[0,1] )/2
     
     stiffness = C*1e8
-
+    
     return(stiffness)
 
 # -----------------------------------------------------------------------------

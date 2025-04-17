@@ -715,7 +715,51 @@ class Model:
         axz.set_ylabel('Z ' + y_units)
         axz.set_xlabel('time (s)')
         plt.show()
-
+    
+    
+    # --------------------------------------------------------------------------
+    def voigt_to_full_tensor(self, C_voigt):
+        """
+        Convert a 6x6 stiffness matrix in Voigt notation to a 3x3x3x3 tensor.
+        
+        Parameters:
+            C_voigt: numpy.ndarray
+                6x6 stiffness matrix in Voigt notation.
+                
+        Returns:
+            C_full: numpy.ndarray
+                3x3x3x3 stiffness tensor.
+        """
+        # Initialize full tensor with zeros
+        C_full = np.zeros((3, 3, 3, 3))
+        
+        # Mapping from sorted index pairs to Voigt index
+        voigt_map = {
+            (0, 0): 0,
+            (1, 1): 1,
+            (2, 2): 2,
+            (1, 2): 3,
+            (0, 2): 4,
+            (0, 1): 5
+        }
+        
+        # Conversion factor: 1 if i == j, else 1/sqrt(2)
+        def factor(i, j):
+            return 1.0 if i == j else 1.0/np.sqrt(2)
+        
+        # Loop over all tensor indices
+        for i in range(3):
+            for j in range(3):
+                # Determine the Voigt index for the (i, j) pair (order doesn't matter)
+                I = voigt_map[tuple(sorted((i, j)))]
+                for k in range(3):
+                    for l in range(3):
+                        # Determine the Voigt index for the (k, l) pair
+                        J = voigt_map[tuple(sorted((k, l)))]
+                        # Multiply the appropriate conversion factors and assign
+                        C_full[i, j, k, l] = factor(i, j) * factor(k, l) * C_voigt[I, J]
+        return C_full
+    
     # --------------------------------------------------------------------------
     def get_christoffel_matrix(self, material_indice, direction):
         direction_map = {
@@ -766,16 +810,7 @@ class Model:
             ])
             
             rho = row['rho']  # Extract density
-            for i in range(6):
-                for j in range(6):
-                    i1, i2 = voigt_to_tensor[i]
-                    j1, j2 = voigt_to_tensor[j]
-                    factor = voigt_factor[i] * voigt_factor[j]
-                    C_full[i1, i2, j1, j2] = factor * C[i, j]
-                    C_full[i2, i1, j1, j2] = factor * C[i, j]
-                    C_full[i1, i2, j2, j1] = factor * C[i, j]
-                    C_full[i2, i1, j2, j1] = factor * C[i, j]
-            # Construct the 3x3 Christoffel matrix
+            C_full = self.voigt_to_full_tensor(C)
             Gamma = np.zeros((3, 3))
             for i in range(3):
                 for j in range(3):
@@ -820,51 +855,92 @@ class Model:
         velocities.sort()
         
         return Gamma, eigenvalues, eigenvectors, velocities
-    
-    # --------------------------------------------------------------------------
-    def christoffel_plot(self, 
-            material_indice, directions = np.array(['x','y','z','yz','xz','xy'])
-        ):
-        angles = np.linspace(0, 2 * np.pi, len(directions), endpoint=False)
-        num_directions = len(directions)
-        
-        # Initialize arrays for wave speeds
-        speeds_p, speeds_s1, speeds_s2 = [], [], []
-        # Step through each direction and compute wave speeds
-        for direction in directions:
-            Gamma, eigenvalues, eigenvectors, velocities = self.get_christoffel_matrix(material_indice, direction)
-            
-            # Compute eigenvalues (which correspond to v^2 for wave propagation)
-            # eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
-            
-            # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
-            velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
-            
-            # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
-            velocities.sort()
-            
-            # Store velocities
-            speeds_s1.append(velocities[0])  # Slowest S-wave
-            speeds_s2.append(velocities[1])  # Second S-wave
-            speeds_p.append(velocities[2])   # Fastest wave (P-wave)
-        
-         # Convert lists to NumPy arrays
-        speeds_p = np.array(speeds_p)
-        speeds_s1 = np.array(speeds_s1)
-        speeds_s2 = np.array(speeds_s2)
-        
-        # Extend data for closing the radar plot loop
-        angles = np.linspace(0, 2 * np.pi, num_directions, endpoint=False)
-        speeds_p = np.append(speeds_p, speeds_p[0])
-        speeds_s1 = np.append(speeds_s1, speeds_s1[0])
-        speeds_s2 = np.append(speeds_s2, speeds_s2[0])
-        angles = np.append(angles, angles[0])
-    
-    # --------------------------------------------------------------------------
-    # --------------------------------------------------------------------------
 
-        
+    # --------------------------------------------------------------------------
+    def compute_christoffel_directions(self, material_index, n_theta=30, n_phi=60):
+        """
+        Compute eigenvectors from the Christoffel matrix over a grid of directions.
+
+        Parameters
+        ----------
+        material_index : int
+            Index of the material from stiffness_coefficients.
+        n_theta : int
+            Number of points in inclination (from 0 to pi/2, lower hemisphere).
+        n_phi : int
+            Number of azimuthal angles (from 0 to 2*pi).
+
+        Stores
+        ------
+        self.christoffel_solutions : list of dict
+            Each dict contains direction vector, eigenvectors, eigenvalues, velocities.
+        """
+        self.christoffel_solutions = []
+
+        for i in range(n_theta):
+            theta = (i + 0.5) * (np.pi / 2) / n_theta  # 0 to pi/2
+            for j in range(n_phi):
+                phi = j * 2 * np.pi / n_phi  # 0 to 2pi
+
+                # Convert to Cartesian
+                n = np.array([
+                    np.sin(theta) * np.cos(phi),
+                    np.sin(theta) * np.sin(phi),
+                    np.cos(theta)
+                ])
+
+                Gamma, eigvals, eigvecs, velocities = self.get_christoffel_matrix(material_index, n)
+                self.christoffel_solutions.append({
+                    'direction': n,
+                    'eigenvectors': eigvecs,
+                    'eigenvalues': eigvals,
+                    'velocities': velocities
+                })
+
+    # --------------------------------------------------------------------------
+    def plot_lower_hemisphere_polarizations(self):
+        """
+        Plot lower hemisphere projections of P, SV, and SH polarization directions
+        using previously computed Christoffel solutions.
+
+        Returns
+        -------
+        fig, axs : Matplotlib figure and axes objects.
+        """
+        def project(v):
+            x, y, z = v
+            # Flip to lower hemisphere if needed
+            if z < 0:
+                v = -v
+            r = np.sqrt(1 - v[2]**2)
+            return v[0] * r, v[1] * r
+
+        fig, axs = plt.subplots(1, 3, figsize=(12, 4), subplot_kw=dict(aspect='equal'))
+
+        titles = ['P-wave', 'SV-wave', 'SH-wave']
+        colors = ['r', 'b', 'g']
+
+        for i, ax in enumerate(axs):
+            ax.set_title(titles[i])
+            ax.set_xlim(-1.05, 1.05)
+            ax.set_ylim(-1.05, 1.05)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.axhline(0, color='k', linewidth=0.5)
+            ax.axvline(0, color='k', linewidth=0.5)
+            ax.add_patch(plt.Circle((0, 0), 1, color='gray', fill=False, linewidth=0.5))
+
+            for sol in self.christoffel_solutions:
+                vec = sol['eigenvectors'][:, i]  # i = 0: P, 1: SV, 2: SH
+                x, y = project(vec)
+                ax.plot(x, y, marker='o', color=colors[i], markersize=2, alpha=0.7)
+
+        fig.tight_layout()
+        return fig, axs
+
     
+    # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------    
     def plot_unit_sphere_wave_speeds(self, material_indice, num_samples=100):
         """
         Plot wave speeds on a unit sphere for a given material.

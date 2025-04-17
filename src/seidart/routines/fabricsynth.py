@@ -178,14 +178,12 @@ class Fabric:
                         self.params['npts'][ind]
                     )
                 ))
-                self.plunges = np.hstack((
-                    self.plunges,
-                    np.random.uniform(
-                        self.params['plunge_low'][ind], 
-                        self.params['plunge_high'][ind], 
-                        self.params['npts'][ind]
-                    )
-                ))
+                theta_low = np.radians(self.params['plunge_low'][ind])
+                theta_high = np.radians(self.params['plunge_high'][ind])
+                u = np.random.uniform(0, 1, self.params['npts'][ind])
+                cos_theta = np.cos(theta_low) - u * (np.cos(theta_low) - np.cos(theta_high) )
+                plunge_samples = np.degrees(np.arccos(cos_theta) )
+                self.plunges = np.hstack((self.plunges, plunge_samples))
                 self.orientations = np.hstack((
                     self.orientations,
                     np.random.uniform(

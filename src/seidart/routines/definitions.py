@@ -8,6 +8,7 @@ from typing import Optional
 from subprocess import call
 from scipy.io import FortranFile
 from scipy.signal import hilbert, correlate
+from scipy.signal.windows import tukey
 
 import glob2
 import copy
@@ -31,12 +32,15 @@ __all__ = [
     'movingsrc',
     'indvar',
     'rotate_to_zrt',
+    'rotate_to_qlt',
     'compute_envelope',
+    'polarization_analysis',
     'agc',
     'correct_geometric_spreading',
     'exponential_gain',
     'parameter_profile_1d',
     'plot_3c',
+    'plot_hodogram',
     'CFL', 'clight',
 ]
 
@@ -1232,9 +1236,11 @@ def plot_3c(time,
             envelope_color1='lightgray', 
             envelope_color2='lightgray',
             envelope_color3='lightgray',
+            plot_envelope=True,
             figsize=(10, 8),
             show_legend=True,
             xlims = None,
+            yaxis_rotation = 90,
             envelope_pad_width=50):
     """
     Plot 3-component seismograms with vertical dashed lines for expected arrival times.
@@ -1343,6 +1349,11 @@ def plot_3c(time,
     if arrival_colors3 is None:
         arrival_colors3 = {'P': 'green', 'S1': 'green', 'S2': 'green'}
     
+    if not plot_envelope:
+        envelope_alpha = 0.0
+    else: 
+        envelope_alpha = 0.4
+    
     # Create figure with 3 subplots (one per component).
     fig, axs = plt.subplots(3, 1, figsize=figsize, sharex=True)
     
@@ -1358,7 +1369,7 @@ def plot_3c(time,
             env1 = compute_envelope(cc1, pad_width=envelope_pad_width)
         except ValueError:
             env1 = np.abs(hilbert(cc1))
-        axs[i].fill_between(time, -env1, env1, color=envelope_color1, alpha=0.4)
+        axs[i].fill_between(time, -env1, env1, color=envelope_color1, alpha=envelope_alpha)
         axs[i].plot(time, cc1, color=color_data1, label=data_label1 if i == 0 else None, lw = 2, alpha = 0.75)
         
         # Process data2 if provided.
@@ -1372,7 +1383,7 @@ def plot_3c(time,
                 env2 = compute_envelope(cc2, pad_width=envelope_pad_width)
             except ValueError:
                 env2 = np.abs(hilbert(cc2))
-            axs[i].fill_between(time, -env2, env2, color=envelope_color2, alpha=0.4)
+            axs[i].fill_between(time, -env2, env2, color=envelope_color2, alpha=envelope_alpha)
             axs[i].plot(time, cc2, color=color_data2, label=data_label2 if i == 0 else None, lw = 2, alpha = 0.75)
         
         # Process data3 if provided.
@@ -1386,10 +1397,10 @@ def plot_3c(time,
                 env3 = compute_envelope(cc3, pad_width=envelope_pad_width)
             except ValueError:
                 env3 = np.abs(hilbert(cc3))
-            axs[i].fill_between(time, -env3, env3, color=envelope_color3, alpha=0.4)
+            axs[i].fill_between(time, -env3, env3, color=envelope_color3, alpha=envelope_alpha)
             axs[i].plot(time, cc3, color=color_data3, label=data_label3 if i == 0 else None, lw = 2, alpha = 0.75)
         
-        axs[i].set_ylabel(component_labels[i], fontsize=12)
+        axs[i].set_ylabel(component_labels[i], fontsize=12, rotation = yaxis_rotation)
         axs[i].grid(True, linestyle='--', alpha=0.5)
         
         # Plot vertical dashed lines for arrivals in data1.
@@ -1402,13 +1413,13 @@ def plot_3c(time,
         if data2 is not None and arrivals2 is not None:
             for key, atime in arrivals2.items():
                 lbl = arrival_labels2[key] if i == 0 else None
-                axs[i].axvline(atime, color=arrival_colors2.get(key, 'blue'), linestyle='-.', label=lbl)
+                axs[i].axvline(atime, color=arrival_colors2.get(key, 'blue'), linestyle=':', label=lbl)
         
         # Plot vertical dashed lines for arrivals in data3.
         if data3 is not None and arrivals3 is not None:
             for key, atime in arrivals3.items():
                 lbl = arrival_labels3[key] if i == 0 else None
-                axs[i].axvline(atime, color=arrival_colors3.get(key, 'green'), linestyle=':', label=lbl)
+                axs[i].axvline(atime, color=arrival_colors3.get(key, 'green'), linestyle='-.', label=lbl)
         
         # Add legend only on the first subplot.
         if i == 0:
@@ -1423,6 +1434,69 @@ def plot_3c(time,
     fig.tight_layout()
     return fig, axs
 
+# ------------------------------------------------------------------------------
+def plot_hodogram(data, dt, window=None, components=('L', 'Q', 'T'), title='Hodogram'):
+    """
+    Plots hodograms (particle motion plots) from given seismic data and returns the figure and axes objects.
+    
+    Parameters
+    ----------
+    data : ndarray (N x 3)
+        Seismic data array with columns corresponding to [L, Q, T] components.
+    dt : float
+        Time interval between samples (seconds).
+    window : tuple (start, end), optional
+        Time window (in seconds) to select data. If None, uses full data.
+    components : tuple of str
+        Labels for components, default ('L', 'Q', 'T').
+    title : str
+        Plot title.
+    
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The figure object.
+    axs : ndarray of matplotlib.axes.Axes
+        Array containing the axes objects.
+    """
+    time = np.arange(data.shape[0]) * dt
+    
+    if window:
+        idx = np.where((time >= window[0]) & (time <= window[1]))[0]
+        data = data[idx]
+        time = time[idx]
+    
+    L, Q, T = data[:,0], data[:,1], data[:,2]
+    
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # L vs. Q
+    axs[0].plot(L, Q, color='k')
+    axs[0].set_xlabel(f'{components[0]}')
+    axs[0].set_ylabel(f'{components[1]}')
+    axs[0].set_title(f'{components[0]} vs. {components[1]}')
+    axs[0].grid(True)
+    
+    # L vs. T
+    axs[1].plot(L, T, color='k')
+    axs[1].set_xlabel(f'{components[0]}')
+    axs[1].set_ylabel(f'{components[2]}')
+    axs[1].set_title(f'{components[0]} vs. {components[2]}')
+    axs[1].grid(True)
+    
+    # Q vs. T
+    axs[2].plot(Q, T, color='k')
+    axs[2].set_xlabel(f'{components[1]}')
+    axs[2].set_ylabel(f'{components[2]}')
+    axs[2].set_title(f'{components[1]} vs. {components[2]}')
+    axs[2].grid(True)
+    
+    plt.tight_layout()
+    
+    return fig, axs
+
+
+
 # ============================ Processing Functions ============================
 def compute_envelope(signal, pad_width=50):
     """
@@ -1436,6 +1510,88 @@ def compute_envelope(signal, pad_width=50):
     envelope = np.abs(analytic)
     # Remove the padded regions.
     return envelope[pad_width:-pad_width]
+
+
+# ------------------------------------------------------------------------------
+def polarization_analysis(data, dt, M, alpha=0.1):
+    """
+    Compute rectilinearity, backazimuth, and incidence angle using a sliding Tukey window.
+    Handles signal edges with internal padding and shorter windows near boundaries.
+
+    Parameters
+    ----------
+    data : ndarray (N x 3)
+        3-component motion data (e.g., LQT, ZRT, or XYZ).
+    dt : float
+        Time step in seconds.
+    M : int
+        Window length (samples).
+    alpha : float
+        Tukey window shape parameter (default = 0.1).
+    
+    Returns
+    -------
+    times : ndarray
+        Time vector (seconds).
+    rectilinearity : ndarray
+        Rectilinearity values.
+    backazimuth : ndarray
+        Backazimuth angles (degrees from y-axis).
+    incidence : ndarray
+        Incidence angles (degrees from vertical).
+    cone_mask : ndarray
+        Boolean array, True where full-length window is used (i.e., outside the cone of influence).
+    """
+    N = data.shape[0]
+    times = np.arange(N) * dt
+    
+    rectilinearity = np.full(N, np.nan)
+    backazimuth = np.full(N, np.nan)
+    incidence = np.full(N, np.nan)
+    cone_mask = np.zeros(N, dtype=bool)
+    
+    half_M = M // 2
+    
+    for i in range(N):
+        # Determine actual window range (shorter near edges)
+        start = max(0, i - half_M)
+        end = min(N, i + half_M)
+        
+        segment = data[start:end]
+        win_len = end - start
+        
+        if win_len < 10:
+            continue  # Not enough data to compute polarization
+        
+        # Apply Tukey window of current length
+        taper = tukey(win_len, alpha)
+        tapered = segment * taper[:, None]
+        
+        # Covariance and eigen-decomposition
+        cov = np.cov(tapered.T)
+        eigvals, eigvecs = np.linalg.eigh(cov)
+        principal = eigvecs[:, 2]
+        
+        # Flip to ensure "upward" or consistent direction
+        if principal[2] < 0:
+            principal *= -1
+        
+        # Compute metrics
+        r = 1.0 - eigvals[1] / eigvals[2]
+        inc = np.degrees(np.arccos(principal[2]))
+        ba = np.degrees(np.arctan2(principal[0], principal[1]))
+        if ba < 0:
+            ba += 360
+        
+        # Save results
+        rectilinearity[i] = r
+        backazimuth[i] = ba
+        incidence[i] = inc
+        
+        # Flag if this is a full window
+        cone_mask[i] = (win_len == M)
+        
+    return times, rectilinearity, backazimuth, incidence, cone_mask
 
 # --------------------------------------------------------------------------
 def rotate_to_zrt(data, source=None, receiver=None, direction=None):
@@ -1518,7 +1674,68 @@ def rotate_to_zrt(data, source=None, receiver=None, direction=None):
     rotated_data = np.dot(data, rotation_matrix.T)
     
     return rotated_data
+
+def rotate_to_qlt(data, source_location, receiver_location, backazimuth = None, incidence = None):
+    """
+    Rotate data from (x, y, z) to (L, Q, T) components.
+
+    Parameters
+    ----------
+    data : ndarray (N x 3)
+        Input data with columns [vx, vy, vz].
+    source_location : ndarray (3,)
+        Source coordinates [x, y, z].
+    receiver_location : ndarray (3,)
+        Receiver coordinates [x, y, z].
+
+    Returns
+    -------
+    ba : float
+        Backazimuth angle in radians.
+    inc : float
+        Inclination angle in radians.
+    lqt : ndarray (N x 3)
+        Rotated data [L, Q, T].
+    """ 
     
+    # Compute displacement vector (receiver - source)
+    d = receiver_location - source_location
+    dx, dy, dz = d
+    
+    # Horizontal distance
+    if incidence is None:
+        H = np.sqrt(dx**2 + dy**2)
+        
+        # Inclination angle (positive downward)
+        inc = np.arctan2(dz, H)
+    else:
+        inc = incidence 
+    
+    # Backazimuth angle (clockwise from +y)
+    if backazimuth is None:
+        ba = np.arctan2(dx, dy)
+        if ba < 0:
+            ba += 2 * np.pi
+    else: 
+        ba = backazimuth
+    
+    # Trigonometric components
+    sin_inc, cos_inc = np.sin(inc), np.cos(inc)
+    sin_ba, cos_ba = np.sin(ba), np.cos(ba)
+    
+    # Rotation matrix from XYZ to LQT
+    # L aligned along propagation direction
+    R = np.array([
+        [sin_inc * sin_ba,  sin_inc * cos_ba, cos_inc],     # L-direction (along propagation)
+        [cos_inc * sin_ba,  cos_inc * cos_ba, -sin_inc],    # Q-direction (SV-plane, perpendicular to propagation)
+        [cos_ba,           -sin_ba,           0.0]          # T-direction (SH, perpendicular horizontally)
+    ])
+    
+    # Apply rotation
+    lqt = data @ R.T
+    
+    return ba, inc, lqt
+
 # ------------------------------------------------------------------------------
 def agc(ts: np.ndarray, k: int, agctype: str) -> np.ndarray:
     """

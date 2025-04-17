@@ -5,7 +5,6 @@ from scipy import signal
 import matplotlib.pyplot as plt 
 from scipy.io import FortranFile 
 import scipy.signal
-from scipy.signal import hilbert, correlate
 from typing import Tuple 
 
 __all__ = [
