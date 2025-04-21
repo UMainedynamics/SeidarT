@@ -279,6 +279,7 @@ class Model:
         self.compute_coefficients = True
         self.domain_density = None
         self.air_gradient_integer = 2
+        self.use_seismoacoustic = False
         self.sourcefunction = sourcefunction.pointsource # This will change
         self.get_seismic = mf.get_seismic 
         self.get_perm = mf.get_perm
@@ -420,7 +421,7 @@ class Model:
                 self.initialcondition_y = np.zeros([
                     domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
                 ])
-        
+        # ----------------------
         if self.exit_status == 0 and recompute_tensors:
             # The coefficients aren't provided but the materials are so we can 
             # compute them
@@ -463,7 +464,7 @@ class Model:
                     '''Nyquist is not small enough for the source frequency. Change
                     the source frequency or decrease the spatial step size'''
                 )
-        
+        # ----------------------
         # We need to set the 
         print("Creating the source function")
         (
@@ -478,6 +479,18 @@ class Model:
             cpmlcompute(self, domain, d)
             cpmlcompute(self, domain, d, half = True)
         
+        # ----------------------
+        # If air, water, or oil are present then we will need to incorporate the acoustic equations
+        masked_materials = ['air', 'water', 'oil']
+        for matname in material.material_list['Name']:
+            if matname in masked_materials:
+                self.use_seismoacoustic = True 
+        
+        if self.use_seismoacoustic == True:
+            print('Writing masked array for Seismoacoustics')
+            self.writemask(material, domain)
+        
+        # ----------------------
         # Write out the tensor components to file
         if write_tensor:
             print('Writing tensor components to individual .dat files.')
@@ -485,6 +498,7 @@ class Model:
             # a single material, this will return an error. Booooo, errors!
             if domain.nmats > 1:
                 self.domain_density = airsurf(material, domain, self.air_gradient_integer)
+                self.domain_density = np.ones([domain.nx, domain.nz]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             else:
                 self.domain_density = np.ones([domain.nx, domain.nz])
             
@@ -500,6 +514,33 @@ class Model:
         else:
             print('Tensor components have already been written to .dat files.')
             return
+        
+    def writemask(self, material: Material, domain: Domain):
+        """
+        
+        """
+        # Define any materials that need to be masked
+        masked_materials = ['air', 'water', 'oil']
+        
+        masked_array = np.zeros([domain.nx, domain.nz])
+        extended_masked_array = np.zeros(
+            [domain.nx + 2*domain.cpml, domain.nz + 2*domain.cpml]
+        )
+        for mm in masked_materials:
+            material_id = material.material_list['id'].loc[material.material_list['Name'] == 'air'].to_numpy()
+            masked_array = masked_array + (domain.geometry == material_id).astype(int)
+        
+        extended_masked_array[
+                domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
+        ] = masked_array
+        extended_masked_array[0:domain.cpml,:] = extended_masked_array[domain.cpml+1,:]
+        extended_masked_array[domain.nx+domain.cpml:,:] = extended_masked_array[domain.nx+domain.cpml-1,:]
+        extended_masked_array[:,0:domain.cpml] = extended_masked_array[:,domain.cpml+1].reshape(-1,1)
+        extended_masked_array[:,domain.nz+domain.cpml:] = extended_masked_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
+        f = FortranFile('geometry_mask.dat', 'w')
+        f.write_record(extended_masked_array.T)
+        f.close()
+        return 
         
     def tensor2dat(self, tensor, domain):
         """
@@ -683,16 +724,19 @@ class Model:
             env = os.environ.copy() 
             env['OMP_NUM_THREADS'] = str(num_threads)
             call([
-                'seidartfdtd', 
-                jsonfile, 
-                f'seismic={str(self.is_seismic).lower()}'],
+                    'seidartfdtd', 
+                    jsonfile, 
+                    f'seismic={str(self.is_seismic).lower()}',
+                    f'seismoacoustic={str(self.use_seismoacoustic).lower()}'
+                ],
                 env=env 
             )
         else:
             call([
                 'seidartfdtd', 
                 jsonfile, 
-                f'seismic={str(self.is_seismic).lower()}'
+                f'seismic={str(self.is_seismic).lower()}',
+                f'seismoacoustic={str(self.use_seismoacoustic).lower()}'
             ])
     
     # --------------------------------------------------------------------------
