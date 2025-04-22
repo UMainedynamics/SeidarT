@@ -284,6 +284,7 @@ class Model:
         self.get_seismic = mf.get_seismic 
         self.get_perm = mf.get_perm
         self.CFL = 1/np.sqrt(2) # Default minimum. If the dimension is 2.5, then this will change automatically
+        self.density_method = 'none' # options are 'none', 'harmonic', 'geometric', and 'arithmetic'
         
     def kband_check(self, domain):
         '''
@@ -421,40 +422,38 @@ class Model:
                 self.initialcondition_y = np.zeros([
                     domain.nx+2*domain.cpml, domain.nz+2*domain.cpml
                 ])
+        
         # ----------------------
         if self.exit_status == 0 and recompute_tensors:
             # The coefficients aren't provided but the materials are so we can 
             # compute them
             # Assign the materials to their respective corners
-            max_vels = np.zeros([domain.nmats])
-            
             if self.is_seismic:
                 print('Computing the stiffness coefficients.')
                 self.get_seismic(self, material)
-                
-                # We need to compute dt from the Courant number. We can use the 
-                # maximum tensor value, and the maximum density even if they don't 
-                # correspond to the same material.
-                
-                for ind in range(domain.nmats):
-                    max_vels[ind] = np.sqrt( (self.stiffness_coefficients.loc[ind]/ \
-                        self.stiffness_coefficients.rho.loc[ind]).max() )
-                    
-                max_rho = self.stiffness_coefficients["rho"].max()
-                if domain.dim == 2:
-                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max() / 2
-                else:
-                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max() / 2
             else:
-                print('Computing the permittivity and conductivity coefficients.')
-                
+                print('Computing the permittivity and conductivity coefficients.')    
                 self.get_perm(self, material)
                 
-                for ind in range(domain.nmats):
-                    max_vels[ind] = clight / \
-                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
-                        
-                self.dt = CFL * np.min([domain.dx, domain.dz]) / max_vels.max()
+            
+        # Always recalculate dt
+        max_vels = np.zeros([domain.nmats])
+        
+        if self.is_seismic:
+            for ind in range(domain.nmats):
+                max_vels[ind] = np.sqrt( (self.stiffness_coefficients.loc[ind]/ \
+                    self.stiffness_coefficients.rho.loc[ind]).max() )
+            if domain.dim == 2:
+                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max() / 2
+            else:
+                
+                self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max() / 2            
+        else:
+            for ind in range(domain.nmats):
+                max_vels[ind] = clight / \
+                    np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+            
+            self.dt = CFL * np.min([domain.dx, domain.dz]) / max_vels.max()
             
             # The time step needs to satisfy the Courant number and also have a nyquist
             # that will resolve the source frequency
@@ -490,6 +489,8 @@ class Model:
             print('Writing masked array for Seismoacoustics')
             self.writemask(material, domain)
         
+        # We haven't tidied up the seismoacoustic code yet. 
+        self.use_seismoacoustic = False
         # ----------------------
         # Write out the tensor components to file
         if write_tensor:
@@ -530,6 +531,7 @@ class Model:
             material_id = material.material_list['id'].loc[material.material_list['Name'] == 'air'].to_numpy()
             masked_array = masked_array + (domain.geometry == material_id).astype(int)
         
+        masked_array[masked_array > 0] = 1
         extended_masked_array[
                 domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
         ] = masked_array
@@ -540,6 +542,7 @@ class Model:
         f = FortranFile('geometry_mask.dat', 'w')
         f.write_record(extended_masked_array.T)
         f.close()
+        self.geometry_mask = extended_masked_array
         return 
         
     def tensor2dat(self, tensor, domain):
@@ -554,9 +557,6 @@ class Model:
                 for jj in range(domain.nz):
                     coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
                     fn = col + '.dat' 
-            
-            if col == 'rho':
-                coef_array = coef_array*self.domain_density
             
             # Extend values into the pml
             extended_array[
@@ -706,13 +706,6 @@ class Model:
         f.write_record(self.initialcondition_z.T)
         f.close()
         
-        # # For em models, we need to put in the initial conditions for the magnetic field
-        # if not self.is_seismic:
-        #     for direction in ['x', 'y', 'z']:
-        #         f = FortranFile(f'initialconditionH{direction}.dat', 'w')
-        #         f.write_record(self.initialcondition_)
-        #         f.close() 
-        
         # Update the JSON
         if not jsonfile:
             jsonfile = self.project_file 
@@ -727,7 +720,7 @@ class Model:
                     'seidartfdtd', 
                     jsonfile, 
                     f'seismic={str(self.is_seismic).lower()}',
-                    f'seismoacoustic={str(self.use_seismoacoustic).lower()}'
+                    f'density_method={str(self.density_method).lower()}'
                 ],
                 env=env 
             )
@@ -736,7 +729,7 @@ class Model:
                 'seidartfdtd', 
                 jsonfile, 
                 f'seismic={str(self.is_seismic).lower()}',
-                f'seismoacoustic={str(self.use_seismoacoustic).lower()}'
+                f'density_method={str(self.density_method).lower()}'
             ])
     
     # --------------------------------------------------------------------------
