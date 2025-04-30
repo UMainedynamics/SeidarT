@@ -547,7 +547,7 @@ def cpml_parameters(
     # Compute the a-coefficients 
     alpha[np.where(alpha < 0.0)] = 0.0
     # indices = np.where(np.abs(sigma) > 1.0e-6)
-    denom = (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+    denom = kappa * sigma + kappa * alpha
     indices = np.abs(denom) > 1e-10 
     acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / denom[indices]
     acoef[~indices] = 0.0 
