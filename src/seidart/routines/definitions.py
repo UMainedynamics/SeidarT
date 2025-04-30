@@ -484,8 +484,7 @@ def cpmlcompute(
         # magnetic permeability is 1. We can use a different value
         sig_max = domain.sig_opt_scalar * \
             ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        sig_max =  np.log(domain.Rcoef) * \
-            ((domain.NP + 1) / (2.0 * domain.cpml) 
+        sig_max =  np.log(domain.Rcoef) * (domain.NP + 1) / (2.0 * domain.cpml) 
         alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
             sig_max, alpha_max, domain.kappa_max, 
