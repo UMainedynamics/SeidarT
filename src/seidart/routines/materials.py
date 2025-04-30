@@ -307,34 +307,33 @@ def rotator_zxz(eul: np.ndarray) -> np.ndarray:
     """
     Generates a rotation matrix from Euler angles using the z-x-z rotation 
     convention.
-
-    :param eul: An array containing the three Euler angles.
+    
+    :param eul: An array containing the three Euler angles. Angles are in radians
     :type eul: np.ndarray
     :return: The 3x3 rotation matrix derived from the Euler angles.
     :rtype: np.ndarray
     """
-
+    
     # From the 3 euler angles for the zxz rotation, compute the rotation matrix
     R = np.zeros([3,3])
     D = np.zeros([3,3])
     C = np.zeros([3,3])
     B = np.zeros([3,3])
-
+    
     D[0,:] = [ np.cos( eul[0] ), -np.sin( eul[0] ), 0.0 ]
     D[1,:] = [ np.sin( eul[0] ), np.cos( eul[0] ), 0.0 ]
     D[2,:] = [ 0.0, 0.0, 1.0 ]
-
+    
     C[0,:] = [ 1.0, 0.0, 0.0 ]
     C[1,:] = [ 0.0, np.cos( eul[1] ), -np.sin( eul[1] ) ]
     C[2,:] = [ 0.0, np.sin( eul[1] ), np.cos( eul[1] ) ]
-
+    
     B[0,:] = [ np.cos( eul[2] ), -np.sin( eul[2] ), 0.0 ] 
     B[1,:] = [ np.sin( eul[2] ), np.cos( eul[2] ), 0.0 ]
     B[2,:] = [ 0.0, 0.0, 1.0 ]
-
-    R = np.matmul(D, np.matmul(C, B) )
-
-
+    
+    # R = np.matmul(B, np.matmul(C, D) )
+    R = B @ C @ D
     return(R)
 
 # -----------------------------------------------------------------------------

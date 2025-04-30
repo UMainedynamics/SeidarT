@@ -484,7 +484,9 @@ def cpmlcompute(
         # magnetic permeability is 1. We can use a different value
         sig_max = domain.sig_opt_scalar * \
             ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        alpha_max = domain.alpha_max_scalar * 2 * np.pi * eps0 * modelclass.f0 
+        sig_max =  np.log(domain.Rcoef) * \
+            ((domain.NP + 1) / (2.0 * domain.cpml) 
+        alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
             sig_max, alpha_max, domain.kappa_max, 
             dist, N, domain.NP, domain.NPA, modelclass.dt
@@ -545,10 +547,12 @@ def cpml_parameters(
 
     # Compute the a-coefficients 
     alpha[np.where(alpha < 0.0)] = 0.0
-    indices = np.where(np.abs(sigma) > 1.0e-6)
-    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
-            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
-
+    # indices = np.where(np.abs(sigma) > 1.0e-6)
+    denom = (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+    indices = np.abs(denom) > 1e-10 
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / denom[indices]
+    acoef[~indices] = 0.0 
+    
     return sigma, kappa, alpha, acoeff, bcoeff
 
 # -----------------------------------------------------------------------------

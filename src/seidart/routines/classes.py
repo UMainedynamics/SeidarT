@@ -453,7 +453,12 @@ class Model:
                 max_vels[ind] = clight / \
                     np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
             
-            self.dt = CFL * np.min([domain.dx, domain.dz]) / max_vels.max()
+            if domain.dim == 2.5:
+                denom  = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
+            else:
+                denom = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
+            
+            self.dt = self.CFL / (max_vels.max() * denom) 
             
             # The time step needs to satisfy the Courant number and also have a nyquist
             # that will resolve the source frequency
