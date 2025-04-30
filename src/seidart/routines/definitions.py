@@ -550,7 +550,7 @@ def cpml_parameters(
     denom = kappa * sigma + kappa * alpha
     indices = np.abs(denom) > 1e-10 
     acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / denom[indices]
-    acoef[~indices] = 0.0 
+    acoeff[~indices] = 0.0 
     
     return sigma, kappa, alpha, acoeff, bcoeff
 
