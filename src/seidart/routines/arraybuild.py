@@ -4,12 +4,16 @@ from glob2 import glob
 import argparse
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from typing import Tuple
+from typing import Tuple, Optional, Dict, List, Union
 from seidart.routines.definitions import *
 import dill as pickle
+from scipy.ndimage import gaussian_filter
+from numpy.fft import fft2, fftshift, rfft, rfftfreq
 from scipy.fft import fft2, fftshift
-from scipy.signal import spectrogram, windows
+from scipy.signal import spectrogram, windows, butter, filtfilt, sosfiltfilt
+from scipy.signal.windows import tukey
 from matplotlib.colors import TwoSlopeNorm
+
 from seidart.routines.classes import Domain, Material, Model
 
 # =============================================================================
@@ -307,7 +311,7 @@ class Array:
 
         if correction_type == 'EXP':
             for j in range(0, n):
-                dat[:,j] = exponential_gain(dat[:,j], self.alpha_exponent)
+                dat[:,j] = exponential_gain(dat[:,j], self.dt, self.alpha_exponent)
             self.exp_corrected_timeseries = dat.copy() 
         
         return dat
@@ -348,6 +352,7 @@ class Array:
             amplitude_correction_type: str = None,
             colormap: str = 'Greys',
             figure_size: Tuple[float, float] = (8,8),
+            use_filtered: bool = False
         ):
         """
         Creates a grayscale section plot of the time series data.
@@ -362,7 +367,10 @@ class Array:
         :type figure_size: Tuple 
         """
 
-        dat = self.timeseries.copy()
+        if use_filtered:
+            dat = self.timeseries_filtered.copy()
+        else:
+            dat = self.timeseries.copy()
         
         m,n = dat.shape
         time_max = self.dt * m 
@@ -424,6 +432,7 @@ class Array:
             positive_fill_color = None,
             negative_fill_color = None,
             figure_size: Tuple[float, float] = (8, 5),
+            use_filtered: bool = False,
             **kwargs
         ):
         """
@@ -454,7 +463,10 @@ class Array:
         
         plot_params = {**default_plotspec, **kwargs}
         
-        dat = self.timeseries[:,receiver_number]
+        if use_filtered:
+            dat = self.timeseries_filtered.copy()
+        else:
+            dat = self.timeseries.copy()
             
         timevector = np.arange(0, len(dat) ) * self.dt 
         
@@ -488,14 +500,14 @@ class Array:
             self, 
             receiver_indices: np.ndarray,
             scaling_factor: float = 1.0,
-            receiver_distance: np.ndarray = None,
             plot_vertical = False,
             positive_fill_color = None,
             negative_fill_color = None,
             figure_size: Tuple[float, float] = (5,8),
             amplitude_correction_type = None,
             yaxis_label: str = 'Source-Receiver Distance (m)',
-            gridded = True
+            gridded: bool = True, 
+            use_filtered: bool = False
         ):
         """
         Plots a seismic or electromagnetic record section using wiggle traces. 
@@ -509,10 +521,6 @@ class Array:
         :param scaling_factor: A scaling factor for adjusting the amplitude of 
             the traces (default is 1.0).
         :type scaling_factor: float, optional
-        :param receiver_distance: An array specifying the horizontal 
-            (or vertical) positions of the receiver traces. If None, a 
-            sequential index is used (default is None).
-        :type receiver_distance: np.ndarray, optional
         :param plot_vertical: If True, plots the traces vertically rather than 
             horizontally (default is False).
         :type plot_vertical: bool, optional
@@ -544,7 +552,15 @@ class Array:
               in the time series so that they are layed out as a section plot. 
               The traces can be sorted and plotted according to other inputs.  
         """
-        dat = self.timeseries.copy()
+        
+        if self.distances is None:
+            self.srcrcx_distance() 
+        
+        if use_filtered:
+            dat = self.timeseries_filtered.copy()
+        else:
+            dat = self.timeseries.copy()
+        
         m,n = dat.shape
         n_traces_to_plot = len(receiver_indices) 
         time = np.arange(m)*self.dt 
@@ -560,20 +576,20 @@ class Array:
             for i in range(n_traces_to_plot):
                 indice = receiver_indices[i]
                 ax_wiggles.plot(
-                    dat[:, indice] * scaling_factor + receiver_distance[indice], 
+                    dat[:, indice] * scaling_factor + self.distances[indice], 
                     time,
                     'k', linewidth=0.8
                 )
                 if positive_fill_color:
                     ax_wiggles.fill_betweenx(
-                        time, receiver_distance[indice],
-                        dat[:, indice] * scaling_factor + receiver_distance[indice],
+                        time, self.distances[indice],
+                        dat[:, indice] * scaling_factor + self.distances[indice],
                         where=(dat[:, indice] > 0), color=positive_fill_color
                     )
                 if negative_fill_color:
                     ax_wiggles.fill_betweenx(
-                        time, receiver_distance[indice],
-                        dat[:, indice] * scaling_factor + receiver_distance[indice],
+                        time, self.distances[indice],
+                        dat[:, indice] * scaling_factor + self.distances[indice],
                         where=(dat[:, indice] < 0), color=negative_fill_color
                     )
 
@@ -584,19 +600,19 @@ class Array:
             for i in range(n_traces_to_plot):
                 indice = receiver_indices[i]
                 ax_wiggles.plot(
-                    time, dat[:,indice]*scaling_factor + receiver_distance[indice],
+                    time, dat[:,indice]*scaling_factor + self.distances[indice],
                     'k', linewidth = 0.8
                 )
                 if positive_fill_color:
                     ax_wiggles.fill_between(
-                        time, receiver_distance[indice],
-                        dat[:,indice] * scaling_factor + receiver_distance[indice],
+                        time, self.distances[indice],
+                        dat[:,indice] * scaling_factor + self.distances[indice],
                         where=(dat[:,indice] > 0), color = positive_fill_color
                     )
                 if negative_fill_color:
                     ax_wiggles.fill_between(
-                        time, receiver_distance[indice],
-                        dat[:,indice] * scaling_factor + receiver_distance[indice],
+                        time, self.distances[indice],
+                        dat[:,indice] * scaling_factor + self.distances[indice],
                         where=(dat[:,indice] < 0), color = positive_fill_color
                     )
 
@@ -611,36 +627,216 @@ class Array:
         
         plt.show() 
 
-    # -------------------------------------------------------------------------
-    def fk_analysis(
-            self, 
-            d_rcx: float, 
-            figure_size: Tuple[float,float] = (10,8), 
-            colormap: str = 'viridis',
-            contour_levels: int = 100,
-            frequency_limits: Tuple[float,float] = None,
-            wavenumber_limits: Tuple[float,float] = None,
+    # --------------------------------------------------------------------------
+    def butterworth_filter(self,
+            filter_type: str,
+            lowcut: float = None,
+            highcut: float = None,
+            order: int = 4,
+            taper_duration: float = 0.0,
+            pad_samples: int = 100,
         ):
         """
-        Compute and plot the frequency-wavenumber analysis for an array with 
-        regularly spaced intervals.
+        Unified seismic filter with tapering and padding.
         
-        :param d_rcx: The receiver interval
-        :type d_rcx: float 
+        Parameters
+        ----------
+        filter_type : str
+            'lowpass', 'highpass', or 'bandpass'
+        lowcut : float, optional
+            Lower cutoff frequency in Hz (used for 'highpass' and 'bandpass')
+        highcut : float, optional
+            Upper cutoff frequency in Hz (used for 'lowpass' and 'bandpass')
+        order : int
+            Butterworth filter order
+        taper_duration : float
+            Duration in seconds for a pre-arrival taper (default = 0.0, no taper)
+        pad_samples : int
+            Number of samples to pad symmetrically at top and bottom
         
+        Result
+        ------
+        Sets self.timeseries_filtered (same shape as self.timeseries)
         """
-        m, n = self.timeseries.shape 
-        fk_spectrum = fftshift(fft2(self.timeseries))
+        
+        data = self.timeseries
+        fs = 1 / self.dt
+        nyq = 0.5 * fs
+        
+        # Validate filter parameters
+        if filter_type == 'lowpass':
+            if not highcut or not (0 < highcut < nyq):
+                raise ValueError(f"Invalid highcut: {highcut} Hz")
+            Wn = highcut / nyq
+            sos = butter(order, Wn, btype='low', output='sos')
+        
+        elif filter_type == 'highpass':
+            if not lowcut or not (0 < lowcut < nyq):
+                raise ValueError(f"Invalid lowcut: {lowcut} Hz")
+            Wn = lowcut / nyq
+            sos = butter(order, Wn, btype='high', output='sos')
+        
+        elif filter_type == 'bandpass':
+            if not lowcut or not highcut or not (0 < lowcut < highcut < nyq):
+                raise ValueError(f"Invalid bandpass range: {lowcut}–{highcut} Hz")
+            Wn = [lowcut / nyq, highcut / nyq]
+            sos = butter(order, Wn, btype='band', output='sos')
+        
+        else:
+            raise ValueError(f"Unsupported filter type: '{filter_type}'")
+        
+        # Apply pre-arrival taper if requested
+        if taper_duration > 0.0:
+            nt = data.shape[0]
+            taper_samples = int(taper_duration / self.dt)
+            taper = np.ones(nt)
+            ramp = 0.5 * (1 - np.cos(np.pi * np.arange(taper_samples) / taper_samples))
+            taper[:taper_samples] = ramp
+            data = data * taper[:, None]
+        
+        # Pad with zeros before filtering
+        pad = np.zeros((pad_samples, data.shape[1]))
+        padded = np.vstack([pad, data, pad])
+        filtered = sosfiltfilt(sos, padded, axis=0)
+        unpadded = filtered[pad_samples:-pad_samples, :]
+        
+        self.timeseries_filtered = unpadded
+    
+    # -------------------------------------------------------------------------
+    def fk_analysis(
+            self,
+            d_rcx: float,
+            ntfft: Optional[int] = None,
+            nxfft: Optional[int] = None,
+            taper: Union[str, bool] = 'time',
+            figure_size: Tuple[float, float] = (10, 8),
+            colormap: str = 'viridis',
+            contour_levels: int = 100,
+            frequency_limits: Tuple[float, float] = None,
+            wavenumber_limits: Tuple[float, float] = None,
+            wavenumber_units: str = 'cycles',
+            use_filtered: bool = True,
+            to_db: Union[str, bool] = 'normalized',
+            mode_lines: Optional[dict] = None,
+            mask_db: float = -40
+        ):
+        """
+        Compute and plot the frequency–wavenumber (f-k) power spectrum of the time series
+        for a regularly spaced seismic receiver array.
+
+        Applies a 2D FFT to the array, with optional tapering, zero-padding, and
+        amplitude-to-dB conversion. Overlays theoretical mode dispersion curves if provided.
+
+        Parameters
+        ----------
+        d_rcx : float
+            Receiver spacing in meters.
+        ntfft : int, optional
+            Number of FFT points in time. If None, defaults to the number of time samples.
+        nxfft : int, optional
+            Number of FFT points in space. If None, defaults to the number of receivers.
+        taper : {'time', 'space', 'both', 'tukey_time', 'tukey_space', 'tukey_both', False}, default='time'
+            Apply a Hanning taper in the specified direction(s) to suppress spectral leakage.
+        figure_size : tuple of float, default=(10, 8)
+            Size of the matplotlib figure in inches.
+        colormap : str, default='viridis'
+            Colormap used for plotting the contour.
+        contour_levels : int, default=100
+            Number of levels in the contour plot.
+        frequency_limits : tuple of float, optional
+            y-axis limits for frequency (min, max) in Hz.
+        wavenumber_limits : tuple of float, optional
+            x-axis limits for wavenumber (min, max) in cycles/m or rad/m.
+        wavenumber_units : {'cycles', 'radians'}, default='cycles'
+            Units of the wavenumber axis. Affects velocity overlays.
+        use_filtered : bool, default=True
+            Whether to use the filtered time series (`self.timeseries_filtered`) or raw (`self.timeseries`).
+        to_db : {'normalized', 'raw', True, False}, default='normalized'
+            If 'normalized', converts to decibel scale with 0 dB peak normalization.
+            If 'raw', converts to decibels without normalization.
+            If False, keeps the amplitude linear.
+        mode_lines : dict, optional
+            A dictionary of dispersion curves to overlay. Each key is a label (e.g., "Rayleigh"),
+            and each value is either a velocity or a (velocity, color) tuple.
+
+        Sets
+        ----
+        self.fk_freqs : ndarray
+            Frequency axis in Hz.
+        self.fk_wavenumbers : ndarray
+            Wavenumber axis in cycles/m or rad/m.
+        self.fk_spectrum : ndarray
+            The 2D FFT power spectrum (in dB or linear units depending on `to_db`).
+        self.fk_velocities : ndarray
+            Phase velocity grid (freqs / wavenumbers).
+        self.fk_power_linear : ndarray
+            Linear (non-dB) power spectrum.
+        self.fig_fk : matplotlib.figure.Figure
+            The matplotlib figure object for the plot.
+        self.ax_fk : matplotlib.axes.Axes
+            The matplotlib axes object for the plot.
+
+        Raises
+        ------
+        ValueError
+            If FFT sizes are smaller than the input array dimensions, or if cutoff frequency limits are invalid.
+        """
+        if use_filtered: 
+            dat = self.timeseries_filtered.copy() 
+        else:
+            dat = self.timeseries.copy() 
+        
+        m, n = dat.shape
+        ntfft = ntfft or m
+        nxfft = nxfft or n
+        
+        if ntfft < m or nxfft < n:
+            raise ValueError("ntfft and nxfft must be >= data dimensions for zero-padding.")
+        
+        if taper:
+            if 'tukey' in taper:
+                from scipy.signal import tukey
+                time_win = tukey(m, alpha=tukey_alpha)
+                space_win = tukey(n, alpha=tukey_alpha)
+            else:
+                time_win = np.hanning(m)
+                space_win = np.hanning(n)
+            
+            if taper in ['both', 'tukey_both']:
+                dat *= time_win[:, None] * space_win[None, :]
+            elif taper in ['time', 'tukey_time']:
+                dat *= time_win[:, None]
+            elif taper in ['space', 'tukey_space']:
+                dat *= space_win[None, :]
+        
+        fk_spectrum = fftshift(fft2(dat, s = (ntfft, nxfft)) )
+        
+        epsilon = 1e-12
+        if to_db == 'normalized':
+            fk_spectrum = 10 * np.log10((np.abs(fk_spectrum)**2 + epsilon) / \
+                np.max(np.abs(fk_spectrum)**2))
+        elif to_db == 'raw':
+            fk_spectrum = 10 * np.log10(np.abs(fk_spectrum)**2 + epsilon)
         
         # Create the frequency and wavenumber vectors then we need to shift the 
         # frequencies and wavenumbers for plotting 
-        freqs = fftshift(np.fft.fftfreq(m, self.dt))
-        wavenumbers = -fftshift(np.fft.fftfreq(n, d_rcx)) # positive down coordinates means we have to flip the f-k 
+        freqs = fftshift(np.fft.fftfreq(ntfft, self.dt))
+        wavenumbers = -fftshift(np.fft.fftfreq(nxfft, d_rcx)) # positive down coordinates means we have to flip the f-k 
+        velocities = freqs[:, None] / wavenumbers[None, :]  # cycles/m
         
+        # Save the values 
+        self.fk_freqs = freqs 
+        self.fk_wavenumbers = wavenumbers 
+        self.fk_spectrum = fk_spectrum 
+        self.fk_velocities = velocities # multiply by 2*np.pi to get rad/m
+        self.fk_power_linear = np.abs(fk_spectrum)**2
+
+        mask = fk_spectrum < mask_db
+        fk_spectrum_masked = np.ma.masked_where(mask, fk_spectrum)
         
         self.fig_fk, self.ax_fk = plt.subplots(figsize = figure_size)
         contour = self.ax_fk.contourf(
-            wavenumbers, freqs, np.abs(fk_spectrum), 
+            wavenumbers, freqs, fk_spectrum_masked, 
             cmap = colormap, levels = contour_levels,
         )
         cbar = self.fig_fk.colorbar(contour, ax = self.ax_fk, label = 'Amplitude')
@@ -652,85 +848,165 @@ class Array:
         if wavenumber_limits:
             self.ax_fk.set_xlim(wavenumber_limits)
         
+        # overlay mode lines
+        if mode_lines:
+            for label, spec in mode_lines.items():
+                if isinstance(spec, (tuple, list)):
+                    v, col = spec
+                else:
+                    v, col = spec, 'white'
+                # compute k_line in correct units
+                if wavenumber_units == 'radians':
+                    kline = 2 * np.pi * freqs / v
+                else:
+                    kline = freqs / v
+                self.ax_fk.plot(kline, freqs, '--', color=col, lw=1, label=label)
+                self.ax_fk.plot(-kline, freqs, '--', color=col, lw=1)
+        
         plt.show()
-    
+
     # -------------------------------------------------------------------------
-    def dispersion_analysis(
+    def multichannel_analysis(
             self,
             d_rcx: float,
             figure_size: Tuple[float, float] = (10, 8),
             colormap: str = 'viridis',
             contour_levels: int = 100,
-            frequency_limits: Tuple[float, float] = None,
-            velocity_limits: Tuple[float, float] = None,
-            time_bandwidth: float = 4.0,  # Time-bandwidth product for DPSS
-            n_tapers: int = 5,  # Number of tapers
+            frequency_limits: Optional[Tuple[float, float]] = None,
+            velocity_limits: Optional[Tuple[float, float]] = None,
+            time_bandwidth: float = 4.0,
+            n_tapers: int = 5,
+            ntfft: Optional[int] = None,
+            nxfft: Optional[int] = None,
+            vmin = -40,
+            vmax = None
         ):
         """
         Compute and plot the dispersion image using multitaper spectral analysis
-        with Scipy's DPSS.
+        with DPSS tapers and f-k to f-c transformation.
 
-        :param d_rcx: The receiver interval (spacing between receivers).
-        :type d_rcx: float
-        :param time_bandwidth: Time-bandwidth product for DPSS tapers.
-        :type time_bandwidth: float
-        :param n_tapers: Number of DPSS tapers to use.
-        :type n_tapers: int
+        Parameters
+        ----------
+        d_rcx : float
+            Receiver spacing (in meters).
+        figure_size : tuple of float, optional
+            Size of the output figure in inches.
+        colormap : str, optional
+            Matplotlib colormap name.
+        contour_levels : int, optional
+            Number of contour levels in the image.
+        frequency_limits : tuple of float, optional
+            Frequency axis limits (Hz).
+        velocity_limits : tuple of float, optional
+            Velocity axis limits (m/s).
+        time_bandwidth : float, optional
+            Time–bandwidth product for DPSS tapers.
+        n_tapers : int, optional
+            Number of DPSS tapers.
+        ntfft : int, optional
+            FFT size in time (zero-padded if larger than trace length).
+        nxfft : int, optional
+            FFT size in space (zero-padded if larger than number of traces).
         """
-        # Step 1: Preprocess data (multitaper applied per time-series)
         m, n = self.timeseries.shape
-        fs = 1.0 / self.dt  # Sampling frequency
-        multitaper_spectrum = np.zeros((m, n), dtype=np.complex128)
+        fs = 1.0 / self.dt
 
+        ntfft = ntfft or m
+        nxfft = nxfft or n
+
+        # Generate DPSS tapers once
+        tapers = windows.dpss(m, NW=time_bandwidth, Kmax=n_tapers)
+
+        # Multitaper spectral estimation
+        multitaper_spectrum = np.zeros((m // 2 + 1, n), dtype=np.complex128)
         for i in range(n):
-            # Generate DPSS tapers
-            tapers = windows.dpss(m, NW=time_bandwidth, Kmax=n_tapers)
             spectra = []
             for taper in tapers:
-                # Compute the FFT of the tapered data
                 tapered_data = self.timeseries[:, i] * taper
-                spectrum = np.fft.fft(tapered_data)
+                spectrum = rfft(tapered_data)
                 spectra.append(spectrum)
-            # Average the multitaper spectra
             multitaper_spectrum[:, i] = np.mean(spectra, axis=0)
 
-        # Step 2: Perform 2D FFT for f-k spectrum
-        fk_spectrum = fftshift(fft2(multitaper_spectrum))
-        freqs = fftshift(np.fft.fftfreq(m, self.dt))
-        wavenumbers = -fftshift(np.fft.fftfreq(n, d_rcx))  # Flip for positive down
+        # f-k spectrum
+        fk_spectrum = fftshift(fft2(multitaper_spectrum, s=(ntfft // 2 + 1, nxfft)))
+        freqs = rfftfreq(ntfft, self.dt)
+        wavenumbers = -fftshift(np.fft.fftfreq(nxfft, d_rcx))
 
-        # Step 3: Compute phase velocity (c = f / k)
+        self.masw_spectrum = fk_spectrum
+        self.masw_freqs = freqs
+
+        # f-k to f-c
         fk_mesh_freq, fk_mesh_k = np.meshgrid(freqs, wavenumbers, indexing='ij')
         with np.errstate(divide='ignore', invalid='ignore'):
             phase_velocity = np.abs(fk_mesh_freq / fk_mesh_k)
 
-        # Step 4: Bin amplitude into f-c space
         if velocity_limits is None:
-            velocity_limits = (0, np.max(phase_velocity[np.isfinite(phase_velocity)]))
+            vmax = np.nanmax(phase_velocity[np.isfinite(phase_velocity)])
+            velocity_limits = (0.0, vmax)
         velocity_bins = np.linspace(*velocity_limits, 500)
+        self.masw_velocity_bins = velocity_bins
 
+        # Bin f-k amplitude into f-c space
         amplitude_fc = np.zeros((len(freqs), len(velocity_bins)))
         for i, f_row in enumerate(np.abs(fk_spectrum)):
             c_indices = np.digitize(phase_velocity[i], velocity_bins)
-            for j, c_idx in enumerate(c_indices):
-                if 0 <= c_idx < len(velocity_bins):
-                    amplitude_fc[i, c_idx] += f_row[j]
+            c_indices = np.clip(c_indices, 0, len(velocity_bins) - 1)
+            np.add.at(amplitude_fc[i], c_indices, f_row)
 
-        # Step 5: Plot the dispersion image
-        self.fig_dispersion, self.ax_dispersion = plt.subplots(figsize=figure_size)
-        contour = self.ax_dispersion.contourf(
-            velocity_bins, freqs, amplitude_fc, cmap=colormap, levels=contour_levels
-        )
-        cbar = self.fig_dispersion.colorbar(contour, ax=self.ax_dispersion, label='Amplitude')
-        self.ax_dispersion.set_xlabel('Phase Velocity (m/s)')
-        self.ax_dispersion.set_ylabel('Frequency (Hz)')
+        amplitude_fc /= n_tapers
+        amplitude_fc = gaussian_filter(amplitude_fc, sigma=0.75)
+
+        # Convert to dB and limit contrast
+        epsilon = 1e-12
+        amplitude_db = 10 * np.log10(amplitude_fc + epsilon)
+        # amplitude_db = np.clip(amplitude_db, -40, 0)
+
+        # Apply frequency limits to the plotted range
         if frequency_limits:
-            self.ax_dispersion.set_ylim(frequency_limits)
+            fmin, fmax = frequency_limits
+            freq_mask = (freqs >= fmin) & (freqs <= fmax)
+            freqs = freqs[freq_mask]
+            amplitude_db = amplitude_db[freq_mask, :]
+        
+        mask = amplitude_db < -20
+        amplitude_db_masked = np.ma.masked_where(mask, amplitude_db)
+        # Plot frequency on x and velocity on y
+        self.fig_dispersion, self.ax_dispersion = plt.subplots(figsize=figure_size)
+        # Clip everything below -40 dB for visualization purposes
+        if not vmax:
+            vmax = np.max(amplitude_db)
+
+        # Create colormap that clips under vmin
+        cmap = plt.get_cmap(colormap).copy()
+        cmap.set_under(cmap(0))  # Optional: choose a different color if desired
+
+        # Plot using imshow (note: extent uses [x0, x1, y0, y1])
+        im = self.ax_dispersion.imshow(
+            amplitude_db_masked.T,
+            extent=[freqs[0], freqs[-1], velocity_bins[0], velocity_bins[-1]],
+            origin='lower',
+            aspect='auto',
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax
+        )
+
+        # Add colorbar
+        cbar = self.fig_dispersion.colorbar(im, ax=self.ax_dispersion, label='Amplitude (dB)')
+
+        # Axis labels
+        self.ax_dispersion.set_xlabel('Frequency (Hz)')
+        self.ax_dispersion.set_ylabel('Phase Velocity (m/s)')
+
+        # Optional axis limits
+        if frequency_limits:
+            self.ax_dispersion.set_xlim(frequency_limits)
         if velocity_limits:
-            self.ax_dispersion.set_xlim(velocity_limits)
-
+            self.ax_dispersion.set_ylim(velocity_limits)
+        
+        plt.tight_layout()
         plt.show()
-
+  
     # -------------------------------------------------------------------------
     def save(self, save_object = True, output_basefile = None):
         """
@@ -758,7 +1034,7 @@ class Array:
         # Pickle the object and save to file
         with open(self.pklfilename, 'wb') as file:
             pickle.dump(self, file)
-        
+    
 # =============================================================================
 # ============================== Main Function ================================
 def main(

@@ -3,16 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.animation as anim
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import os.path
-from typing import Optional
+from typing import Tuple, Optional, Dict, List, Union
 from subprocess import call
 from scipy.io import FortranFile
-from scipy.signal import hilbert, correlate
+from scipy.signal import hilbert, correlate, butter, filtfilt, sosfiltfilt, firwin, minimum_phase, savgol_filter
+
 from scipy.signal.windows import tukey
 
 import glob2
 import copy
 import json
+
 
 import seidart.routines.materials as mf
 from seidart.routines.prjbuild import image2int, update_json, readwrite_json
@@ -35,13 +39,23 @@ __all__ = [
     'rotate_to_qlt',
     'compute_envelope',
     'polarization_analysis',
+    'compute_polar_energy',
+    'compute_phase_gain',
     'agc',
     'correct_geometric_spreading',
     'exponential_gain',
-    'parameter_profile_1d',
     'plot_3c',
     'plot_hodogram',
-    'CFL', 'clight',
+    'compute_dispersion',
+    'compute_dispersion_image',
+    'compute_fk_spectrum', 
+    'plot_fk_spectrum',
+    'plot_dispersion',
+    'plot_dispersion_image',
+    'compute_fk_spectrum',
+    'plot_fk_spectrum',
+    'CFL', 
+    'clight',
 ]
 
 # --------------------------------- Globals ------------------------------------
@@ -50,15 +64,6 @@ eps0 = 8.85418782e-12  # Permittivity of free space
 mu0 = 4.0 * np.pi * 1.0e-7  # Permeability of free space
 mu_r = 1.0
 
-# These can be changed for control over the cpml parameters
-#CPML
-#----
-# sig_opt_scalar = 1.2
-# alpha_max_scalar = 1.0
-# NP = 2  # Numerical parameter for CPML
-# NPA = 2  # Additional numerical parameter for CPML
-# kappa_max = 5  # Max value for CPML parameter
-# Rcoef = 0.0010  # Reflection coefficient, used for seismic only
 
 # Courant-Friedrichs-Levy condition
 CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D. 
@@ -265,7 +270,7 @@ def loadproject(
         domain.dim, domain.nx, domain.ny, domain.nz, 
         domain.dx, domain.dy, domain.dz, domain.cpml, 
         domain.nmats, 
-        domain.sig_opt_scalar, domain.alpha_max_scalar, domain.kappa_max,
+        domain.alpha_max_scalar, domain.kappa_max,
         domain.NP, domain.NPA, domain.Rcoef,
         domain.imfile 
     ) = list(data['Domain'].values())
@@ -420,7 +425,7 @@ def airsurf(material, domain, N: int = 2) -> np.ndarray:
 def cpmlcompute(
         modelclass, 
         domain, 
-        direction: str, 
+        # direction: str, 
         half: bool = False,
     ) -> None:
     """
@@ -428,90 +433,109 @@ def cpmlcompute(
 
     :param modelclass: The model class instance to update.
     :param domain: The domain class instance to update.
-    :param direction: Direction to compute CPML ('x', 'y', or 'z').
+    # :param direction: Direction to compute CPML ('x', 'y', or 'z').
     :param half: Flag to compute half CPML parameters. Defaults to False.
     :type modelclass: Model
     :type domain: Domain
-    :type direction: str
+    # :type direction: str
     :type half: bool
     """
-
-    # For 2D models, we don't need to compute the cpml in the y-direction
-    if domain.dim == 2 and direction == 'y':
-        return 
-    
     nx = domain.nx + 2*domain.cpml
     nz = domain.nz + 2*domain.cpml
     if domain.dim == 2.5:
-        ny = domain.ny + 2*domain.cpml
+        # ny = domain.ny + 2*domain.cpml
         deltamin = np.min([domain.dx, domain.dy, domain.dz]) 
     else:
         deltamin = np.min([domain.dx, domain.dz]) 
-
-    # Allocate space
-    if direction == 'x':
-        N = int(nx)
-        dx = float(domain.dx)
-    elif direction == 'y':
-        N = int(ny)
-        dx = float(domain.dy) 
-    else:
-        N = int(nz)
-        dx = float(domain.dz)
     
     # -----------------------------------------------------------------------------
     # Compute the distance along the absorbing boundary relative to the end of the 
     # original model space. 
-    dist = dx * np.arange(0, domain.cpml)
+    distx = domain.dx * np.arange(0, domain.cpml)
+    distz = domain.dz * np.arange(0, domain.cpml)
     if half:
-        dist = dist + dx/2
+        distx = distx + domain.dx/2
+        distz = distz + domain.dz/2
     
-    dist = dx*domain.cpml - dist
-    dist = dist/(dx*domain.cpml)
-
+    distx = domain.dx*domain.cpml - distx
+    distz = domain.dz*domain.cpml - distz
+    distx = distx/(domain.dx*domain.cpml)
+    distz = distz/(domain.dz*domain.cpml)
+    
+    # Create lookup array indexed by material ID
+    lookup_array = np.zeros(domain.nmats)
+    for mat_id, v in modelclass.max_velocity_per_material.items():
+        lookup_array[mat_id] = v
+    
+    # Now map geometry to velocities
+    velocity_map = lookup_array[domain.geometry]
+    
     # Compute the maximum sigma, and alpha values for the CPML.  
     if modelclass.is_seismic:
         alpha_max = domain.alpha_max_scalar * np.pi*modelclass.f0
-        quasi_cp_max = 0.7 * deltamin / (2.0 * modelclass.dt)
+        quasi_cp_max = 0.7 * velocity_map / 2.0 
         sig_max = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max / (2.0 * domain.cpml )
-         # This seems to work well even at higher frequencies
-        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, domain.kappa_max, 
-            dist, N, domain.NP, domain.NPA, modelclass.dt, is_seismic = True
+        # This seems to work well even at higher frequencies
+        sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
+            sig_max, alpha_max, domain.kappa_max, nx, nz,
+            distx, distz, domain.NP, domain.NPA, modelclass.dt, is_seismic = True
         )
     else:
         # We will use the maximum permittivity coefficient and assume that the 
         # magnetic permeability is 1. We can use a different value
-        sig_max = domain.sig_opt_scalar * \
-            ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        sig_max =  np.log(domain.Rcoef) * (domain.NP + 1) / (2.0 * domain.cpml) 
+        # sig_max = domain.sig_opt_scalar * ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
+        eps_r_min = modelclass.permittivity_coefficients[['e11', 'e22', 'e33']].min().min()
+        c_max = clight * np.sqrt(1/eps_r_min)
+        sig_max = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max / (2 * domain.cpml * deltamin)
+        
         alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
-        sigma, kappa, alpha, acoeff, bcoeff = cpml_parameters(
-            sig_max, alpha_max, domain.kappa_max, 
-            dist, N, domain.NP, domain.NPA, modelclass.dt
+        sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
+            sig_max, alpha_max, domain.kappa_max, nx, nz,
+            distx, distz, domain.NP, domain.NPA, modelclass.dt
         )
-
+    
     # Save the results to a fortran binary
     if half:
-        sigma.tofile('sigma' + direction + '_half_cpml.dat')
-        kappa.tofile('kappa' + direction + '_half_cpml.dat')
-        alpha.tofile('alpha' + direction + '_half_cpml.dat')
-        acoeff.tofile('acoef' + direction + '_half_cpml.dat')
-        bcoeff.tofile('bcoef' + direction + '_half_cpml.dat')
+        sigma_fn = 'sigma_half_cpml.dat'
+        kappa_fn = 'kappa_half_cpml.dat'
+        alpha_fn = 'alpha_half_cpml.dat'
+        acoef_fn = 'acoef_half_cpml.dat'
+        bcoef_fn = 'bcoef_half_cpml.dat'
     else:
-        sigma.tofile('sigma' + direction + '_cpml.dat')
-        kappa.tofile('kappa' + direction + '_cpml.dat')
-        alpha.tofile('alpha' + direction + '_cpml.dat')
-        acoeff.tofile('acoef' + direction + '_cpml.dat')
-        bcoeff.tofile('bcoef' + direction + '_cpml.dat')
+        sigma_fn = 'sigma_cpml.dat'
+        kappa_fn = 'kappa_cpml.dat'
+        alpha_fn = 'alpha_cpml.dat'
+        acoef_fn = 'acoef_cpml.dat'
+        bcoef_fn = 'bcoef_cpml.dat'
+    
+    f = FortranFile(sigma_fn, 'w')
+    f.write_record(sigma.T)
+    f.close()
+    f = FortranFile(kappa_fn, 'w')
+    f.write_record(kappa.T)
+    f.close()
+    f = FortranFile(alpha_fn, 'w')
+    f.write_record(alpha.T)
+    f.close()
+        
+    f = FortranFile(acoef_fn, 'w')
+    f.write_record(acoef.T)
+    f.close()
+    f = FortranFile(bcoef_fn, 'w')
+    f.write_record(bcoef.T)
+    f.close()
+        
+    return sigma, kappa, alpha, acoef, bcoef
         
 # -----------------------------------------------------------------------------
 def cpml_parameters(
         sig_max: float, 
         alpha_max: float, 
         kappa_max: float, 
-        distance, 
-        N: int, 
+        nx: int,
+        nz: int,
+        distancex,
+        distancez, 
         NP: int,
         NPA: int, 
         dt: float,
@@ -519,369 +543,68 @@ def cpml_parameters(
     ):
     """
     """
-    kappa = np.ones([N])
-    alpha = np.zeros([N])
-    sigma = np.zeros([N])
-    acoeff = np.zeros([N])
-    bcoeff = np.zeros([N])
+    kappa = np.ones([nx,nz])
+    alpha = np.zeros([nx,nz])
+    sigma = np.zeros([nx,nz])
+    acoeff = np.zeros([nx,nz])
+    bcoeff = np.zeros([nx,nz])
+    
+    distx_max = distancex.max() 
+    distz_max = distancez.max()
+    
+    m = len(distancex)
+    n = len(distancez)
+    # Compute in the x, and z direction
+    for ind in range(0, m):
+        sigma[ind,m:-m] = sig_max[0,:] * (distancex[ind]**NP)
+        kappa[ind,:] = 1.0 + (kappa_max - 1.0) * (distancex[ind]/distx_max)**NP
+        alpha[ind,:] = alpha_max * (1 - distancex[ind])**NPA
 
-    # Compute in the x, and z directions
-    for ind in range(0, len(distance)):
-        # From 0
-        sigma[ind] = sig_max * (distance[ind]**NP)
-        kappa[ind] = 1.0 + (kappa_max - 1.0) * distance[ind]**NP
-        alpha[ind] = alpha_max * (1 - distance[ind])**NPA
         # From the end 
-        sigma[-(ind+1)] = sig_max*distance[ind]**NP
-        kappa[-(ind+1)] = 1 + (kappa_max - 1) * distance[ind]**NP
-        alpha[-(ind+1)] = alpha_max * (1 - distance[ind])**NPA
-        
-        if is_seismic:
-            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * dt)
-            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * dt)
-        else:
-            bcoeff[ind] = np.exp( - (sigma[ind] / kappa[ind] + alpha[ind]) * (dt/eps0) )
-            bcoeff[-(ind+1)] = np.exp(- (sigma[-(ind+1)] / kappa[-(ind+1)] + alpha[-(ind+1)]) * (dt/eps0) )
+        sigma[-(ind+1),m:-m] = sig_max[-1,:]*distancex[ind]**NP
+        kappa[-(ind+1),:] = 1 + (kappa_max - 1) * (distancex[ind]/distx_max)**NP
+        alpha[-(ind+1),:] = alpha_max * (1 - distancex[ind])**NPA
+    
+    for ind in range(0, n):        
+        sigma[n:-n,ind] = sig_max[:,0] * (distancez[ind]**NP)
+        kappa[:,ind] = 1.0 + (kappa_max - 1.0) * (distancez[ind]/distz_max)**NP
+        alpha[:,ind] = alpha_max * (1 - distancez[ind])**NPA
+                    
+        sigma[n:-n,-(ind+1)] = sig_max[:,-1]*distancez[ind]**NP
+        kappa[:,-(ind+1)] = 1 + (kappa_max - 1) * (distancez[ind]/distz_max)**NP
+        alpha[:,-(ind+1)] = alpha_max * (1 - distancez[ind])**NPA
+    
+    for ii in range(m):
+        for jj in range(n):
+            r = np.sqrt(distancex[ii]**2 + distancez[jj]**2)
+            sigma[ii, jj]           = sig_max[0, 0]   * (r ** NP)
+            sigma[-(ii+1), jj]      = sig_max[-1, 0]  * (r ** NP)
+            sigma[ii, -(jj+1)]      = sig_max[0, -1]  * (r ** NP)
+            sigma[-(ii+1), -(jj+1)] = sig_max[-1, -1] * (r ** NP)
             
-
+            kappa[ii, jj]           = 1.0 + (kappa_max - 1.0) * (r ** NP)
+            kappa[-(ii+1), jj]      = 1.0 + (kappa_max - 1.0) * (r ** NP)
+            kappa[ii, -(jj+1)]      = 1.0 + (kappa_max - 1.0) * (r ** NP)
+            kappa[-(ii+1), -(jj+1)] = 1.0 + (kappa_max - 1.0) * (r ** NP)
+            
+            alpha[ii, jj]           = alpha_max * ((1.0 - r) ** NPA)
+            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - r) ** NPA)
+            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - r) ** NPA)
+            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - r) ** NPA)
+    
+    if is_seismic:
+        bcoeff = np.exp( - (sigma / kappa + alpha) * dt)
+    else:
+        bcoeff = np.exp( - (sigma / kappa + alpha) * (dt/eps0) )
+    
     # Compute the a-coefficients 
-    alpha[np.where(alpha < 0.0)] = 0.0
-    # indices = np.where(np.abs(sigma) > 1.0e-6)
-    denom = kappa * sigma + kappa * alpha
-    indices = np.abs(denom) > 1e-10 
-    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / denom[indices]
-    acoeff[~indices] = 0.0 
-    
-    return sigma, kappa, alpha, acoeff, bcoeff
-
-# -----------------------------------------------------------------------------
-def ecpml_parameters2(domain, modelclass, dist, direction):
-    """
-    Compute the boundary values for variable permittivity and conductivity values at
-    the boundary. 
-    """
-    global mu0, NP, NPA
-
-    nx = domain.nx + 2 * domain.cpml 
-    nz = domain.nz + 2 * domain.cpml 
-    
-    if direction == 'x':
-        perm_ind = 1
-        cond_ind = 7
-        nx -= 1
-    if direction == 'z':
-        perm_ind = 6
-        cond_ind = 12
-        nz -= 1
-    
-    sigma = np.zeros([nx, nz])
-    alpha = sigma.copy() 
-    kappa = np.ones([nx, nz])
-    acoeff = sigma.copy() 
-    bcoeff = sigma.copy() 
-
-    m,n = domain.geometry.shape
-
-    for ii in range(0, domain.cpml):
-        for jj in range(domain.cpml, nz-domain.cpml):
-            perm1 = modelclass.tensor_coefficients_original[
-                domain.geometry[0,jj-domain.cpml]
-            ][perm_ind]
-            cond1 = modelclass.tensor_coefficients_original[domain.geometry[0,jj-domain.cpml]][cond_ind].real
-            perm2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][perm_ind]
-            cond2 = modelclass.tensor_coefficients_original[domain.geometry[-1,jj-domain.cpml]][cond_ind].real
-            if cond1 > 0:
-                sig_max1 = cond1
-            elif perm1.imag > 0 and cond1 == 0:
-                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
-            else:
-                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
-            
-            if cond2 > 0:
-                sig_max2 = cond2
-            elif perm2.imag > 0 and cond2 == 0:
-                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
-            else:
-                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
-            
-            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-            alpha_max1 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
-            alpha_max2 = 2 * np.pi * modelclass.f0 * eps0 * perm1.real / 2
-            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
-
-            #!!! This is for testing 
-            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
-            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
-            
-            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
-            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
-            kappa_max1 = 5.0
-            kappa_max2 = 5.0
-            #!!!
-            sigma[ii,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
-            sigma[-(ii+1),jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
-            alpha[ii,jj] = alpha_max1 * (1 - dist[ii])**NPA
-            alpha[-(ii+1),jj] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[ii,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
-            kappa[-(ii+1),jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
-
-            bcoeff[ii,jj] = np.exp( 
-                -( (sigma[ii,jj] / kappa[ii,jj]) + alpha[ii,jj] ) * (modelclass.dt/eps0)
-            )
-            bcoeff[-(ii+1),jj] = np.exp( 
-                -( (sigma[-(ii+1),jj] / kappa[-(ii+1),jj] + alpha[-(ii+1),jj]) * (modelclass.dt/eps0) )
-            )
-
-        for jj in range(domain.cpml, nx-domain.cpml):
-            perm1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][perm_ind]
-            cond1 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,0]][cond_ind].real
-            perm2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][perm_ind]
-            cond2 = modelclass.tensor_coefficients_original[domain.geometry[jj-domain.cpml,-1]][cond_ind].real
-
-            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-            if cond1 > 0:
-                sig_max1 = cond1
-            elif perm1.imag > 0 and cond2 == 0.0:
-                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
-            else:
-                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
-            
-            if cond2 > 0:
-                sig_max2 = cond2
-            elif perm2.imag > 0 and cond2 == 0.0:
-                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag            
-            else:
-                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
-            
-            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-            if perm1.imag == 0.0:
-                alpha_max1 = 0.02
-            else:
-                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
-
-            if perm2.imag == 0.0:
-                alpha_max2 = 0.02
-            else:
-                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
-
-            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
-
-            #!!! This is for testing 
-            sig_max1 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
-            sig_max2 = 0.8 * ( (NP+1) / (domain.dx * (mu0/eps0 )**0.5) )
-            
-            alpha_max1 = 2 * np.pi * eps0 * modelclass.f0
-            alpha_max2 = 2 * np.pi * eps0 * modelclass.f0
-            kappa_max1 = 5.0
-            kappa_max2 = 5.0
-            #!!!
-            sigma[jj,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
-            sigma[jj,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
-            alpha[jj,ii] = alpha_max1 * (1 - dist[ii])**NPA
-            alpha[jj,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[jj,ii] = 1.0 + (kappa_max - 1.0) * dist[ii]**NP
-            kappa[jj,-(ii+1)] = 1 + (kappa_max - 1) * dist[ii]**NP
-
-            bcoeff[jj,ii] = np.exp( 
-                -(sigma[jj,ii] / kappa[jj,ii] + alpha[jj,ii]) * modelclass.dt
-            )
-            bcoeff[jj,-(ii+1)] = np.exp( 
-                -(sigma[jj,-(ii+1)] / kappa[jj,-(ii+1)] + alpha[jj,-(ii+1)]) * modelclass.dt
-            )
-
-    alpha[np.where(alpha < 0.0)] = 0.0
-    indices = np.where(np.abs(sigma) > 1.0e-6)
-    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1.0) / \
-        (kappa[indices] * sigma[indices] + kappa[indices]**2 * alpha[indices] )
-
-    return sigma, alpha, kappa, acoeff, bcoeff
- 
-# -----------------------------------------------------------------------------
-def ecpml_parameters3(domain, modelclass, dist, direction):
-    """
-    """
-    global mu0, NP, NPA
-    nx = domain.nx + 2 * domain.cpml 
-    ny = domain.ny + 2 * domain.cpml
-    nz = domain.nz + 2 * domain.cpml
-    if direction == 'x':
-        perm_ind = 1
-        cond_ind = 7
-        nx -= 1
-    if direction == 'y':
-        perm_ind = 4
-        cond_ind = 10
-        ny -= 1
-    if direction == 'z':
-        perm_ind = 6
-        cond_ind = 12
-        nz -= 1
-    
-    sigma = np.zeros([nx, ny, nz])
-    alpha = sigma.copy() 
-    kappa = np.ones([nx, ny, nz])
-    acoeff = sigma.copy() 
-    bcoeff = sigma.copy()
-
-    m,n = domain.geometry.shape
-
-    for ii in range(0, domain.cpml):
-        for jj in range(domain.cpml, nz-domain.cpml):
-            perm1 = modelclass.tensor_coefficients_original[
-                domain.geometry[0,jj-domain.cpml]
-            ][perm_ind]
-            cond1 = modelclass.tensor_coefficients_original[
-                domain.geometry[0,jj-domain.cpml]
-            ][cond_ind].real
-            perm2 = modelclass.tensor_coefficients_original[
-                domain.geometry[-1,jj-domain.cpml]
-            ][perm_ind]
-            cond2 = modelclass.tensor_coefficients_original[
-                domain.geometry[-1,jj-domain.cpml]
-            ][cond_ind].real
-            if cond1 > 0:
-                sig_max1 = cond1
-            elif perm1.imag > 0:
-                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
-            else:
-                sig_max1 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm1.real) )
-            
-            if cond2 > 0:
-                sig_max2 = cond2
-            elif perm2.imag > 0:
-                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
-            else:
-                sig_max2 =  (NP+1) / (150.0 * np.pi * domain.dx * np.sqrt(perm2.real) )
-            
-            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-            if perm1.imag == 0.0:
-                alpha_max1 = 0.02
-            else:
-                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
-
-            if perm2.imag == 0.0:
-                alpha_max2 = 0.02
-            else:
-                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
-
-            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real)
-
-            sigma[ii,:,jj] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
-            sigma[-(ii+1),:,jj] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
-            alpha[ii,:,jj] = alpha_max1 * (1 - dist[ii])**NPA
-            alpha[-(ii+1),:,jj] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[ii,:,jj] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
-            kappa[-(ii+1),:,jj] = 1 + (kappa_max2 - 1) * dist[ii]**NP
-
-            bcoeff[ii,:,jj] = np.exp( 
-                -(sigma[ii,:,jj] / kappa[ii,:,jj] + alpha[ii,:,jj]) * modelclass.dt
-            )
-            bcoeff[-(ii+1),:,jj] = np.exp( 
-                -(sigma[-(ii+1),:,jj] / kappa[-(ii+1),:,jj] + alpha[-(ii+1),:,jj]) * modelclass.dt
-            )
-
-        for jj in range(domain.cpml, nx-domain.cpml):
-            perm1 = modelclass.tensor_coefficients_original[
-                domain.geometry[jj-domain.cpml,0]
-            ][perm_ind]
-            cond1 = modelclass.tensor_coefficients_original[
-                domain.geometry[jj-domain.cpml,0]
-            ][cond_ind].real
-            perm2 = modelclass.tensor_coefficients_original[
-                domain.geometry[jj-domain.cpml,-1]
-            ][perm_ind]
-            cond2 = modelclass.tensor_coefficients_original[
-                domain.geometry[jj-domain.cpml,-1]
-            ][cond_ind].real
-            if cond1 > 0:
-                sig_max1 = cond1
-            elif perm1.imag > 0:
-                sig_max1 = eps0 * modelclass.f0 * np.sqrt(perm1).imag
-            else:
-                sig_max1 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm1.real) )
-            
-            if cond2 > 0:
-                sig_max2 = cond2
-            elif perm2.imag > 0:
-                sig_max2 = eps0 * modelclass.f0 * np.sqrt(perm2).imag
-            else:
-                sig_max2 =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm2.real) )
-
-            # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-            if perm1.imag == 0.0:
-                alpha_max1 = 0.02
-            else:
-                alpha_max1 = modelclass.f0 * np.sqrt(perm1).imag / 2
-
-            if perm2.imag == 0.0:
-                alpha_max2 = 0.02
-            else:
-                alpha_max2 = modelclass.f0 * np.sqrt(perm2).imag / 2 
-            
-            kappa_max1 = 1 + (alpha_max1 / modelclass.f0) * np.sqrt(mu0 * perm1.real)
-            kappa_max2 = 1 + (alpha_max2 / modelclass.f0) * np.sqrt(mu0 * perm2.real) 
-
-            sigma[jj,:,ii] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
-            sigma[jj,:,-(ii+1)] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
-            alpha[jj,:,ii] = alpha_max1 * (1 - dist[ii])**NPA
-            alpha[jj,:,-(ii+1)] = alpha_max2 * (1 - dist[ii])**NPA
-            kappa[jj,:,ii] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
-            kappa[jj,:,-(ii+1)] = 1 + (kappa_max2 - 1) * dist[ii]**NP
-
-            bcoeff[jj,ii] = np.exp( 
-                -(sigma[jj,:,ii] / kappa[jj,:,ii] + alpha[jj,:,ii]) * modelclass.dt
-            )
-            bcoeff[jj,:,-(ii+1)] = np.exp( 
-                -(sigma[jj,:,-(ii+1)] / kappa[jj,:,-(ii+1)] + alpha[jj,:,-(ii+1)]) * modelclass.dt
-            )
-
-        for jj in range(domain.cpml, nx-domain.cpml):
-            for kk in range(domain.cpml, nz-domain.cpml):
-                perm = modelclass.tensor_coefficients_original[
-                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
-                ][perm_ind]
-                cond = modelclass.tensor_coefficients_original[
-                    domain.geometry[jj-domain.cpml,kk-domain.cpml]
-                ][cond_ind].real
-                if cond > 0:
-                    sig_max = cond
-                elif perm.imag > 0:
-                    sig_max = eps0 * modelclass.f0 * np.sqrt(perm).imag
-                else:
-                    sig_max =  (NP+1) / (150.0 * np.pi * dx * np.sqrt(perm.real) )
-
-                # In places where there is no complex permittivity, we need to assign alpha to a small non-zero value
-                if perm.imag == 0.0:
-                    alpha_max = 0.02
-                else:
-                    alpha_max = modelclass.f0 * np.sqrt(perm1).imag / 2
-
-
-                kappa_max = 1 + (alpha_max / modelclass.f0) * np.sqrt(mu0 * perm.real)
-                sigma[jj,ii,kk] = sig_opt_scalar * sig_max1 * (dist[ii]**NP)
-                sigma[jj,-(ii+1),kk] = sig_opt_scalar * sig_max2 * ( (1-dist[ii] )**NPA)
-                alpha[jj,ii,kk] = alpha_max1 * (1 - dist[ii])**NPA
-                alpha[jj,-(ii+1),kk] = alpha_max2 * (1 - dist[ii])**NPA
-                kappa[jj,ii,kk] = 1.0 + (kappa_max1 - 1.0) * dist[ii]**NP
-                kappa[jj,-(ii+1),kk] = 1 + (kappa_max2 - 1) * dist[ii]**NP
-
-                bcoeff[jj,ii,kk] = np.exp( 
-                    -(sigma[ii,jj] / kappa[ii,jj] + alpha[ii,jj]) * modelclass.dt
-                )
-                bcoeff[jj,-(ii+1),kk] = np.exp( 
-                    -(sigma[jj,-(ii+1),kk] / kappa[jj,-(ii+1),kk] + alpha[jj,-(ii+1),kk]) * modelclass.dt
-                )
-
-    
     alpha[np.where(alpha < 0.0)] = 0.0
     indices = np.where(np.abs(sigma) > 1.0e-6)
     acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
-        (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
+    
+    return sigma, kappa, alpha, acoeff, bcoeff
 
-    return sigma, alpha, kappa, acoeff, bcoeff
 
 # ------------------------------------------------------------------------------
 def rcxgen(
@@ -1139,80 +862,6 @@ def indvar(
         y = None
 
     return(x,y,z,t)
-
-# ------------------------------------------------------------------------------
-def parameter_profile_1d(
-        domain, material, model, 
-        indice: int, parameter: str = 'velocity'
-    ):
-    """
-    Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
-    directions with respect to z). The available options are:
-        'velocity', 'temperature', 'density', 'lwc', 'conductivity' (em only)
-
-    Defaults to 'velocity' which returns 4 m-by-1 arrays. All other options will 
-    return 2 m-by-1 arrays. 
-
-    :param domain: The domain object of the model
-    :type domain: Domain
-    :param material: The material object of the model
-    type material: Material
-    :param model: The model object
-    :type model: Model
-    :param indice: Specify the x-indice to pull the 1D profile
-    :type indice: int
-    :param parameter: Specify which parameter to use
-    :type parameter: str
-    """
-
-    profile = domain.geometry[indice,:]
-    n = len(profile)
-    if material.material is None:
-        material.sort_material_list() 
-    
-    attribute_map = {
-        'temperature': 'temp',
-        'density': 'rho',
-        'lwc': 'lwc',
-        'porosity': 'porosity'
-    }
-
-     
-    if parameter == 'velocity':
-        if model.is_seismic:
-            output_values = np.empty([n, 4])
-            tensor_coefficients = model.tensor_coefficients[:,:-1].astype(float)
-            # T = np.zeros([6,6])
-            for ind in range(n):
-                T = tensor_coefficients[profile[ind],:]
-                rho = material.rho[profile[ind]]
-                output_values[ind,:] = mf.tensor2velocities(
-                    T, rho, seismic = True
-                )
-        else:
-            output_values = np.empty([n, 3])
-            if parameter == 'conductivity':
-                tensor_coefficients = model.tensor_coefficients[:,7].real.astype(float)
-                for ind in range(n):
-                    T = tensor_coefficients[profile[ind],:] 
-                    output_values[ind,:] = T[np.array([0,3,5])]
-            else:
-                tensor_coefficients = model.tensor_coefficients[:,1:7].real.astype(float)
-                # T = np.zeros([3,3])  
-                for ind in range(n):
-                    T = tensor_coefficients[profile[ind],:]
-                    output_values[ind,:] = mf.tensor2velocities(
-                        T, seismic = False
-                    )
-    else:
-        attribute_name = attribute_map.get(parameter)
-        vals = getattr(material, attribute_name, None)
-        output_values = np.empty([n])
-        for ind in range(n):
-            output_values[ind] = vals[profile[ind]]
-
-    z = np.arange(0,n) * domain.dz
-    return z, output_values 
 
 # ------------------------------------------------------------------------------
 def plot_3c(time, 
@@ -1498,9 +1147,13 @@ def plot_hodogram(data, dt, window=None, components=('L', 'Q', 'T'), title='Hodo
     
     return fig, axs
 
-
-
 # ============================ Processing Functions ============================
+
+# ------------------------------------------------------------------------------
+
+
+
+# ------------------------------------------------------------------------------
 def compute_envelope(signal, pad_width=50):
     """
     Compute the amplitude envelope of a signal using the Hilbert transform.
@@ -1513,7 +1166,6 @@ def compute_envelope(signal, pad_width=50):
     envelope = np.abs(analytic)
     # Remove the padded regions.
     return envelope[pad_width:-pad_width]
-
 
 # ------------------------------------------------------------------------------
 def polarization_analysis(data, dt, M, alpha=0.1):
@@ -1596,7 +1248,98 @@ def polarization_analysis(data, dt, M, alpha=0.1):
         
     return times, rectilinearity, backazimuth, incidence, cone_mask
 
-# --------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+def compute_polar_energy(E_x, E_y, dt, angles, to_db=False, corrected=False):
+    """
+    Compute the integrated energy of the horizontal field projection 
+    onto multiple polarization angles for a 3C time series.
+    
+    Parameters
+    ----------
+    E_x : array_like
+        1D array of the x-component time series.
+    E_y : array_like
+        1D array of the y-component time series.
+    dt : float
+        Time-step interval (seconds).
+    angles : array_like
+        1D array of angles (radians) at which to project the field.
+    to_db : bool, optional
+        If True, convert energies to dB scale: 10*log10(E/E.max()).
+    
+    Returns
+    -------
+    energies : np.ndarray
+        Array of shape (len(angles),) containing the energy at each angle,
+        or in dB if `to_db=True`.
+    """
+    E_x = np.asarray(E_x)
+    E_y = np.asarray(E_y)
+    energies = np.empty(len(angles))
+    
+    for i, theta in enumerate(angles):
+        # Project onto the polarization direction theta
+        E_theta = E_x * np.cos(theta) + E_y * np.sin(theta)
+        # Compute energy = integral of |E|^2 dt
+        energies[i] = np.sum(np.abs(E_theta)**2) * dt
+    
+    if to_db:
+        # Normalize to max and convert to dB
+        energies = 10 * np.log10(energies / np.max(energies))
+    
+    if corrected:
+        baseline = np.cos(angles)**2
+        corr = energies / baseline 
+        return 10*np.log10(corr / corr.max() )
+    else:
+        return energies
+
+# ------------------------------------------------------------------------------
+def compute_phase_gain(ts_ref, ts, f0, dt):
+    """
+    Compute phase shift and gain (in dB) between two time series at a specific frequency.
+    
+    Parameters
+    ----------
+    ts_ref : array_like
+        Reference time series (1D array).
+    ts : array_like
+        Comparison time series (same shape as ts_ref).
+    f0 : float
+        Center frequency in Hz at which to compute phase and gain.
+    dt : float
+        Sampling interval in seconds.
+    
+    Returns
+    -------
+    phase_deg : float
+        Phase shift of `ts` relative to `ts_ref` at f0, in degrees.
+    gain_db : float
+        Gain in decibels: 20 * log10(|H|), where H is the complex ratio of spectral amplitudes.
+    """
+    ts_ref = np.asarray(ts_ref)
+    ts = np.asarray(ts)
+    if ts_ref.shape != ts.shape:
+        raise ValueError("Input time series must have the same shape")
+    N = ts_ref.size
+    
+    # Compute real FFTs
+    Y_ref = np.fft.rfft(ts_ref)
+    Y = np.fft.rfft(ts)
+    freqs = np.fft.rfftfreq(N, d=dt)
+    
+    # Find the index of the bin closest to f0
+    idx = np.argmin(np.abs(freqs - f0))
+    
+    # Complex transfer at f0
+    H = Y[idx] / Y_ref[idx]
+    
+    gain_db = 20 * np.log10(np.abs(H))
+    phase_deg = np.angle(H, deg=True)
+    
+    return phase_deg, gain_db
+
+# ------------------------------------------------------------------------------
 def rotate_to_zrt(data, source=None, receiver=None, direction=None):
     """
     Rotate seismogram data from Cartesian (vx, vy, vz) to Z, R, T components.
@@ -1849,7 +1592,7 @@ def correct_geometric_spreading(
     return corrected_time_series
 
 # ------------------------------------------------------------------------------
-def exponential_gain(time_series: np.ndarray, alpha: float) -> np.ndarray:
+def exponential_gain(time_series: np.ndarray, dt: float, alpha: float) -> np.ndarray:
     """
     Applies an exponential gain to a time series to correct for attenuation.
 
@@ -1873,3 +1616,317 @@ def exponential_gain(time_series: np.ndarray, alpha: float) -> np.ndarray:
     corrected_time_series = time_series * gain
 
     return corrected_time_series
+
+
+# ------------------------------------------------------------------------------
+def compute_fk_spectrum(
+        data: np.ndarray,
+        dt: float,
+        dx: float,
+        taper: bool = True,
+        ntfft: Optional[int] = None,
+        nxfft: Optional[int] = None,
+        fmin: float = 0.0,
+        fmax: Optional[float] = None,
+        kmin: Optional[float] = None,
+        kmax: Optional[float] = None,
+        wavenumber_units: str = 'cycles'  # 'cycles' or 'radians'
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute the slant-stack f–k power spectrum of a 2D shot gather.
+    
+    Returns
+    -------
+    freqs : 1D array of frequencies (Hz)
+    ks     : 1D array of wavenumbers in either cycles/m or rad/m
+    P      : 2D power spectrum array shape (len(freqs), len(ks))
+    """
+    nt, nx = data.shape
+    ntfft = ntfft or nt
+    nxfft = nxfft or nx
+    
+    # optional taper to suppress leakage
+    dat = data.copy()
+    if taper:
+        dat *= np.hanning(nt)[:, None] * np.hanning(nx)[None, :]
+    
+    # 2D FFT and power
+    F2 = np.fft.fft2(dat, s=(ntfft, nxfft))
+    Pfull = np.abs(F2)**2
+    
+    # frequency axis
+    freqs_full = np.fft.rfftfreq(ntfft, dt)
+    if fmax is None:
+        fmask = freqs_full >= fmin
+    else:
+        fmask = (freqs_full >= fmin) & (freqs_full <= fmax)
+    freqs = freqs_full[fmask]
+    
+    # wavenumber axis (cycles/m)
+    ks_full = np.fft.fftshift(np.fft.fftfreq(nxfft, dx))
+    # convert to rad/m if requested
+    if wavenumber_units == 'radians':
+        ks_full = ks_full * 2 * np.pi
+    
+    # apply k bounds
+    if kmin is None: kmin = 0.0
+    if kmax is None: kmax = np.abs(ks_full).max()
+    kmask = (np.abs(ks_full) >= kmin) & (np.abs(ks_full) <= kmax)
+    ks = ks_full[kmask]
+    
+    # extract and shift power matrix
+    P = Pfull[: len(freqs_full), :]
+    P = P[fmask, :]
+    P = np.fft.fftshift(P, axes=1)
+    P = P[:, kmask]
+    
+    return freqs, ks, P
+
+# -----------------------------------------------------------------------------
+
+def plot_fk_spectrum(
+        freqs: np.ndarray,
+        ks: np.ndarray,
+        P: np.ndarray,
+        fig: Optional[Figure] = None,
+        ax: Optional[Axes] = None,
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
+        log_scale: bool = False,
+        smooth: bool = False,
+        smooth_sigma: Tuple[float, float] = (1.0, 1.0),
+        mode_lines: Optional[Dict[str, Union[float, Tuple[float,str]]]] = None,
+        wavenumber_units: str = 'cycles'  # match compute_fk_spectrum
+    ) -> Tuple[Figure, Axes]:
+    """
+    Display an f–k power spectrum, with optional log-scale, smoothing,
+    and overlaid theoretical mode-velocity lines in either cycles/m or rad/m.
+    """
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # optional smoothing
+    Pplot = P.copy()
+    if smooth:
+        Pplot = gaussian_filter(Pplot, sigma=smooth_sigma)
+    
+    eps = np.finfo(float).eps
+    if log_scale:
+        Pplot = 10 * np.log10(Pplot + eps)
+        cbar_label = 'Power (dB)'
+    else:
+        cbar_label = 'Power'
+    
+    pcm = ax.pcolormesh(ks, freqs, Pplot, shading='auto', vmin=vmin, vmax=vmax)
+    fig.colorbar(pcm, ax=ax, label=cbar_label)
+    
+    # overlay mode lines
+    if mode_lines:
+        for label, spec in mode_lines.items():
+            if isinstance(spec, (tuple, list)):
+                v, col = spec
+            else:
+                v, col = spec, 'white'
+            # compute k_line in correct units
+            if wavenumber_units == 'radians':
+                kline = 2 * np.pi * freqs / v
+            else:
+                kline = freqs / v
+            ax.plot(kline, freqs, '--', color=col, lw=1, label=label)
+            ax.plot(-kline, freqs, '--', color=col, lw=1)
+        # ax.legend(loc='upper right')
+    
+    xlabel = 'Wavenumber (rad/m)' if wavenumber_units=='radians' else 'Wavenumber (1/m)'
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel('Frequency (Hz)')
+    ax.set_title('f–k Spectrum')
+    return fig, ax
+
+# ------------------------------------------------------------------------------
+# SURFACE WAVES
+def compute_dispersion(
+        seismograms: np.ndarray, 
+        dx: float, 
+        dt: float,
+        fmin: float, 
+        fmax: float, 
+        nfreq: int=50
+    ) -> Tuple[np.ndarray,np.ndarray]:
+    """Linear-phase fit with 2π-branch correction and physical clamp."""
+    nt, nx = seismograms.shape
+    spec = np.fft.rfft(seismograms, axis=0)
+    freq_axis = np.fft.rfftfreq(nt, dt)
+    freqs = np.linspace(fmin, fmax, nfreq)
+    vs = np.full(nfreq, np.nan)
+    x = np.arange(nx)*dx
+    L = x[-1]-x[0]
+    # max physically resolvable velocity (Nyquist spatial): dx/dt
+    max_vel = dx / dt
+    for i,f in enumerate(freqs):
+        idx = np.argmin(np.abs(freq_axis-f))
+        ph = np.unwrap(np.angle(spec[idx,:]))
+        raw = np.polyfit(x,ph,1)[0]
+        impl = raw*L
+        branch = np.round(impl/(2*np.pi))
+        slope = raw - branch*(2*np.pi/L)
+        k = -slope
+        v = 2*np.pi*f/ k
+        # clamp to positive and below max_vel
+        if v > 0 and v <= max_vel:
+            vs[i] = v
+        else:
+            vs[i] = np.nan
+    return freqs, vs
+
+# ============= Slant-stack energy image and smooth picks =============
+def compute_dispersion_image(
+        seismograms: np.ndarray,
+        dx: float,
+        dt: float,
+        fmin: float,
+        fmax: float,
+        nv: int = 100,
+        nfreq: int = 100,
+        vmin: float = None,
+        vmax: float = None
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """MASW slant-stack with taper, smoothing, and sub-bin peak picking."""
+    # taper in time to reduce spectral leakage
+    nt, nx = seismograms.shape
+    win = np.hanning(nt)
+    tapered = seismograms * win[:, None]
+    # FFT in time
+    spec = np.fft.rfft(tapered, axis=0)
+    freq_axis = np.fft.rfftfreq(nt, dt)
+    
+    # initial phase-fit picks for auto bounding
+    freqs, phase_picks = compute_dispersion(seismograms, dx, dt, fmin, fmax, nfreq)
+    # determine vmin/vmax: user override or auto
+    if vmin is not None and vmax is not None:
+        vmin, vmax = vmin, vmax
+    else:
+        pos = phase_picks[np.isfinite(phase_picks) & (phase_picks > 0)]
+        if pos.size > 0:
+            vmin = pos.min() * 0.8
+            vmax = pos.max() * 1.2
+        else:
+            vmin = dx/dt * 0.1
+            vmax = dx/dt * 2.0
+    if vmin >= vmax:
+        raise ValueError(f"Invalid velocity bounds: vmin={vmin}, vmax={vmax}")
+    
+    vs = np.linspace(vmin, vmax, nv)
+    image = np.zeros((len(freqs), len(vs)))
+    x = np.arange(nx) * dx
+    
+    # build slant-stack energy image
+    for i, f in enumerate(freqs):
+        idx = np.argmin(np.abs(freq_axis - f))
+        A = spec[idx, :]
+        omega = 2 * np.pi * f
+        for j, v in enumerate(vs):
+            image[i, j] = np.abs(np.sum(A * np.exp(1j * omega * x / v)))**2
+    
+    # normalize per-frequency
+    image /= (image.max(axis=1, keepdims=True) + np.finfo(float).eps)
+    # smooth image to reduce striping
+    from scipy.ndimage import gaussian_filter
+    image = gaussian_filter(image, sigma=(1, 2))
+    
+    # sub-bin (parabolic) peak picking
+    picks = np.zeros_like(freqs)
+    dv = vs[1] - vs[0]
+    for i in range(len(freqs)):
+        row = image[i]
+        imax = np.nanargmax(row)
+        if 0 < imax < len(vs) - 1:
+            y0, y1, y2 = row[imax-1], row[imax], row[imax+1]
+            dp = 0.5 * (y0 - y2) / (y0 - 2*y1 + y2)
+            picks[i] = vs[imax] + dp * dv
+        else:
+            picks[i] = vs[imax]
+    # mask outside bounds
+    picks = np.where((picks >= vmin) & (picks <= vmax), picks, np.nan)
+    
+    return freqs, vs, image, picks
+
+# ----------------------------------------------------------------------------
+
+def plot_dispersion(freqs: np.ndarray, velocities: np.ndarray) -> None:
+    """
+    Plot the dispersion curve freq vs phase velocity.
+    """
+    plt.figure()
+    plt.plot(freqs, velocities, '-o')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Phase velocity (m/s)')
+    plt.title('Dispersion curve')
+    plt.grid(True)
+    plt.show()
+
+
+def plot_dispersion_image(
+        freqs: np.ndarray,
+        vs: np.ndarray,
+        image: np.ndarray,
+        picks_freqs: Optional[np.ndarray] = None,
+        picks_vs: Optional[np.ndarray] = None
+    ) -> Tuple[Figure, Axes]:
+    """
+    Plot a MASW-style dispersion image and optional picked dispersion curve.
+    
+    Parameters
+    ----------
+    freqs : (Nf,) array
+        Frequencies (Hz).
+    vs : (Nv,) array
+        Phase velocities (m/s).
+    image : (Nf, Nv) array
+        Normalized energy map (frequency × velocity).
+    picks_freqs : (Np,) array, optional
+        Frequencies of picked dispersion curve.
+    picks_vs : (Np,) array, optional
+        Phase velocities of picked dispersion curve.
+    
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    ax : matplotlib.axes.Axes
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # plot the energy map
+    pcm = ax.pcolormesh(freqs, vs, image.T, shading='auto')
+    cbar = fig.colorbar(pcm, ax=ax, label='Normalized Energy')
+    
+    # labels and title
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('Phase Velocity (m/s)')
+    ax.set_title('Dispersion Image')
+    
+    # overlay picks if provided
+    if picks_freqs is not None and picks_vs is not None:
+        ax.scatter(
+            picks_freqs, picks_vs,
+            c='r', marker='.', s=10,
+            label='Picked Curve'
+        )
+        ax.legend(loc='upper right')
+    
+    return fig, ax
+
+# ----------------------------------------------------------------------------
+def apply_time_taper(data, dt, t0=0.18, t1=0.25):
+    """
+    Apply a cosine taper to suppress data after t0–t1 (in seconds).
+    """
+    nt, nx = data.shape
+    time = np.arange(nt) * dt
+    taper = np.ones_like(time)
+
+    # Apply taper between t0 and t1
+    mask = (time >= t0) & (time <= t1)
+    taper[mask] = 0.5 * (1 + np.cos(np.pi * (time[mask] - t0) / (t1 - t0)))
+    taper[time > t1] = 0.0
+
+    return data * taper[:, None]

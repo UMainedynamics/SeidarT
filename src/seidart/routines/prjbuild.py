@@ -34,11 +34,10 @@ def generate_template(nmats, **kwargs):
             "dz": None,
             "cpml": 10,
             "nmats": nmats,
-            "sig_opt_scalar": 1.2,
             "alpha_max_scalar": 1.0,
+            "kappa_max": 5,
             "NP": 2,
             "NPA": 2,
-            "kappa_max": 5,
             "Rcoef": 0.0010,
             "image_file": None
         },

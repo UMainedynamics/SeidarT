@@ -44,8 +44,8 @@ class Domain:
         self.alpha_opt_scalar = None 
         self.NP = None 
         self.NPA = None 
-        self.kappa_max = 5 
-        self.Rcoef = None # Seismic only parameter
+        self.kappa_max = 5
+        self.Rcoef = None # This is the reflection coefficient and has replaced sig_opt_scalar 
         # Some more values that might be of interest 
         self.write = None
         self.image_file = None
@@ -263,12 +263,6 @@ class Model:
         self.attenuation_fadjust = None
         self.exit_status = 0
         self.is_seismic = None
-        self.kappa_max = np.zeros([3])
-        self.sig_max = np.zeros([3])
-        self.alpha_max = np.zeros([3]) 
-        self.kappa_max_half = np.zeros([3])
-        self.sig_max_half = np.zeros([3])
-        self.alpha_max_half = np.zeros([3])
         self.step_limit = None
         self.sourcefunction_x = None 
         self.sourcefunction_y = None 
@@ -279,7 +273,12 @@ class Model:
         self.compute_coefficients = True
         self.domain_density = None
         self.air_gradient_integer = 2
-        self.use_seismoacoustic = False
+        self.use_multimodal = False
+        self.center = False
+        self.use_broadband = False 
+        self.broadband_fmin = None
+        self.broadband_fmax = None
+        self.source_n_octaves = 2
         self.sourcefunction = sourcefunction.pointsource # This will change
         self.get_seismic = mf.get_seismic 
         self.get_perm = mf.get_perm
@@ -300,9 +299,11 @@ class Model:
         if self.is_seismic:
             velocities = np.zeros([domain.nmats, 4])
             for ind in range(domain.nmats):
+                row = self.stiffness_coefficients.loc[ind]
+                rho = row['rho']
+                tensor = row.drop('rho').to_numpy()
                 velocities[ind,:] = mf.tensor2velocities(
-                    self.stiffness_coefficients.loc[ind][:-1].to_numpy(), 
-                    self.stiffness_coefficients['rho'][ind], 
+                    tensor, rho,
                     seismic = True
                 )
         else: 
@@ -434,68 +435,55 @@ class Model:
             else:
                 print('Computing the permittivity and conductivity coefficients.')    
                 self.get_perm(self, material)
-                
-            
-        # Always recalculate dt
-        max_vels = np.zeros([domain.nmats])
         
-        if self.is_seismic:
-            for ind in range(domain.nmats):
-                max_vels[ind] = np.sqrt( (self.stiffness_coefficients.loc[ind]/ \
-                    self.stiffness_coefficients.rho.loc[ind]).max() )
-            if domain.dim == 2:
-                    self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dz**2) / max_vels.max() / 2
-            else:
-                
-                self.dt = self.CFL / np.sqrt(1/domain.dx**2 + 1/domain.dy**2 + 1/domain.dz**2) / max_vels.max() / 2            
-        else:
+        # Always recalculate dt
+        self.get_max_velocities() 
+        max_vel = max(self.max_velocity_per_material.values() ) 
+        
+        if not self.is_seismic:
             for ind in range(domain.nmats):
                 max_vels[ind] = clight / \
                     np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
             
-            if domain.dim == 2.5:
-                denom  = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
-            else:
-                denom = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
-            
-            self.dt = self.CFL / (max_vels.max() * denom) 
-            
-            # The time step needs to satisfy the Courant number and also have a nyquist
-            # that will resolve the source frequency
-            src_nyquist = 1/(2*self.f0)
-            if src_nyquist < self.dt:
-                print(
-                    '''Nyquist is not small enough for the source frequency. Change
-                    the source frequency or decrease the spatial step size'''
-                )
+            max_vel = max_vel.max()     
+        
+        if domain.dim == 2.5:
+            denom  = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
+        else:
+            denom = np.sqrt((1/domain.dx)**2 + (1/domain.dz)**2) 
+        
+        self.dt = self.CFL / ( max_vel * denom )  
+                  
+        src_nyquist = 1/(2*self.f0)
+        if src_nyquist < self.dt:
+            print(
+                '''Nyquist is not small enough for the source frequency. Change
+                the source frequency or decrease the spatial step size'''
+            )
+        
         # ----------------------
         # We need to set the 
         print("Creating the source function")
         (
             __, self.sourcefunction_x, self.sourcefunction_y, 
             self.sourcefunction_z, __ 
-        ) = self.sourcefunction(self)
-        
+        ) = self.sourcefunction(
+            self, 
+            broadband = self.use_broadband,
+            multimodal = self.use_multimodal,
+            center = self.center,
+            fmin = self.broadband_fmin,
+            fmax = self.broadband_fmax,
+            num_octaves = self.source_n_octaves
+        )
+                
         direction = ['x', 'y', 'z']
         # Compute CPML
         print('Computing CPML boundary values and writing outputs to Fortran files.')
         for d in direction:
-            cpmlcompute(self, domain, d)
-            cpmlcompute(self, domain, d, half = True)
+            __ = cpmlcompute(self, domain)
+            __ = cpmlcompute(self, domain, half = True)
         
-        # ----------------------
-        # If air, water, or oil are present then we will need to incorporate the acoustic equations
-        masked_materials = ['air', 'water', 'oil']
-        for matname in material.material_list['Name']:
-            if matname in masked_materials:
-                self.use_seismoacoustic = True 
-        
-        if self.use_seismoacoustic == True:
-            print('Writing masked array for Seismoacoustics')
-            self.writemask(material, domain)
-        
-        # We haven't tidied up the seismoacoustic code yet. 
-        self.use_seismoacoustic = False
         # ----------------------
         # Write out the tensor components to file
         if write_tensor:
@@ -841,7 +829,7 @@ class Model:
         if self.is_seismic:
             C_full = np.zeros((3, 3, 3, 3))
             # Extract stiffness coefficients from the specified row
-            row = self.stiffness_coefficients.iloc[material_indice]
+            row = self.stiffness_coefficients.loc[material_indice]
             C = np.array([
                 [row['c11'], row['c12'], row['c13'], row['c14'], row['c15'], row['c16']],
                 [row['c12'], row['c22'], row['c23'], row['c24'], row['c25'], row['c26']],
@@ -859,7 +847,7 @@ class Model:
                     Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
         else:
              # Extract permittivity values from the specified row
-            row_epsilon = self.permittivity_coefficients.iloc[material_indice]
+            row_epsilon = self.permittivity_coefficients.loc[material_indice]
             epsilon = np.array([
                 [row_epsilon['e11'], row_epsilon['e12'], row_epsilon['e13']],
                 [row_epsilon['e12'], row_epsilon['e22'], row_epsilon['e23']],
@@ -867,7 +855,7 @@ class Model:
             ])
 
             # Extract conductivity values from the specified row
-            row_sigma = self.conductivity_coefficients.iloc[material_indice]
+            row_sigma = self.conductivity_coefficients.loc[material_indice]
             sigma = np.array([
                 [row_sigma['s11'], row_sigma['s12'], row_sigma['s13']],
                 [row_sigma['s12'], row_sigma['s22'], row_sigma['s23']],
@@ -940,6 +928,33 @@ class Model:
                 })
 
     # --------------------------------------------------------------------------
+    def get_max_velocities(self, directions=None):
+        """
+        Loop over all materials in the model and compute the maximum phase velocity
+        for each material using the Christoffel matrix.
+
+        :param directions: List of direction keys to use. Defaults to ['x', 'y', 'z', 'xy', 'xz', 'yz'].
+        :return: Dictionary {material_id: max_velocity}
+        """
+        if directions is None:
+            directions = ['x', 'y', 'z', 'xy', 'xz', 'yz']
+        
+        max_velocity_per_material = {}
+
+        # Loop over all material IDs present in the stiffness/permittivity tables
+        material_ids = self.stiffness_coefficients.index if self.is_seismic \
+            else self.permittivity_coefficients.index
+
+        for mat_id in material_ids:
+            local_max = 0.0
+            for direction in directions:
+                _, _, _, velocities = self.get_christoffel_matrix(mat_id, direction)
+                local_max = max(local_max, np.max(velocities))
+            max_velocity_per_material[mat_id] = local_max
+
+        self.max_velocity_per_material = max_velocity_per_material
+    
+    # --------------------------------------------------------------------------
     def plot_lower_hemisphere_polarizations(self):
         """
         Plot lower hemisphere projections of P, SV, and SH polarization directions
@@ -980,6 +995,69 @@ class Model:
         fig.tight_layout()
         return fig, axs
 
+    # ------------------------------------------------------------------------------
+    def parameter_profile_1d(
+            self, domain, material, 
+            indice: int, parameter: str = 'velocity', direction = 'z'
+        ):
+        """
+        Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
+        directions with respect to z). The available options are:
+            'velocity', 'temperature', 'density', 'lwc', 'conductivity' (em only)
+
+        Defaults to 'velocity' which returns 4 m-by-1 arrays. All other options will 
+        return 2 m-by-1 arrays. 
+
+        :param domain: The domain object of the model
+        :type domain: Domain
+        :param material: The material object of the model
+        type material: Material
+        :param indice: Specify the x-indice to pull the 1D profile
+        :type indice: int
+        :param parameter: Specify which parameter to use
+        :type parameter: str
+        """
+
+        profile = domain.geometry[indice,:]
+        n = len(profile)
+        if material.material is None:
+            material.sort_material_list() 
+        
+        attribute_map = {
+            'temperature': 'temp',
+            'density': 'rho',
+            'lwc': 'lwc',
+            'porosity': 'porosity'
+        }
+
+        
+        if parameter == 'velocity':
+            
+            output_values = np.empty([n, 3])
+            if self.is_seismic:
+                for ind in range(n):
+                    __, __, __, output_values[ind,:] = self.get_christoffel_matrix(profile[ind], direction)
+            else:                      
+                for ind in range(n):
+                    T = self.permittivity_coefficients[profile[ind],:]
+                    output_values[ind,:] = mf.tensor2velocities(
+                        T, seismic = False
+                    )
+        elif parameter == 'conductivity':
+            for ind in range(n):
+                T = em.conductivity_coefficients.loc[profile[ind],:] 
+                output_values[ind,:] = T[np.array([0,3,5])]
+        else:
+            attribute_name = attribute_map.get(parameter)
+            vals = getattr(material, attribute_name, None)
+            output_values = np.empty([n])
+            for ind in range(n):
+                output_values[ind] = vals[profile[ind]]
+
+        z = np.arange(0,n) * domain.dz
+        self.parameter_z = z.copy()
+        self.parameter_output_values = output_values.copy()
+        return  z, output_values
     
     # --------------------------------------------------------------------------
     # --------------------------------------------------------------------------    

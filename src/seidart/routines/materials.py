@@ -409,11 +409,17 @@ def highfreq_stability_conditions(T):
 # -----------------------------------------------------------------------------
 def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
     if T.shape == (6,):
-        temp = np.zeros([3,3])
-        temp[0,:] = T[0:3] 
-        temp[1,1:] = T[3:5]
-        temp[2,2] = T[5]
-        T = np.triu(temp).T + np.triu(temp, 1)
+        if isinstance(T, pd.DataFrame):
+            vx = c_light * np.sqrt(1/T['e11'])
+            vy = c_light * np.sqrt(1/T['e22'])
+            vz = c_light * np.sqrt(1/T['e33'])
+            return vx, vy, vz
+        else:
+            temp = np.zeros([3,3])
+            temp[0,:] = T[0:3] 
+            temp[1,1:] = T[3:5]
+            temp[2,2] = T[5]
+            T = np.triu(temp).T + np.triu(temp, 1)
     if T.shape == (21,) or T.shape == (22,): # First case is a numpy array and second is a dataframe
         temp = np.zeros([6,6])
         if isinstance(T, pd.DataFrame):
