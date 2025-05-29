@@ -442,8 +442,12 @@ class Model:
         
         if not self.is_seismic:
             for ind in range(domain.nmats):
-                max_vels[ind] = clight / \
-                    np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+                try:
+                    max_vel[ind] = clight / \
+                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+                except: #nmat = 1 case
+                    max_vel = clight / \
+                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
             
             max_vel = max_vel.max()     
         
@@ -881,6 +885,9 @@ class Model:
         # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
         velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
         
+        # if not self.is_seismic:
+        #     velocities[velocities > 0] = 1/velocities[velocities>0]
+        
         # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
         velocities.sort()
         
@@ -940,18 +947,24 @@ class Model:
             directions = ['x', 'y', 'z', 'xy', 'xz', 'yz']
         
         max_velocity_per_material = {}
-
+        
         # Loop over all material IDs present in the stiffness/permittivity tables
-        material_ids = self.stiffness_coefficients.index if self.is_seismic \
-            else self.permittivity_coefficients.index
-
+        if self.is_seismic:
+            material_ids = self.stiffness_coefficients.index 
+        else: 
+            material_ids = self.permittivity_coefficients.index
+        
         for mat_id in material_ids:
             local_max = 0.0
             for direction in directions:
                 _, _, _, velocities = self.get_christoffel_matrix(mat_id, direction)
                 local_max = max(local_max, np.max(velocities))
             max_velocity_per_material[mat_id] = local_max
-
+            
+        if not self.is_seismic:
+            for key, value in max_velocity_per_material.items():
+                max_velocity_per_material[key] = 1/value
+        
         self.max_velocity_per_material = max_velocity_per_material
     
     # --------------------------------------------------------------------------

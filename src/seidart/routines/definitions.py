@@ -425,7 +425,6 @@ def airsurf(material, domain, N: int = 2) -> np.ndarray:
 def cpmlcompute(
         modelclass, 
         domain, 
-        # direction: str, 
         half: bool = False,
     ) -> None:
     """
@@ -484,10 +483,11 @@ def cpmlcompute(
         # We will use the maximum permittivity coefficient and assume that the 
         # magnetic permeability is 1. We can use a different value
         # sig_max = domain.sig_opt_scalar * ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        eps_r_min = modelclass.permittivity_coefficients[['e11', 'e22', 'e33']].min().min()
-        c_max = clight * np.sqrt(1/eps_r_min)
+        # eps_r_min = modelclass.permittivity_coefficients[['e11', 'e22', 'e33']].min().min()
+        # c_max = clight * np.sqrt(1/eps_r_min) 
+        # sig_max = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max / (2 * domain.cpml * deltamin)
+        c_max = clight / np.sqrt(velocity_map)
         sig_max = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max / (2 * domain.cpml * deltamin)
-        
         alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
         sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
             sig_max, alpha_max, domain.kappa_max, nx, nz,
@@ -559,7 +559,7 @@ def cpml_parameters(
         sigma[ind,m:-m] = sig_max[0,:] * (distancex[ind]**NP)
         kappa[ind,:] = 1.0 + (kappa_max - 1.0) * (distancex[ind]/distx_max)**NP
         alpha[ind,:] = alpha_max * (1 - distancex[ind])**NPA
-
+        
         # From the end 
         sigma[-(ind+1),m:-m] = sig_max[-1,:]*distancex[ind]**NP
         kappa[-(ind+1),:] = 1 + (kappa_max - 1) * (distancex[ind]/distx_max)**NP
@@ -1788,7 +1788,7 @@ def compute_dispersion_image(
         nv: int = 100,
         nfreq: int = 100,
         vmin: float = None,
-        vmax: float = None
+        vmax: float = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """MASW slant-stack with taper, smoothing, and sub-bin peak picking."""
     # taper in time to reduce spectral leakage
@@ -1870,7 +1870,8 @@ def plot_dispersion_image(
         vs: np.ndarray,
         image: np.ndarray,
         picks_freqs: Optional[np.ndarray] = None,
-        picks_vs: Optional[np.ndarray] = None
+        picks_vs: Optional[np.ndarray] = None,
+        colormap = 'inferno'
     ) -> Tuple[Figure, Axes]:
     """
     Plot a MASW-style dispersion image and optional picked dispersion curve.
@@ -1896,7 +1897,7 @@ def plot_dispersion_image(
     fig, ax = plt.subplots(figsize=(8, 6))
     
     # plot the energy map
-    pcm = ax.pcolormesh(freqs, vs, image.T, shading='auto')
+    pcm = ax.pcolormesh(freqs, vs, image.T, shading='auto', cmap = colormap)
     cbar = fig.colorbar(pcm, ax=ax, label='Normalized Energy')
     
     # labels and title

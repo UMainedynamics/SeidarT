@@ -868,145 +868,100 @@ class Array:
     # -------------------------------------------------------------------------
     def multichannel_analysis(
             self,
-            d_rcx: float,
+            velocity_limits: Tuple[float, float] = (100, 2000),
+            frequency_limits: Optional[Tuple[float, float]] = None,
+            n_velocity: int = 500,
             figure_size: Tuple[float, float] = (10, 8),
             colormap: str = 'viridis',
-            contour_levels: int = 100,
-            frequency_limits: Optional[Tuple[float, float]] = None,
-            velocity_limits: Optional[Tuple[float, float]] = None,
-            time_bandwidth: float = 4.0,
-            n_tapers: int = 5,
-            ntfft: Optional[int] = None,
-            nxfft: Optional[int] = None,
-            vmin = -40,
-            vmax = None
+            mask_db: float = -40,
+            vmax: Optional[float] = None,
+            smooth_sigma: float = 0.75,
         ):
         """
-        Compute and plot the dispersion image using multitaper spectral analysis
-        with DPSS tapers and f-k to f-c transformation.
-
+        Compute and plot the frequency–velocity (f–c) dispersion image from f–k spectrum.
+        
         Parameters
         ----------
-        d_rcx : float
-            Receiver spacing (in meters).
-        figure_size : tuple of float, optional
-            Size of the output figure in inches.
-        colormap : str, optional
-            Matplotlib colormap name.
-        contour_levels : int, optional
-            Number of contour levels in the image.
+        velocity_limits : tuple of float
+            Range of phase velocities (min, max) in m/s.
         frequency_limits : tuple of float, optional
-            Frequency axis limits (Hz).
-        velocity_limits : tuple of float, optional
-            Velocity axis limits (m/s).
-        time_bandwidth : float, optional
-            Time–bandwidth product for DPSS tapers.
-        n_tapers : int, optional
-            Number of DPSS tapers.
-        ntfft : int, optional
-            FFT size in time (zero-padded if larger than trace length).
-        nxfft : int, optional
-            FFT size in space (zero-padded if larger than number of traces).
+            Frequency range (Hz) to display.
+        n_velocity : int, default=500
+            Number of velocity bins.
+        figure_size : tuple of float, default=(10, 8)
+            Size of the plot.
+        colormap : str, default='viridis'
+            Matplotlib colormap.
+        mask_db : float, default=-40
+            Threshold below which to mask values (in dB).
+        vmax : float, optional
+            Max value for dB color range.
+        smooth_sigma : float, default=0.75
+            Gaussian smoothing factor.
         """
-        m, n = self.timeseries.shape
-        fs = 1.0 / self.dt
-
-        ntfft = ntfft or m
-        nxfft = nxfft or n
-
-        # Generate DPSS tapers once
-        tapers = windows.dpss(m, NW=time_bandwidth, Kmax=n_tapers)
-
-        # Multitaper spectral estimation
-        multitaper_spectrum = np.zeros((m // 2 + 1, n), dtype=np.complex128)
-        for i in range(n):
-            spectra = []
-            for taper in tapers:
-                tapered_data = self.timeseries[:, i] * taper
-                spectrum = rfft(tapered_data)
-                spectra.append(spectrum)
-            multitaper_spectrum[:, i] = np.mean(spectra, axis=0)
-
-        # f-k spectrum
-        fk_spectrum = fftshift(fft2(multitaper_spectrum, s=(ntfft // 2 + 1, nxfft)))
-        freqs = rfftfreq(ntfft, self.dt)
-        wavenumbers = -fftshift(np.fft.fftfreq(nxfft, d_rcx))
-
-        self.masw_spectrum = fk_spectrum
-        self.masw_freqs = freqs
-
-        # f-k to f-c
-        fk_mesh_freq, fk_mesh_k = np.meshgrid(freqs, wavenumbers, indexing='ij')
-        with np.errstate(divide='ignore', invalid='ignore'):
-            phase_velocity = np.abs(fk_mesh_freq / fk_mesh_k)
-
-        if velocity_limits is None:
-            vmax = np.nanmax(phase_velocity[np.isfinite(phase_velocity)])
-            velocity_limits = (0.0, vmax)
-        velocity_bins = np.linspace(*velocity_limits, 500)
-        self.masw_velocity_bins = velocity_bins
-
-        # Bin f-k amplitude into f-c space
+        # Validation
+        required_attrs = ['fk_freqs', 'fk_wavenumbers', 'fk_power_linear']
+        missing = [attr for attr in required_attrs if not hasattr(self, attr)]
+        if missing:
+            raise RuntimeError(f"Missing required attribute(s) for MASW computation: {', '.join(missing)}. "
+                            "Please run fk_analysis() first.")
+        
+        freqs = self.fk_freqs
+        wavenumbers = self.fk_wavenumbers
+        fk_power = self.fk_power_linear
+        
+        velocity_bins = np.linspace(*velocity_limits, n_velocity)
         amplitude_fc = np.zeros((len(freqs), len(velocity_bins)))
-        for i, f_row in enumerate(np.abs(fk_spectrum)):
-            c_indices = np.digitize(phase_velocity[i], velocity_bins)
-            c_indices = np.clip(c_indices, 0, len(velocity_bins) - 1)
-            np.add.at(amplitude_fc[i], c_indices, f_row)
-
-        amplitude_fc /= n_tapers
-        amplitude_fc = gaussian_filter(amplitude_fc, sigma=0.75)
-
-        # Convert to dB and limit contrast
+        
+        for i, f in enumerate(freqs):
+            if f <= 0:
+                continue
+            for j, k in enumerate(wavenumbers):
+                if k == 0:
+                    continue
+                c = abs(f / k)
+                if velocity_limits[0] <= c <= velocity_limits[1]:
+                    # idx = np.searchsorted(velocity_bins, c)
+                    # if 0 <= idx < len(velocity_bins):
+                    #     amplitude_fc[i, idx] += fk_power[i, j]
+                    weights = gaussian_weighted_bin(c, velocity_bins, stddev=10)
+                    amplitude_fc[i] += fk_power[i, j] * weights
+        
+        amplitude_fc = gaussian_filter(amplitude_fc, sigma=smooth_sigma)
+        
+        # Convert to decibel scale
         epsilon = 1e-12
         amplitude_db = 10 * np.log10(amplitude_fc + epsilon)
-        # amplitude_db = np.clip(amplitude_db, -40, 0)
-
-        # Apply frequency limits to the plotted range
+        amplitude_db = np.ma.masked_where(amplitude_db < mask_db, amplitude_db)
+        
         if frequency_limits:
             fmin, fmax = frequency_limits
             freq_mask = (freqs >= fmin) & (freqs <= fmax)
             freqs = freqs[freq_mask]
             amplitude_db = amplitude_db[freq_mask, :]
         
-        mask = amplitude_db < -20
-        amplitude_db_masked = np.ma.masked_where(mask, amplitude_db)
-        # Plot frequency on x and velocity on y
-        self.fig_dispersion, self.ax_dispersion = plt.subplots(figsize=figure_size)
-        # Clip everything below -40 dB for visualization purposes
-        if not vmax:
-            vmax = np.max(amplitude_db)
-
-        # Create colormap that clips under vmin
-        cmap = plt.get_cmap(colormap).copy()
-        cmap.set_under(cmap(0))  # Optional: choose a different color if desired
-
-        # Plot using imshow (note: extent uses [x0, x1, y0, y1])
-        im = self.ax_dispersion.imshow(
-            amplitude_db_masked.T,
+        self.masw_velocity_bins = velocity_bins
+        self.masw_freqs = freqs
+        self.masw_dispersion = amplitude_db
+        
+        # Plot
+        self.fig_masw, self.ax_masw = plt.subplots(figsize=figure_size)
+        im = self.ax_masw.imshow(
+            amplitude_db.T,
             extent=[freqs[0], freqs[-1], velocity_bins[0], velocity_bins[-1]],
             origin='lower',
             aspect='auto',
-            cmap=cmap,
-            vmin=vmin,
-            vmax=vmax
+            cmap=colormap,
+            vmin=mask_db,
+            vmax=vmax or np.max(amplitude_db)
         )
-
-        # Add colorbar
-        cbar = self.fig_dispersion.colorbar(im, ax=self.ax_dispersion, label='Amplitude (dB)')
-
-        # Axis labels
-        self.ax_dispersion.set_xlabel('Frequency (Hz)')
-        self.ax_dispersion.set_ylabel('Phase Velocity (m/s)')
-
-        # Optional axis limits
-        if frequency_limits:
-            self.ax_dispersion.set_xlim(frequency_limits)
-        if velocity_limits:
-            self.ax_dispersion.set_ylim(velocity_limits)
-        
+        cbar = self.fig_masw.colorbar(im, ax=self.ax_masw, label='Amplitude (dB)')
+        self.ax_masw.set_xlabel('Frequency (Hz)')
+        self.ax_masw.set_ylabel('Phase Velocity (m/s)')
+        self.ax_masw.set_title('MASW Dispersion Image')
         plt.tight_layout()
         plt.show()
-  
+    
     # -------------------------------------------------------------------------
     def save(self, save_object = True, output_basefile = None):
         """
