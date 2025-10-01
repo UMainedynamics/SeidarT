@@ -28,7 +28,8 @@ __all__ = [
     'loadproject',
     'airsurf',
     'cpmlcompute',
-    'cpml_parameters',
+    # 'seis_cpml_parameters',
+    # 'em_cpml_parameters',
     'rcxgen',
     'coherdt',
     'coherstf',
@@ -422,10 +423,15 @@ def airsurf(material, domain, N: int = 2) -> np.ndarray:
         
     return(gradcomp)
 
+# ------------------------------------------------------------------------------
 def cpmlcompute(
         modelclass, 
         domain, 
         half: bool = False,
+        velocity_scaling_factor = 1.0,
+        pml_smoothing: bool = "global",
+        smoothing_window: int = 7, 
+        smoothing_passes: int = 1
     ) -> None:
     """
     Computes CPML parameters for a given direction and updates model/domain.
@@ -434,6 +440,12 @@ def cpmlcompute(
     :param domain: The domain class instance to update.
     # :param direction: Direction to compute CPML ('x', 'y', or 'z').
     :param half: Flag to compute half CPML parameters. Defaults to False.
+    :param pml_smoothing: Specify the type of smoothing to apply to the PML
+        layer to avoid impedence contrasts and instability within the region. 
+        Options are: 
+            None - no smoothing is applied and cpml parameters will reflect the inner modeling domain boundary values
+            global (Default) - set the max values from the max velocity in the domain 
+            smoothed - computes the max from the boundary value and smooths within the PML using the arithmetic mean
     :type modelclass: Model
     :type domain: Domain
     # :type direction: str
@@ -446,7 +458,7 @@ def cpmlcompute(
         deltamin = np.min([domain.dx, domain.dy, domain.dz]) 
     else:
         deltamin = np.min([domain.dx, domain.dz]) 
-    
+        
     # -----------------------------------------------------------------------------
     # Compute the distance along the absorbing boundary relative to the end of the 
     # original model space. 
@@ -461,38 +473,81 @@ def cpmlcompute(
     distx = distx/(domain.dx*domain.cpml)
     distz = distz/(domain.dz*domain.cpml)
     
-    # Create lookup array indexed by material ID
-    lookup_array = np.zeros(domain.nmats)
-    for mat_id, v in modelclass.max_velocity_per_material.items():
-        lookup_array[mat_id] = v
+    modelclass.compute_max_velocities(dim = domain.dim) 
     
-    # Now map geometry to velocities
-    velocity_map = lookup_array[domain.geometry]
+    # build separate max velocities for x and z directions
+    lookup_array_x = np.zeros(domain.nmats)
+    lookup_array_z = np.zeros(domain.nmats)
+    
+    modelclass.compute_max_velocities(dim = domain.dim, directions='x')
+    for mat_id, v in modelclass.vmax_x.items():
+        lookup_array_x[mat_id] = v
+    
+    modelclass.compute_max_velocities(dim = domain.dim, directions='z')
+    for mat_id, v in modelclass.vmax_z.items():
+        lookup_array_z[mat_id] = v
+    
+    velocity_map_x = lookup_array_x[domain.geometry]
+    velocity_map_z = lookup_array_z[domain.geometry]
     
     # Compute the maximum sigma, and alpha values for the CPML.  
-    if modelclass.is_seismic:
+    if modelclass.is_seismic:    
         alpha_max = domain.alpha_max_scalar * np.pi*modelclass.f0
-        quasi_cp_max = 0.7 * velocity_map / 2.0 
-        sig_max = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max / (2.0 * domain.cpml )
-        # This seems to work well even at higher frequencies
-        sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
-            sig_max, alpha_max, domain.kappa_max, nx, nz,
-            distx, distz, domain.NP, domain.NPA, modelclass.dt, is_seismic = True
-        )
+        quasi_cp_max_x = velocity_scaling_factor * 0.7 * velocity_map_x / 2.0
+        quasi_cp_max_z = velocity_scaling_factor *  0.7 * velocity_map_z / 2.0
+        sig_max_x = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max_x / (2.0 * domain.cpml)
+        sig_max_z = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max_z / (2.0 * domain.cpml)
     else:
-        # We will use the maximum permittivity coefficient and assume that the 
-        # magnetic permeability is 1. We can use a different value
-        # sig_max = domain.sig_opt_scalar * ((domain.NP + 1) / (deltamin * ((mu0/eps0)**0.5) ) ) #!!! We need to multiply eps0 by the relative permattivity for a better estimate
-        # eps_r_min = modelclass.permittivity_coefficients[['e11', 'e22', 'e33']].min().min()
-        # c_max = clight * np.sqrt(1/eps_r_min) 
-        # sig_max = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max / (2 * domain.cpml * deltamin)
-        c_max = clight / np.sqrt(velocity_map)
-        sig_max = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max / (2 * domain.cpml * deltamin)
+        c_max_x = clight / np.sqrt(velocity_map_x)
+        c_max_z = clight / np.sqrt(velocity_map_z) 
+        sig_max_x = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max_x / (2 * domain.cpml * deltamin)
+        sig_max_z = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max_z / (2 * domain.cpml * deltamin)
         alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
-        sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
-            sig_max, alpha_max, domain.kappa_max, nx, nz,
-            distx, distz, domain.NP, domain.NPA, modelclass.dt
-        )
+    
+    # -------------------- apply pml_smoothing strategy --------------------
+    # We only need the tangential boundary lines because cpml_parameters
+    # consumes sig_max_x[0, :], sig_max_x[-1, :], sig_max_z[:, 0], sig_max_z[:, -1].
+    mode = (pml_smoothing or "global").lower()
+    
+    if mode == "global":
+        if modelclass.is_seismic:
+            vgx = float(np.nanmax(velocity_map_x))
+            vgz = float(np.nanmax(velocity_map_z))
+            qc_x = velocity_scaling_factor * 0.7 * vgx / 2.0
+            qc_z = velocity_scaling_factor * 0.7 * vgz / 2.0
+            s_x = - np.log(domain.Rcoef) * (domain.NP + 1) * qc_x / (2.0 * domain.cpml)
+            s_z = - np.log(domain.Rcoef) * (domain.NP + 1) * qc_z / (2.0 * domain.cpml)
+        else:
+            cmax_x = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_x, 1.0))))
+            cmax_z = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_z, 1.0))))
+            s_x = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * cmax_x / (2.0 * domain.cpml * deltamin)
+            s_z = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * cmax_z / (2.0 * domain.cpml * deltamin)
+        
+        # overwrite with constants (most robust)
+        sig_max_x = np.full_like(sig_max_x, s_x, dtype=float)
+        sig_max_z = np.full_like(sig_max_z, s_z, dtype=float)
+    elif mode == "smoothed":
+        # Smooth tangential lines only (avoid jagged contrasts along the PML):
+        # - for x-sides, smooth along z: rows 0 and -1
+        # - for z-sides, smooth along x: cols 0 and -1
+        # (The variation across thickness comes from the rx/rz profiles inside cpml_parameters.)
+        sig_max_x[0,  :]  = _smooth1d(sig_max_x[0,  :], k=7, passes=2)
+        sig_max_x[-1, :]  = _smooth1d(sig_max_x[-1, :], k=7, passes=2)
+        sig_max_z[:, 0]   = _smooth1d(sig_max_z[:, 0],  k=7, passes=2)
+        sig_max_z[:, -1]  = _smooth1d(sig_max_z[:, -1], k=7, passes=2)
+        
+        # Ensure non-negativity
+        np.maximum(sig_max_x, 0.0, out=sig_max_x)
+        np.maximum(sig_max_z, 0.0, out=sig_max_z)
+    else:
+        # Do nothing
+        print("No cpml smoothing specified.")
+    
+    
+    sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
+        sig_max_x, sig_max_z, alpha_max, domain.kappa_max, nx, nz,
+        distx, distz, domain.NP, domain.NPA, modelclass.dt, is_seismic=False
+    )
     
     # Save the results to a fortran binary
     if half:
@@ -524,22 +579,32 @@ def cpmlcompute(
     f = FortranFile(bcoef_fn, 'w')
     f.write_record(bcoef.T)
     f.close()
-        
+    
     return sigma, kappa, alpha, acoef, bcoef
-        
-# -----------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+def smooth1d(x, k = 7, passes = 1):
+    # arithmetic moving average smoother
+    k = max(3, int(k) | 1)  # ensure odd >=3
+    kernel = np.ones(k, dtype=float) / k
+    y = x.astype(float)
+    for _ in range(int(passes)):
+        y = np.convolve(y, kernel, mode="same")
+    return y
+
 def cpml_parameters(
-        sig_max: float, 
-        alpha_max: float, 
-        kappa_max: float, 
-        nx: int,
-        nz: int,
+        sig_max_x, 
+        sig_max_z, 
+        alpha_max, 
+        kappa_max, 
+        nx,
+        nz,
         distancex,
         distancez, 
-        NP: int,
-        NPA: int, 
-        dt: float,
-        is_seismic = False,
+        NP, 
+        NPA, 
+        dt,
+        is_seismic=False,
     ):
     """
     """
@@ -549,48 +614,50 @@ def cpml_parameters(
     acoeff = np.zeros([nx,nz])
     bcoeff = np.zeros([nx,nz])
     
-    distx_max = distancex.max() 
-    distz_max = distancez.max()
+    distx = distancex/distancex.max() 
+    distz = distancez/distancez.max()
     
-    m = len(distancex)
-    n = len(distancez)
+    rx = distx ** NP 
+    rz = distz ** NP 
+    m = len(distx)
+    n = len(distz)
     # Compute in the x, and z direction
     for ind in range(0, m):
-        sigma[ind,m:-m] = sig_max[0,:] * (distancex[ind]**NP)
-        kappa[ind,:] = 1.0 + (kappa_max - 1.0) * (distancex[ind]/distx_max)**NP
-        alpha[ind,:] = alpha_max * (1 - distancex[ind])**NPA
+        sigma[ind,m:-m] = sig_max_x[0,:] * (rx[ind])
+        kappa[ind,:] = 1.0 + (kappa_max - 1.0) * (rx[ind])
+        alpha[ind,:] = alpha_max * (1 - distx[ind])**NPA
         
         # From the end 
-        sigma[-(ind+1),m:-m] = sig_max[-1,:]*distancex[ind]**NP
-        kappa[-(ind+1),:] = 1 + (kappa_max - 1) * (distancex[ind]/distx_max)**NP
-        alpha[-(ind+1),:] = alpha_max * (1 - distancex[ind])**NPA
+        sigma[-(ind+1),m:-m] = sig_max_x[-1,:]*rx[ind]
+        kappa[-(ind+1),:] = 1 + (kappa_max - 1) * (rx[ind])
+        alpha[-(ind+1),:] = alpha_max * (1 - distx[ind])**NPA
     
     for ind in range(0, n):        
-        sigma[n:-n,ind] = sig_max[:,0] * (distancez[ind]**NP)
-        kappa[:,ind] = 1.0 + (kappa_max - 1.0) * (distancez[ind]/distz_max)**NP
-        alpha[:,ind] = alpha_max * (1 - distancez[ind])**NPA
+        sigma[n:-n,ind] = sig_max_z[:,0] * (rz[ind])
+        kappa[:,ind] = 1.0 + (kappa_max - 1.0) * (rz[ind])
+        alpha[:,ind] = alpha_max * (1 - distz[ind])**NPA
                     
-        sigma[n:-n,-(ind+1)] = sig_max[:,-1]*distancez[ind]**NP
-        kappa[:,-(ind+1)] = 1 + (kappa_max - 1) * (distancez[ind]/distz_max)**NP
-        alpha[:,-(ind+1)] = alpha_max * (1 - distancez[ind])**NPA
+        sigma[n:-n,-(ind+1)] = sig_max_z[:,-1]*rz[ind]
+        kappa[:,-(ind+1)] = 1 + (kappa_max - 1) * (rz[ind])
+        alpha[:,-(ind+1)] = alpha_max * (1 - distz[ind])**NPA
     
     for ii in range(m):
         for jj in range(n):
-            r = np.sqrt(distancex[ii]**2 + distancez[jj]**2)
-            sigma[ii, jj]           = sig_max[0, 0]   * (r ** NP)
-            sigma[-(ii+1), jj]      = sig_max[-1, 0]  * (r ** NP)
-            sigma[ii, -(jj+1)]      = sig_max[0, -1]  * (r ** NP)
-            sigma[-(ii+1), -(jj+1)] = sig_max[-1, -1] * (r ** NP)
+            # r = np.sqrt(distx[ii]**2 + distz[jj]**2)
+            sigma[ii, jj] = sig_max_x[0, 0] * ( rx[ii]) + sig_max_z[0,0] * ( rz[jj] )
+            sigma[-(ii+1), jj] = sig_max_x[-1, 0]  * (rx[ii] ) + sig_max_z[-1, 0]  * (rz[jj] )
+            sigma[ii, -(jj+1)] = sig_max_x[0, -1]  * (rx[ii] ) + sig_max_z[0, -1]  * (rz[jj] )
+            sigma[-(ii+1), -(jj+1)] = sig_max_x[-1, -1] * (rx[ii] ) + sig_max_z[-1, -1] * (rz[jj] )
             
-            kappa[ii, jj]           = 1.0 + (kappa_max - 1.0) * (r ** NP)
-            kappa[-(ii+1), jj]      = 1.0 + (kappa_max - 1.0) * (r ** NP)
-            kappa[ii, -(jj+1)]      = 1.0 + (kappa_max - 1.0) * (r ** NP)
-            kappa[-(ii+1), -(jj+1)] = 1.0 + (kappa_max - 1.0) * (r ** NP)
+            kappa[ii, jj]           = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii+1), jj]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[ii, -(jj+1)]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii+1), -(jj+1)] = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
             
-            alpha[ii, jj]           = alpha_max * ((1.0 - r) ** NPA)
-            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - r) ** NPA)
-            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - r) ** NPA)
-            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - r) ** NPA)
+            alpha[ii, jj]           = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
     
     if is_seismic:
         bcoeff = np.exp( - (sigma / kappa + alpha) * dt)

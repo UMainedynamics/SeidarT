@@ -1119,16 +1119,16 @@ def ice_stiffness_gagnon(
     # Allocate space for the stiffness tensor
     C = np.zeros([6,6])
     
-    C[0,0] = 136.813 - 0.28941*temperature - 0.00178270*(temperature**2) \
-      + 4.6648*pressure - 0.13501*(pressure**2) 
-    C[0,1] = 69.4200 - 0.14673*temperature - 0.00090362*(temperature**2) \
-      + 5.0743*pressure + .085917*(pressure**2)
-    C[0,2] = 56.3410 - 0.11916*temperature - 0.00073120*(temperature**2) \
-      + 6.4189*pressure - .52490*(pressure**2)
-    C[2,2] = 147.607 - 0.31129*temperature - 0.0018948*(temperature**2) \
-      + 4.7546*pressure - .11307*(pressure**2)
-    C[3,3] = 29.7260 - 0.062874*temperature - 0.00038956*(temperature**2) \
-      + 0.5662*pressure + .036917*(pressure**2)
+    C[0,0] = 136.813 - 0.28941*temperature - 0.0017827*(temperature**2) \
+      + 4.7546*pressure - 0.11307*(pressure**2) 
+    C[0,1] = 72.639 - 0.14673*temperature - 0.00090362*(temperature**2) \
+      + 7.2109*pressure + 0.37096*(pressure**2)
+    C[0,2] = 61.445 - 0.11916*temperature - 0.00073120*(temperature**2) \
+      + 2.8083*pressure - .12510*(pressure**2)
+    C[2,2] = 157.960 - 0.31129*temperature - 0.0018948*(temperature**2) \
+      + 2.8083*pressure - 0.12510*(pressure**2)
+    C[3,3] = 29.490 - 0.062874*temperature - 0.00038956*(temperature**2) \
+      + 1.5055*pressure + 0.2677*(pressure**2)
     
     # Fill in the symmetry
     C[1,1] = C[0,0]
@@ -1145,7 +1145,7 @@ def ice_stiffness_gagnon(
     return(stiffness)
 
 # -----------------------------------------------------------------------------
-def ice_density(temperature: float, method: str = None):
+def ice_density(temperature: float, pressure: float = 0.0, method: str = None):
     '''
     Compute the density of an ice crystal given the temperature.
 
@@ -1164,6 +1164,8 @@ def ice_density(temperature: float, method: str = None):
                             1.778e-10*(temperature**4) 
             )
         rho = 1/rho 
+    elif method == 'gagnon':
+        rho = 922.15 + 10.28e-2 * pressure - 0.250310e-4 * pressure **2 - 0.1445 * temperature + 2.77e-4 * temperature**2
     else:
         # The reference temperature is 273.15K; 0C
         rho = rho_o * ( 1 - alpha * temperature)
@@ -1549,11 +1551,13 @@ def snow_permittivity(
     # shivola and tiuri (1986), wise
     
     rho_d,grams_air,grams_water = porewater_correction(
-        temperature, density, porosity, lwc
+        temperature, density, porosity, 0
     )
     
-    # LWC is in kg/m3 but we need it in g/cm3
-    lwc = grams_water / 1000
+    rho_water = rho_water_correction(temperature)
+    # LWC is a percentage we need it in g/cm3
+    lwc = lwc/rho_water 
+    # dry snow density is in kg/m3 but we also need it in g/cm3
     rho_d = rho_d / 1000
     # Put temperature in terms of kelvin
     T = temperature + 273.15

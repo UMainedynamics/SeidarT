@@ -283,7 +283,10 @@ class Model:
         self.get_seismic = mf.get_seismic 
         self.get_perm = mf.get_perm
         self.CFL = 1/np.sqrt(2) # Default minimum. If the dimension is 2.5, then this will change automatically
-        self.density_method = 'none' # options are 'none', 'harmonic', 'geometric', and 'arithmetic'
+        self.density_method = 'geometric' # options are 'none', 'harmonic', 'geometric', and 'arithmetic'
+        self.vmax_x = None
+        self.vmax_z = None
+        self.velocity_scaling_factor = 1.0 
         
     def kband_check(self, domain):
         '''
@@ -437,19 +440,22 @@ class Model:
                 self.get_perm(self, material)
         
         # Always recalculate dt
-        self.get_max_velocities() 
+        self.compute_max_velocities(dim = domain.dim) 
         max_vel = max(self.max_velocity_per_material.values() ) 
         
         if not self.is_seismic:
-            for ind in range(domain.nmats):
-                try:
-                    max_vel[ind] = clight / \
-                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
-                except: #nmat = 1 case
-                    max_vel = clight / \
-                        np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+            max_vel = clight/ \
+                np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].min().min() )
+            # max_vel = np.zeros(domain.nmats)
+            # for ind in range(domain.nmats):
+            #     try:
+            #         max_vel[ind] = clight / \
+            #             np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
+            #     except: #nmat = 1 case
+            #         max_vel[ind] = clight / \
+            #             np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
             
-            max_vel = max_vel.max()     
+            # max_vel = max_vel.max()     
         
         if domain.dim == 2.5:
             denom  = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
@@ -485,8 +491,13 @@ class Model:
         # Compute CPML
         print('Computing CPML boundary values and writing outputs to Fortran files.')
         for d in direction:
-            __ = cpmlcompute(self, domain)
-            __ = cpmlcompute(self, domain, half = True)
+            __ = cpmlcompute(
+                self, domain, 
+                velocity_scaling_factor = self.velocity_scaling_factor, 
+            )
+            __ = cpmlcompute(self, domain, half = True,
+                velocity_scaling_factor = self.velocity_scaling_factor, 
+            )
         
         # ----------------------
         # Write out the tensor components to file
@@ -935,7 +946,7 @@ class Model:
                 })
 
     # --------------------------------------------------------------------------
-    def get_max_velocities(self, directions=None):
+    def compute_max_velocities(self, dim = 2, directions=None):
         """
         Loop over all materials in the model and compute the maximum phase velocity
         for each material using the Christoffel matrix.
@@ -943,8 +954,12 @@ class Model:
         :param directions: List of direction keys to use. Defaults to ['x', 'y', 'z', 'xy', 'xz', 'yz'].
         :return: Dictionary {material_id: max_velocity}
         """
+        
         if directions is None:
-            directions = ['x', 'y', 'z', 'xy', 'xz', 'yz']
+            if dim == 2:
+                directions = ['x', 'z', 'xz']
+            else:
+                directions = ['x', 'y', 'z', 'xy', 'xz', 'yz']
         
         max_velocity_per_material = {}
         
@@ -965,7 +980,12 @@ class Model:
             for key, value in max_velocity_per_material.items():
                 max_velocity_per_material[key] = 1/value
         
-        self.max_velocity_per_material = max_velocity_per_material
+        if direction == 'x':
+            self.vmax_x = max_velocity_per_material 
+        elif direction == 'z': 
+            self.vmax_z = max_velocity_per_material 
+        else:
+            self.max_velocity_per_material = max_velocity_per_material
     
     # --------------------------------------------------------------------------
     def plot_lower_hemisphere_polarizations(self):
@@ -1243,3 +1263,159 @@ class AnimatedGif:
             animation.save(filename, dpi = 300)
         else:
             animation.save(filename, dpi = 300, writer = 'imagemagick')
+
+
+# ------------------------------------------------------------------------------
+class Voxel:
+    """
+    """
+    def __init__(self, domain, material) -> None:
+        super().__init__()
+        # Unpack everything so it is readable in the code 
+        self.geometry3d = None
+        self.domain = domain
+        self.material = material
+        self.geometry_labels = domain.geometry
+        self.nx = domain.nx 
+        self.ny = domain.ny 
+        self.nz = domain.nz 
+        self.dx = domain.dx
+        self.dy = domain.dy 
+        self.dz = domain.dz 
+        self.cpml = domain.cpml
+    
+    # --------------------------------------------------------------------------
+    def extrude_domain_3d(self) -> np.ndarray:
+        """
+        
+        
+        """
+        if self.domain.geometry.ndim != 2:
+            raise ValueError("Geometry must be a 2-D array of shape (nz, nx).")
+        
+        nx, nz = self.domain.geometry.shape
+        if nz != self.nz or nx != self.nx:
+            raise ValueError(f"PNG geometry shape {(self.nz, self.nx)} != (nz, nx)=({nz}, {nx}).")
+        
+        self.geometry3d = np.tile(self.domain.geometry[:, None, :], (1, self.ny, 1))  # (nx, ny, nz)
+        
+    # --------------------------------------------------------------------------
+    def voxelize_surface(
+            self,
+            surface_model: np.ndarray,
+            id: int,
+            vertical_thickness: int = 1, 
+            vertical_shift: int = 0,
+            mode: str = "below",
+            clamp: bool = True,
+            in_place: bool = True
+        ) -> np.ndarray:
+        '''
+        Insert a layer with integer ID `id` following a z-index surface `surface_model(y,x)`.
+
+        surface_model: (ny, nx) array with z-indices (top voxel = 0). If you have heights in meters,
+                       convert before calling: k = np.rint((h - z0)/dz).
+        mode: 'below' | 'above' | 'two-sided'
+        '''
+        if self.geometry3d is None or self.geometry3d.ndim != 3:
+            raise ValueError("geometry3d must be (nz, ny, nx). Run extrude_domain_3d() first.")
+        
+        surface_model = np.asarray(surface_model)
+        if surface_model.shape != (self.ny, self.nx):
+            raise ValueError(f"surface_model must have shape (ny, nx)=({self.ny}, {self.nx}); got {surface_model.shape}")
+        if vertical_thickness < 1:
+            raise ValueError("vertical_thickness must be >= 1.")
+        
+        # Center indices (rounded) at each (y, x)
+        k_center = np.rint(surface_model).astype(np.int64) + int(vertical_shift)
+        
+        # Compute per-(y,x) start/stop indices along z based on the mode
+        T = int(vertical_thickness)
+        if mode == "below":
+            k0 = k_center
+            k1 = k_center + T
+        elif mode == "above":
+            k0 = k_center - (T - 1)
+            k1 = k_center + 1
+        elif mode == "two-sided":
+            half_lo = T // 2
+            half_hi = T - half_lo
+            k0 = k_center - half_lo
+            k1 = k_center + half_hi
+        else:
+            raise ValueError("mode must be 'below', 'above', or 'two-sided'.")
+
+        if clamp:
+            k0 = np.clip(k0, 0, self.nz)   # allow k0==nz (empty slice)
+            k1 = np.clip(k1, 0, self.nz)
+        else:
+            if (k0 < 0).any() or (k1 > self.nz).any():
+                raise IndexError("Surface layer extends outside z bounds.")
+
+        # Build a boolean mask in a fully vectorized way
+        Z = np.arange(self.nz, dtype=np.int64)[:, None, None]        # (nz,1,1)
+        start = k0[None, :, :]                                  # (1,ny,nx)
+        stop  = k1[None, :, :]                                  # (1,ny,nx)
+        layer_mask = (Z >= start) & (Z < stop)                  # (nz,ny,nx), True where we fill
+
+        # Write into a copy (so caller can choose to keep original)
+        target = self.geometry3d.copy()
+        target[layer_mask] = int(id)
+        if in_place:
+            self.geometry3d = target
+        
+        return target
+    
+    # --------------------------------------------------------------------------
+    def tensor2dat(self, tensor):
+        """
+        Map each label ID in geometry3d to coefficient values from `tensor` and
+        write one Fortran unformatted .dat per coefficient (column).
+
+        Fortran layout: writes array with shape (nx', ny', nz') in Fortran order,
+        where nx' = nx + 2*cpml (if pad_cpml), likewise for ny', nz'.
+        """
+        if self.geometry3d is None or self.geometry3d.ndim != 3:
+            raise ValueError("geometry3d must be (nz, ny, nx). Run extrude_domain_3d() first.")
+        
+        present = np.unique(self.geometry3d)
+        cols = list(tensor.columns)
+        dtype = present.dtype
+        idx = tensor.index.astype(int)
+        
+        if len(tensor) > 1:
+            for col in cols:
+                # Build LUT of length max_id+1; fill missing with background_value
+                max_id = int(max(present.max(), idx.max()))
+                lut = np.full(max_id + 1, 0, dtype=dtype)
+                # Only place values for indices actually present
+                lut[idx] = np.asarray(tensor[col].values, dtype=dtype)
+
+                # Vectorized map: labels -> coefficient volume
+                coef_zyx = lut[self.geometry3d]  # (nz, ny, nx)
+
+                # CPML padding (replicate edges) along z,y,x
+                coef_zyx = np.pad(coef_zyx, ((self.cpml, self.cpml), (self.cpml, self.cpml), (self.cpml, self.cpml)), mode="edge")
+
+                # Transpose to (x,y,z), enforce Fortran order, write one record
+                coef_xyz = np.transpose(coef_zyx, (2, 1, 0))
+                coef_F = np.asfortranarray(coef_xyz, dtype=dtype)
+                with FortranFile(f"{col}.dat", "w") as f:
+                    f.write_record(coef_F)
+        else:
+            # Single-row → uniform material
+            row = tensor.iloc[0]
+            for col in cols:
+                val = dtype(row[col])
+                coef_zyx = np.full(geometry3d.shape, val, dtype=dtype)    
+                coef_zyx = np.pad(coef_zyx, ((self.cpml, self.cpml), (self.cpml, self.cpml), (self.cpml, self.cpml)), mode="edge")
+
+                coef_xyz = np.transpose(coef_zyx, (2, 1, 0))
+                coef_F = np.asfortranarray(coef_xyz, dtype=dtype)
+                with FortranFile(f"{col}.dat", "w") as f:
+                    f.write_record(coef_F)
+    
+    def save(self):
+        with FortranFile('geometry.dat', 'w') as f:
+            f.write_record(self.geometry3d)
+    
