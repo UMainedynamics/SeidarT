@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 from seidart.routines.definitions import *
+from seidart.routines.materials import * 
 from scipy import signal
 import numpy.fft as fft
 from scipy.signal import butter, filtfilt, firwin, minimum_phase
@@ -20,18 +21,25 @@ __all__ = [
 
 # ================================ Definitions ================================
 
-def wavelet(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
+def wavelet(timevec: np.ndarray, f: float, stype: str, omni=False) -> np.ndarray:
     """
     Generates a wavelet based on the specified type and parameters.
     """
     a = (2.0 * np.pi * f) ** 2
     to = 1.0 / f
     if stype == 'gaus0':
-        x = np.exp(-a * (timevec - to) ** 2)
+        bw = 0.2 / (np.pi * fc) 
+        a = (timevec - to) / bw
+        x = np.exp(-a*a)
     elif stype == 'gaus1':
-        x = -2.0 * a * (timevec - to) * np.exp(-a * (timevec - to) ** 2)
+        a = pi * fc * (timevec - t0) 
+        e = exp(-a * a) 
+        x = (1.0 - 2.0*a*a) * e 
     elif stype == 'gaus2':
-        x = 2.0 * a * np.exp(-a * (timevec - to) ** 2) * (2.0 * a * (timevec - to) ** 2 - 1)
+        dt = (timevec - to) 
+        k = np.pi * np.pi * fc * fc 
+        e = exp(-k*dt*dt)
+        x = 2.0 * k*dt * (2.0*k*dt*dt - 3.0) * e
     elif stype == 'chirp':
         x = signal.chirp(timevec, 10 * f, to, f, phi=-90)
     elif stype == 'chirplet':
@@ -44,6 +52,7 @@ def wavelet(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
             x = np.array(stype)
         except:
             raise ValueError(f"Unknown wavelet type: {stype}")
+    
     return x / np.max(np.abs(x))
 
 # ----------------------------------------------------------------------------
@@ -68,12 +77,12 @@ def wavelet_center0(timevec: np.ndarray, f: float, stype: str) -> np.ndarray:
 # ----------------------------------------------------------------------------
 
 def multimodesrc(
-    timevec: np.ndarray,
-    f: float,
-    stype: str,
-    center: bool = False, 
-    num_octaves = 3
-) -> np.ndarray:
+        timevec: np.ndarray,
+        f: float,
+        stype: str,
+        center: bool = False, 
+        num_octaves = 3
+    ) -> np.ndarray:
     """
     Creates a multi-mode source by combining octave-spaced wavelets around f.
     If center=True, each wavelet is shifted to t=0 for simultaneous onset.
@@ -90,12 +99,12 @@ def multimodesrc(
 # ----------------------------------------------------------------------------
 
 def bandlimited_impulse_fir(
-    timevec: np.ndarray,
-    fmin: float,
-    fmax: float,
-    numtaps: int = 201,
-    window: str = 'hann'
-) -> np.ndarray:
+        timevec: np.ndarray,
+        fmin: float,
+        fmax: float,
+        numtaps: int = 201,
+        window: str = 'hann'
+    ) -> np.ndarray:
     """
     Minimum-phase band-limited impulse via FIR design:
     - flat response in [fmin, fmax]
@@ -160,14 +169,17 @@ def writesrc(fn: str, srcarray: np.ndarray) -> None:
 
 # ----------------------------------------------------------------------------
 def pointsource(
-    modelclass,
-    multimodal: bool = False,
-    broadband: bool = False,
-    fmin: float = None,
-    fmax: float = None,
-    center: bool = False,
-    num_octaves: int = 2
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        modelclass,
+        multimodal: bool = False,
+        broadband: bool = False,
+        fmin: float = None,
+        fmax: float = None,
+        center: bool = False,
+        num_octaves: int = 2,
+        stress_output: bool = True,
+        a_iso=1.0,                     # weight for ISO (diagonal) part → omni P
+        b_dc=0.7,  
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Build and write point-source time series.
     """
@@ -184,20 +196,51 @@ def pointsource(
         )
     else:
         if center:
-            srcfn = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_type)
+            srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_type)
         else:
             srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_type)
 
     theta = np.deg2rad(modelclass.theta)
     phi = np.deg2rad(modelclass.phi)
+    psi = np.deg2rad(modelclass.psi) 
+    
+    R = rotator_zxz(np.array([theta, phi, psi) )
+
     forcez = np.sin(theta) * np.cos(phi) * srcfn
     forcey = np.sin(theta) * np.sin(phi) * srcfn
     forcex = np.cos(theta) * srcfn
 
     if modelclass.is_seismic:
-        writesrc("seismicsourcex.dat", forcex)
-        writesrc("seismicsourcey.dat", forcey)
-        writesrc("seismicsourcez.dat", forcez)
+        if stress_output:
+            
+            s_iso = a_iso * srcfn 
+            s_dc = b_dc * srcfn 
+            
+            sigma_xx = s_iso.copy() 
+            sigma_yy = s_iso.copy() 
+            sigma_zz = s_iso.copy() 
+            sigma_xy = s_dc.copy() 
+            sigma_xz = s_dc.copy() 
+            simga_yz = s_dc.copy() 
+            
+            
+            writesrc("seismicsourcexx.dat", sigma_xx)
+            writesrc("seismicsourcexy.dat", sigma_xy)
+            writesrc("seismicsourcexz.dat", sigma_xz)
+            writesrc("seismicsourceyy.dat", sigma_yy)
+            writesrc("seismicsourceyz.dat", sigma_yz)
+            writesrc("seismicsourcezz.dat", sigma_zz)
+            
+            modelclass.source_sigma_xx = sigma_xx
+            modelclass.source_sigma_xy = sigma_xy 
+            modelclass.source_sigma_xz = sigma_xz 
+            modelclass.source_sigma_yy = sigma_yy 
+            modelclass.source_sigma_yz = sigma_yz 
+            modelclass.source_sigma_zz = sigma_zz 
+        else:
+            writesrc("seismicsourcex.dat", forcex)
+            writesrc("seismicsourcey.dat", forcey)
+            writesrc("seismicsourcez.dat", forcez)
     else:
         writesrc("electromagneticsourcex.dat", forcex)
         writesrc("electromagneticsourcey.dat", forcey)
@@ -207,6 +250,67 @@ def pointsource(
     modelclass.sourcefunction_y = forcey
     modelclass.sourcefunction_z = forcez
     return timevec, forcex, forcey, forcez, srcfn
+
+# ----------------------------------------------------------------------------
+# def omnisource(
+#         modelclass,
+#         multimodal: bool = False,
+#         broadband: bool = False,
+#         fmin: float = None,
+#         fmax: float = None,
+#         center: bool = False,
+#         num_octaves: int = 2
+#     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+#     """
+#     Build and write point-source time series.
+#     """
+#     N = int(modelclass.time_steps)
+#     dt = float(modelclass.dt)
+#     timevec = np.arange(N) * dt
+#     f0 = float(modelclass.f0)
+
+#     if broadband:
+#         srcfn = modelclass.source_amplitude * broadbandsrc(timevec, fmin, fmax)
+#     elif multimodal:
+#         srcfn = modelclass.source_amplitude * multimodesrc(
+#             timevec, f0, modelclass.source_type, center=center, num_octaves = num_octaves
+#         )
+#     else:
+#         if center:
+#             srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_type)
+#         else:
+#             srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_type)
+
+#     theta = np.deg2rad(modelclass.theta)
+#     phi = np.deg2rad(modelclass.phi)
+#     forcez = np.sin(theta) * np.cos(phi) * srcfn
+#     forcey = np.sin(theta) * np.sin(phi) * srcfn
+#     forcex = np.cos(theta) * srcfn
+
+#     if modelclass.is_seismic:
+#         if stress_output:
+#             writesrc("seismicsourcexx.dat", forcexx)
+#             writesrc("seismicsourcexy.dat", forcexy)
+#             writesrc("seismicsourcexz.dat", forcexz)
+#             writesrc("seismicsourceyy.dat", forceyy)
+#             writesrc("seismicsourceyz.dat", forceyz)
+#             writesrc("seismicsourcezz.dat", forcezz)    
+#         else:
+#             writesrc("seismicsourcex.dat", forcex)
+#             writesrc("seismicsourcey.dat", forcey)
+#             writesrc("seismicsourcez.dat", forcez)
+#     else:
+#         writesrc("electromagneticsourcex.dat", forcex)
+#         writesrc("electromagneticsourcey.dat", forcey)
+#         writesrc("electromagneticsourcez.dat", forcez)
+
+#     modelclass.sourcefunction_x = forcex
+#     modelclass.sourcefunction_y = forcey
+#     modelclass.sourcefunction_z = forcez
+#     return timevec, forcex, forcey, forcez, srcfn
+
+
+
 
 # ----------------------------------------------------------------------------
 

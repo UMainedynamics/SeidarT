@@ -761,8 +761,56 @@ class Model:
         axz.set_xlabel('time (s)')
         plt.show()
     
-    
     # --------------------------------------------------------------------------
+    def tensor_test(self):
+        '''
+        Test for positive definiteness and ellipticity so that we can ensure that
+        our domain is physically stable in the continuum mechanics sense
+        '''
+        if self.is_seismic:
+            nmats = self.stiffness_coefficients.shape[0]
+            pd_ell= np.zeros([nmats, 2], dtype = bool)
+            
+            for ii in range(nmats):
+                row = self.stiffness_coefficients.loc[ii]
+                C = np.array([
+                    [row['c11'], row['c12'], row['c13'], row['c14'], row['c15'], row['c16']],
+                    [row['c12'], row['c22'], row['c23'], row['c24'], row['c25'], row['c26']],
+                    [row['c13'], row['c23'], row['c33'], row['c34'], row['c35'], row['c36']],
+                    [row['c14'], row['c24'], row['c34'], row['c44'], row['c45'], row['c46']],
+                    [row['c15'], row['c25'], row['c35'], row['c45'], row['c55'], row['c56']],
+                    [row['c16'], row['c26'], row['c36'], row['c46'], row['c56'], row['c66']]
+                ])
+                eigenvalues = np.linalg.eigvalsh(C) 
+                min_eigenvalue = np.min(eigenvalues) 
+                pd_ell[ii,0] = np.all(eigenvalues > 0) 
+                pd_ell[ii,1] = min_eigenvalue > 0  
+            
+            self.positive_definite_and_elliptical = pd_ell
+        else: 
+            nmats = self.permittivity_coefficients.shape[0] 
+            pd_pd = np.zeros([nmats,2], dtype = bool) 
+            for ii in range(nmats):
+                rowp = self.permittivity_coefficients.loc[ii] 
+                rowc = self.conductivity_coefficients.loc[ii]
+                P = np.array([
+                    [row['e11'], row['e12'], row['e13']],
+                    [row['e12'], row['e22'], row['e23']],
+                    [row['e13'], row['e23'], row['e33']]
+                ])
+                C = np.array([
+                    [row['s11'], row['s12'], row['s13']],
+                    [row['s12'], row['s22'], row['s23']],
+                    [row['s13'], row['s23'], row['s33']]
+                ])
+                eigenvalues = np.linalg.eigvalsh(P) 
+                pd_pd[ii,0] = np.all(eigenvalues > 0) 
+                eigenvalues = np.linalg.eigvalsh(C) 
+                pd_pd[ii,1] = np.all(eigenvalues > 0) 
+            
+            self.positive_definite = pd_pd
+    # --------------------------------------------------------------------------
+    
     def voigt_to_full_tensor(self, C_voigt):
         """
         Convert a 6x6 stiffness matrix in Voigt notation to a 3x3x3x3 tensor.
