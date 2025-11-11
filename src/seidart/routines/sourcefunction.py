@@ -28,17 +28,17 @@ def wavelet(timevec: np.ndarray, f: float, stype: str, omni=False) -> np.ndarray
     a = (2.0 * np.pi * f) ** 2
     to = 1.0 / f
     if stype == 'gaus0':
-        bw = 0.2 / (np.pi * fc) 
+        bw = 0.2 / (np.pi * f) 
         a = (timevec - to) / bw
         x = np.exp(-a*a)
     elif stype == 'gaus1':
-        a = pi * fc * (timevec - t0) 
-        e = exp(-a * a) 
+        a = np.pi * f * (timevec - to) 
+        e = np.exp(-a * a) 
         x = (1.0 - 2.0*a*a) * e 
     elif stype == 'gaus2':
         dt = (timevec - to) 
-        k = np.pi * np.pi * fc * fc 
-        e = exp(-k*dt*dt)
+        k = np.pi * np.pi * f * f 
+        e = np.exp(-k*dt*dt)
         x = 2.0 * k*dt * (2.0*k*dt*dt - 3.0) * e
     elif stype == 'chirp':
         x = signal.chirp(timevec, 10 * f, to, f, phi=-90)
@@ -168,6 +168,39 @@ def writesrc(fn: str, srcarray: np.ndarray) -> None:
     f.close()
 
 # ----------------------------------------------------------------------------
+def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
+                         M0: float = 1.0) -> np.ndarray:
+    """
+    Return (Mxx, Myy, Mzz, Mxy, Mxz, Myz) for a unit double-couple (scaled by M0).
+    """
+    strike = np.deg2rad(strike_deg)
+    dip    = np.deg2rad(dip_deg)
+    rake   = np.deg2rad(rake_deg)
+    
+    # Fault normal n and slip direction d (global coordinates)
+    # (Aki & Richards 2002; n points out of the fault plane, d is in-plane slip)
+    n = np.array([
+        -np.sin(dip) * np.sin(strike),
+         np.sin(dip) * np.cos(strike),
+        -np.cos(dip)
+    ])
+    d = np.array([
+         np.cos(rake) * np.cos(strike) + np.sin(rake) * np.cos(dip) * np.sin(strike),
+         np.cos(rake) * np.sin(strike) - np.sin(rake) * np.cos(dip) * np.cos(strike),
+         np.sin(rake) * np.sin(dip)
+    ])
+    
+    # normalize the vectors
+    n /= (np.linalg.norm(n) + 1e-15 )
+    d /= (np.linalg.norm(d) + 1e-15) 
+    
+    M = M0 * (np.outer(d, n) + np.outer(n, d))  # symmetric & traceless
+    M = 0.5 * (M + M.T) 
+    M -= np.trace(M)/3.0 * np.eye(3) 
+    
+    return M
+
+# ----------------------------------------------------------------------------
 def pointsource(
         modelclass,
         multimodal: bool = False,
@@ -176,76 +209,120 @@ def pointsource(
         fmax: float = None,
         center: bool = False,
         num_octaves: int = 2,
-        stress_output: bool = True,
+        source: str = "ac",
+        mt: np.ndarray = None,
         a_iso=1.0,                     # weight for ISO (diagonal) part → omni P
         b_dc=0.7,  
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Build and write point-source time series.
+    
+    source can be:
+        "ac" - accelerated weight drop
+        "dc" - double couple 
+        "tnt" - explosive 
+        "omni_ps" - omnidirectional p and s waves; 3 direction dc plus explosive source (for testing)
     """
     N = int(modelclass.time_steps)
     dt = float(modelclass.dt)
     timevec = np.arange(N) * dt
     f0 = float(modelclass.f0)
+    amp = float(modelclass.source_amplitude)
 
     if broadband:
-        srcfn = modelclass.source_amplitude * broadbandsrc(timevec, fmin, fmax)
+        srcfn = amp * broadbandsrc(timevec, fmin, fmax)
     elif multimodal:
-        srcfn = modelclass.source_amplitude * multimodesrc(
-            timevec, f0, modelclass.source_type, center=center, num_octaves = num_octaves
+        srcfn = amp * multimodesrc(
+            timevec, f0, modelclass.source_wavelet, center=center, num_octaves = num_octaves
         )
     else:
         if center:
-            srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_type)
+            srcfn = amp * wavelet_center0(timevec, f0, modelclass.source_wavelet)
         else:
-            srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_type)
-
-    theta = np.deg2rad(modelclass.theta)
-    phi = np.deg2rad(modelclass.phi)
-    psi = np.deg2rad(modelclass.psi) 
+            srcfn = amp * wavelet(timevec, f0, modelclass.source_wavelet)
     
-    R = rotator_zxz(np.array([theta, phi, psi) )
-
-    forcez = np.sin(theta) * np.cos(phi) * srcfn
-    forcey = np.sin(theta) * np.sin(phi) * srcfn
-    forcex = np.cos(theta) * srcfn
-
+    # Pre-allocate output time series 
+    forcex = np.zeros(N)
+    forcey = np.zeros(N) 
+    forcez = np.zeros(N) 
+    sigma_xx = np.zeros(N)
+    sigma_yy = np.zeros(N)
+    sigma_zz = np.zeros(N)
+    sigma_xy = np.zeros(N)
+    sigma_xz = np.zeros(N)
+    sigma_yz = np.zeros(N)
+    
+    
     if modelclass.is_seismic:
-        if stress_output:
-            
+        if modelclass.source_type=='ac':  
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
+            forcez = R[0,2] * srcfn
+            forcey = R[1,2] * srcfn
+            forcex = R[2,2] * srcfn      
+        elif modelclass.source_type=='dc':
+            M = double_couple_tensor(modelclass.phi, modelclass.theta, modelclass.psi, M0=1.0)
+            sigma_xx = srcfn * M[0,0]
+            sigma_yy = srcfn * M[1,1] 
+            sigma_zz = srcfn * M[2,2]
+            sigma_xy = srcfn * M[0,1] 
+            sigma_xz = srcfn * M[0,2] 
+            sigma_yz = srcfn * M[1,2]
+        elif modelclass.source_type == 'tnt':
+            # Isotropic stress-rate: σxx=σyy=σzz = srcfn, shears = 0 
+            sigma_xx = srcfn.copy() 
+            sigma_yy = srcfn.copy() 
+            sigma_zz = srcfn.copy() 
+    
+        elif modelclass.source_type == 'omni_ps':        
+            # First omni-P/explosion
             s_iso = a_iso * srcfn 
+            sigma_xx += s_iso
+            sigma_yy += s_iso 
+            sigma_zz += s_iso 
+            # Now omin-S/3 double couples 
             s_dc = b_dc * srcfn 
-            
-            sigma_xx = s_iso.copy() 
-            sigma_yy = s_iso.copy() 
-            sigma_zz = s_iso.copy() 
-            sigma_xy = s_dc.copy() 
-            sigma_xz = s_dc.copy() 
-            simga_yz = s_dc.copy() 
-            
-            
-            writesrc("seismicsourcexx.dat", sigma_xx)
-            writesrc("seismicsourcexy.dat", sigma_xy)
-            writesrc("seismicsourcexz.dat", sigma_xz)
-            writesrc("seismicsourceyy.dat", sigma_yy)
-            writesrc("seismicsourceyz.dat", sigma_yz)
-            writesrc("seismicsourcezz.dat", sigma_zz)
-            
-            modelclass.source_sigma_xx = sigma_xx
-            modelclass.source_sigma_xy = sigma_xy 
-            modelclass.source_sigma_xz = sigma_xz 
-            modelclass.source_sigma_yy = sigma_yy 
-            modelclass.source_sigma_yz = sigma_yz 
-            modelclass.source_sigma_zz = sigma_zz 
-        else:
-            writesrc("seismicsourcex.dat", forcex)
-            writesrc("seismicsourcey.dat", forcey)
-            writesrc("seismicsourcez.dat", forcez)
+            e1, e2, e3 = R[:,0], R[:,1], R[:,2]
+            DCs = [
+                np.outer(e1, e2) + np.outer(e2, e1),
+                np.outer(e1, e3) + np.outer(e3, e1),
+                np.outer(e2, e3) + np.outer(e3, e2),
+            ]
+            Mavg = sum(DCs) / 3.0
+            sigma_xx += s_dc * Mavg[0,0]
+            sigma_yy += s_dc * Mavg[1,1]
+            sigma_zz += s_dc * Mavg[2,2]
+            sigma_xy += s_dc * Mavg[0,1]
+            sigma_xz += s_dc * Mavg[0,2]
+            sigma_yz += s_dc * Mavg[1,2]
+        else: 
+            raise ValueError(f"Unkown source type '{source}'")
+        
+        writesrc("seismicsourcex.dat", forcex)
+        writesrc("seismicsourcey.dat", forcey)
+        writesrc("seismicsourcez.dat", forcez)
+        
+        writesrc("seismicsourcexx.dat", sigma_xx)
+        writesrc("seismicsourcexy.dat", sigma_xy)
+        writesrc("seismicsourcexz.dat", sigma_xz)
+        writesrc("seismicsourceyy.dat", sigma_yy)
+        writesrc("seismicsourceyz.dat", sigma_yz)
+        writesrc("seismicsourcezz.dat", sigma_zz)
+        
     else:
+        R = rotator_sdr(modelclass.phi. modelclass.theta, modelclass.psi)       
+        forcez = R[0,2] * srcfn
+        forcey = R[1,2] * srcfn
+        forcex = R[2,2] * srcfn  
         writesrc("electromagneticsourcex.dat", forcex)
         writesrc("electromagneticsourcey.dat", forcey)
         writesrc("electromagneticsourcez.dat", forcez)
-
+    
+    modelclass.source_sigma_xx = sigma_xx
+    modelclass.source_sigma_xy = sigma_xy 
+    modelclass.source_sigma_xz = sigma_xz 
+    modelclass.source_sigma_yy = sigma_yy 
+    modelclass.source_sigma_yz = sigma_yz 
+    modelclass.source_sigma_zz = sigma_zz 
     modelclass.sourcefunction_x = forcex
     modelclass.sourcefunction_y = forcey
     modelclass.sourcefunction_z = forcez
@@ -273,13 +350,13 @@ def pointsource(
 #         srcfn = modelclass.source_amplitude * broadbandsrc(timevec, fmin, fmax)
 #     elif multimodal:
 #         srcfn = modelclass.source_amplitude * multimodesrc(
-#             timevec, f0, modelclass.source_type, center=center, num_octaves = num_octaves
+#             timevec, f0, modelclass.source_wavelet, center=center, num_octaves = num_octaves
 #         )
 #     else:
 #         if center:
-#             srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_type)
+#             srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_wavelet)
 #         else:
-#             srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_type)
+#             srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_wavelet)
 
 #     theta = np.deg2rad(modelclass.theta)
 #     phi = np.deg2rad(modelclass.phi)
@@ -328,7 +405,7 @@ def find_zero_crossing(timevec, wavelet_vals, noise_region=slice(0, 100), k=3):
     return t0_approx
 
 # ----------------------------------------------------------------------------
-def main(prjfile: str, source_type: str, factor: float, multimodal: bool, make_plot: bool) -> None:
+def main(prjfile: str, source_wavelet: str, factor: float, multimodal: bool, make_plot: bool) -> None:
     parser = argparse.ArgumentParser(
         description="""Generate source time functions in Fortran .dat format."""
     )
@@ -345,7 +422,7 @@ def main(prjfile: str, source_type: str, factor: float, multimodal: bool, make_p
     args = parser.parse_args()
 
     prjfile = args.projectfile[0]
-    source_type = args.sourcetype[0]
+    source_wavelet = args.sourcetype[0]
     factor = args.amplitude[0]
     model_type = args.modeltype[0]
     multimodal = args.multimodal

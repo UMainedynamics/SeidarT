@@ -28,8 +28,7 @@ __all__ = [
     'loadproject',
     'airsurf',
     'cpmlcompute',
-    # 'seis_cpml_parameters',
-    # 'em_cpml_parameters',
+    'rotate_sdr',
     'rcxgen',
     'coherdt',
     'coherstf',
@@ -283,16 +282,16 @@ def loadproject(
         seismic.dt, seismic.time_steps,
         seismic.x, seismic.y, seismic.z, 
         seismic.xind, seismic.yind, seismic.zind,
-        seismic.f0, seismic.theta, seismic.phi, 
-        seismic.source_amplitude, seismic.source_type    
+        seismic.f0, seismic.theta, seismic.phi, seismic.psi,
+        seismic.source_amplitude, seismic.source_type, seismic.source_wavelet    
     ) = list(data['Seismic']['Source'].values())
     
     (
         electromag.dt, electromag.time_steps,
         electromag.x, electromag.y, electromag.z,
         electromag.xind, electromag.yind, electromag.zind,
-        electromag.f0, electromag.theta, electromag.phi,
-        electromag.source_amplitude, electromag.source_type    
+        electromag.f0, electromag.theta, electromag.phi, electromag.psi,
+        electromag.source_amplitude, electromag.source_wavelet    
     ) = list(data['Electromagnetic']['Source'].values())
 
     # --------------------------- Indexed Values -------------------------------    
@@ -1548,6 +1547,29 @@ def rotate_to_qlt(data, source_location, receiver_location, backazimuth = None, 
     lqt = data @ R.T
     
     return ba, inc, lqt
+
+# ------------------------------------------------------------------------------
+def rotate_sdr(strike, dip, rake, is_degree: bool = True):
+    """
+    Create a rotation matrix from the strike, dip, and rake. These are the 
+    rotation angles in the x-y, x-z, and the y-z directions, respectively. 
+    """
+    if is_degree:
+        s, d, r = np.deg2rad([strike, dip, rake])
+    
+    Rz = np.array([[ np.cos(s), -np.sin(s), 0],
+                   [ np.sin(s),  np.cos(s), 0],
+                   [ 0,          0,         1]])
+    
+    Ry = np.array([[ np.cos(d), 0, np.sin(d)],
+                   [ 0,         1, 0],
+                   [-np.sin(d), 0, np.cos(d)]])
+    
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(r), -np.sin(r)],
+                   [0, np.sin(r),  np.cos(r)]])
+    
+    return Rz @ Ry @ Rx
 
 # ------------------------------------------------------------------------------
 def agc(ts: np.ndarray, k: int, agctype: str) -> np.ndarray:

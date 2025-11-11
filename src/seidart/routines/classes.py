@@ -258,6 +258,7 @@ class Model:
         self.theta = None
         self.phi = None
         self.source_amplitude = None 
+        self.source_wavelet = None
         self.source_type = None
         self.src = None
         self.attenuation_fadjust = None
@@ -645,7 +646,10 @@ class Model:
         json_dictionary[section]['Source']['x-z_rotation'] = self.theta
         json_dictionary[section]['Source']['x-y_rotation'] = self.phi
         json_dictionary[section]['Source']['amplitude'] = self.source_amplitude
-        json_dictionary[section]['Source']['source_type'] = self.source_type
+        json_dictionary[section]['Source']['source_wavelet'] = self.source_wavelet
+        
+        if self.source_type:
+            json_dictionary[section]['Source']['source_type'] = self.source_type
         
         if jsonfile:
             readwrite_json(jsonfile, json_dictionary)
