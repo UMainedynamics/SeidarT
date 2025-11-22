@@ -11,7 +11,7 @@ import argparse
 from glob2 import glob
 import subprocess 
 import os
-
+import matplotlib.pyplot as plt
 
 # !!!!! This could use some better organization of the definition
 
@@ -25,7 +25,7 @@ def slicer(
     """
     Create a gif for a given plane of a 2.5D model. The function will create a
     series of images and then use imagemagick to create a gif.
-
+    
     :param project_file: str: The project file path
     :type project_file: str
     :param channel: str: The channel to query
@@ -46,8 +46,8 @@ def slicer(
     :type delay: int
     :param is_single: bool: If the data is complex
     :type is_single: bool
-    :return: None
-
+    :return: None     
+    
     """
     # We don't need the material values
     domain, material, seismic, electromag = loadproject(
@@ -63,13 +63,13 @@ def slicer(
     domain.nx = int(domain.nx + 2*domain.cpml)
     domain.ny = int(domain.ny + 2*domain.cpml)
     domain.nz = int(domain.nz + 2*domain.cpml)
-
+    
     # Get the list of files to load
     all_files = glob(channel + '*.dat')
     all_files.sort()
-
+    
     m = len(all_files)
-
+    
     # if channel == 'Ex':
     #     NX = domain.nz
     #     NY = domain.ny
@@ -86,7 +86,7 @@ def slicer(
     NX = domain.nz
     NY = domain.ny 
     NZ = domain.nx
-
+    
     # Pre allocate depending on what dimension we are slicing
     if plane == 'xy':
         imageseries = np.zeros([NY, NZ, m])
@@ -94,13 +94,12 @@ def slicer(
         imageseries = np.zeros([NX, NZ, m])
     else:
         imageseries = np.zeros([NX, NY, m])
-
-
+    
     # We'll start counting with the first frame
     n=num_steps
     axscale = np.array([domain.nz, domain.ny, domain.nx])
     axscale = axscale/axscale.max() 
-
+    
     for ind, fn in enumerate(all_files, start = 0):
         if n == num_steps:
             mag = FDTDImage(project_file, fn)
@@ -124,15 +123,14 @@ def slicer(
             n = 1
         else:
             n = n + 1
-
-
+    
     print('Creating the GIF')
     # Use imagemagick via shell command to create the gif
     shellcommand = 'magick -delay ' + \
         str(delay) + ' -loop 0 magnitude.' + channel + '*.png ' + \
             channel + '.gif'
     subprocess.call(shellcommand, shell = True)
-
+    
     # Remove the png files 
     for filepath in glob('magnitude.' + channel + '*.png'):
         os.remove(filepath)

@@ -16,7 +16,8 @@ __all__ = [
     'plotsource',
     'writesrc',
     'pointsource',
-    'find_zero_crossing'
+    'find_zero_crossing',
+    'double_couple_tensor'
 ]
 
 # ================================ Definitions ================================
@@ -179,25 +180,59 @@ def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
     
     # Fault normal n and slip direction d (global coordinates)
     # (Aki & Richards 2002; n points out of the fault plane, d is in-plane slip)
-    n = np.array([
-        -np.sin(dip) * np.sin(strike),
-         np.sin(dip) * np.cos(strike),
-        -np.cos(dip)
-    ])
-    d = np.array([
-         np.cos(rake) * np.cos(strike) + np.sin(rake) * np.cos(dip) * np.sin(strike),
-         np.cos(rake) * np.sin(strike) - np.sin(rake) * np.cos(dip) * np.cos(strike),
-         np.sin(rake) * np.sin(dip)
-    ])
+    s_hat = np.array([-np.sin(strike), np.cos(strike), 0.0])
+    d_hat  = np.array([ np.cos(strike)*np.cos(dip), np.sin(strike)*np.cos(dip), -np.sin(dip)])  # down-dip
+    s_hat /= np.linalg.norm(s_hat)
+    d_hat /= np.linalg.norm(d_hat)
+    n_hat  = np.cross(s_hat, d_hat)
+    n_hat /= np.linalg.norm(n_hat)
     
-    # normalize the vectors
-    n /= (np.linalg.norm(n) + 1e-15 )
-    d /= (np.linalg.norm(d) + 1e-15) 
+    # slip direction from rake (in-plane rotation)
+    slip = np.cos(rake)*s_hat + np.sin(rake)*d_hat
+    slip /= np.linalg.norm(slip)
     
-    M = M0 * (np.outer(d, n) + np.outer(n, d))  # symmetric & traceless
+    # DC tensor
+    M = M0*(np.outer(slip, n_hat) + np.outer(n_hat, slip))
     M = 0.5 * (M + M.T) 
     M -= np.trace(M)/3.0 * np.eye(3) 
     
+    return M
+
+def isotropic_tensor(M0: float = 1.0) -> np.ndarray:
+    """
+    Isotropic moment tensor 
+    M0 > 0 - explosion; M0 < 0 - implosion
+    """
+    return M0 * np.eye(3) 
+
+# ----------------------------------------------------------------------------
+def clvd_tensor(axis_vec: np.ndarray, M0: float = 1.0, mode: str = "tensile") -> np.ndarray:
+    """
+    Build a CLVD moment tensor with principal axis along `axis_vec`.
+    mode: "tensile" -> eigvals (2, -1, -1)  (axis is T)
+          "compressional" -> eigvals (-2, 1, 1) (axis is P)
+    M0 scales the tensor (N·m or arbitrary).
+    """
+    a = np.asarray(axis_vec, dtype=float)
+    a /= (np.linalg.norm(a) + 1e-15)  # e3
+    # pick e1 not parallel to a
+    tmp = np.array([1.0, 0.0, 0.0]) if abs(a[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    e1 = tmp - np.dot(tmp, a) * a
+    e1 /= (np.linalg.norm(e1) + 1e-15)
+    e2 = np.cross(a, e1)
+    R = np.column_stack((e1, e2, a))  # columns are eigenvectors
+    
+    if mode == "tensile":
+        lam = np.diag([1.0, -0.5, -0.5]) * 2.0  # -> (2, -1, -1)
+    elif mode == "compressional":
+        lam = np.diag([-1.0, 0.5, 0.5]) * 2.0   # -> (-2, 1, 1)
+    else:
+        raise ValueError("mode must be 'tensile' or 'compressional'")
+    
+    M = (R @ lam @ R.T) * M0
+    # hygiene: enforce symmetry & zero trace numerically
+    M = 0.5*(M + M.T)
+    M -= np.trace(M)/3.0 * np.eye(3)
     return M
 
 # ----------------------------------------------------------------------------
@@ -252,7 +287,6 @@ def pointsource(
     sigma_xz = np.zeros(N)
     sigma_yz = np.zeros(N)
     
-    
     if modelclass.is_seismic:
         if modelclass.source_type=='ac':  
             R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
@@ -261,6 +295,7 @@ def pointsource(
             forcex = R[2,2] * srcfn      
         elif modelclass.source_type=='dc':
             M = double_couple_tensor(modelclass.phi, modelclass.theta, modelclass.psi, M0=1.0)
+            modelclass.moment_tensor = M.copy() 
             sigma_xx = srcfn * M[0,0]
             sigma_yy = srcfn * M[1,1] 
             sigma_zz = srcfn * M[2,2]
@@ -272,14 +307,33 @@ def pointsource(
             sigma_xx = srcfn.copy() 
             sigma_yy = srcfn.copy() 
             sigma_zz = srcfn.copy() 
+            modelclass.moment_tensor = isotropic_tensor(M0=1.0)
     
-        elif modelclass.source_type == 'omni_ps':        
+        elif modelclass.source_type == 'omni_ps':    
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
             # First omni-P/explosion
             s_iso = a_iso * srcfn 
             sigma_xx += s_iso
             sigma_yy += s_iso 
             sigma_zz += s_iso 
             # Now omin-S/3 double couples 
+            s_dc = b_dc * srcfn 
+            e1, e2, e3 = R[:,0], R[:,1], R[:,2]
+            DCs = [
+                np.outer(e1, e2) + np.outer(e2, e1),
+                np.outer(e1, e3) + np.outer(e3, e1),
+                np.outer(e2, e3) + np.outer(e3, e2),
+            ]
+            Mavg = sum(DCs) / 3.0
+            sigma_xx += s_dc * Mavg[0,0]
+            sigma_yy += s_dc * Mavg[1,1]
+            sigma_zz += s_dc * Mavg[2,2]
+            sigma_xy += s_dc * Mavg[0,1]
+            sigma_xz += s_dc * Mavg[0,2]
+            sigma_yz += s_dc * Mavg[1,2]
+        elif modelclass.source_type == 'omni_s':    
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
+            # omin-S/3 double couples 
             s_dc = b_dc * srcfn 
             e1, e2, e3 = R[:,0], R[:,1], R[:,2]
             DCs = [

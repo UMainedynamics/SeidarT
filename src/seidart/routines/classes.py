@@ -261,6 +261,7 @@ class Model:
         self.source_wavelet = None
         self.source_type = None
         self.src = None
+        self.moment_tensor = None
         self.attenuation_fadjust = None
         self.exit_status = 0
         self.is_seismic = None
@@ -954,8 +955,8 @@ class Model:
         # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
         velocities.sort()
         
-        return Gamma, eigenvalues, eigenvectors, velocities
-
+        return Gamma, eigenvalues, eigenvectors, velocities                  
+            
     # --------------------------------------------------------------------------
     def compute_christoffel_directions(self, material_index, n_theta=30, n_phi=60):
         """
