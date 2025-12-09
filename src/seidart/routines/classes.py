@@ -518,7 +518,7 @@ class Model:
                 self.tensor2dat(self.stiffness_coefficients, domain)
                 # gamma/attenuation coefficients need to be scaled by the 
                 # dominant frequency of the source
-                self.tensor2dat(self.attenuation_coefficients * self.f0, domain)
+                self.atten2dat(self.attenuation_coefficients * self.f0, domain, self.gamma_max)
             else:
                 self.tensor2dat(self.permittivity_coefficients, domain) 
                 self.tensor2dat(self.conductivity_coefficients, domain)
@@ -563,10 +563,10 @@ class Model:
         coef_array = np.zeros([domain.nx, domain.nz])
         extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
         for col in columns:
+            fn = col + '.dat'
             for ii in range(domain.nx):
                 for jj in range(domain.nz):
                     coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
-                    fn = col + '.dat' 
             
             # Extend values into the pml
             extended_array[
@@ -580,6 +580,36 @@ class Model:
             f.write_record(extended_array.T)
             f.close()
         
+    def atten2dat(self, tensor, domain, eta_max = None):
+        """
+
+        """
+        columns = tensor.columns
+        coef_array = np.zeros([domain.nx, domain.nz])
+        extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
+        for col in columns[:-1]:
+            fn = col + '.dat' 
+            for ii in range(domain.nx):
+                for jj in range(domain.nz):
+                    coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
+            
+            # Extend values into the pml
+            extended_array[
+                    domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
+                ] = coef_array
+            extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
+            extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
+            extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
+            extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
+            if eta_max:
+                extended_array = sponge_boundary(domain, self.gamma_max, extended_array)
+                        
+            f = FortranFile(fn, 'w')
+            f.write_record(extended_array.T)
+            f.close()
+        
+        return(extended_array)
+
     # --------------------------------------------------------------------------
     def add_noise(self, domain, scalar_amplitude: float = 1e0):
         """

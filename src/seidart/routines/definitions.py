@@ -28,6 +28,7 @@ __all__ = [
     'loadproject',
     'airsurf',
     'cpmlcompute',
+    'sponge_boundary',
     'rotate_sdr',
     'rcxgen',
     'coherdt',
@@ -620,6 +621,25 @@ def cpml_parameters(
     rz = distz ** NP 
     m = len(distx)
     n = len(distz)
+    
+    for ii in range(m):
+        for jj in range(n):
+            # r = np.sqrt(distx[ii]**2 + distz[jj]**2)
+            sigma[ii, jj] = sig_max_x[0, 0] * ( rx[ii]) + sig_max_z[0,0] * ( rz[jj] )
+            sigma[-(ii+1), jj] = sig_max_x[-1, 0]  * (rx[ii] ) + sig_max_z[-1, 0]  * (rz[jj] )
+            sigma[ii, -(jj+1)] = sig_max_x[0, -1]  * (rx[ii] ) + sig_max_z[0, -1]  * (rz[jj] )
+            sigma[-(ii+1), -(jj+1)] = sig_max_x[-1, -1] * (rx[ii] ) + sig_max_z[-1, -1] * (rz[jj] )
+            
+            kappa[ii, jj]           = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii+1), jj]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[ii, -(jj+1)]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii+1), -(jj+1)] = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            
+            alpha[ii, jj]           = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+    
     # Compute in the x, and z direction
     for ind in range(0, m):
         sigma[ind,m:-m] = sig_max_x[0,:] * (rx[ind])
@@ -640,24 +660,6 @@ def cpml_parameters(
         kappa[:,-(ind+1)] = 1 + (kappa_max - 1) * (rz[ind])
         alpha[:,-(ind+1)] = alpha_max * (1 - distz[ind])**NPA
     
-    for ii in range(m):
-        for jj in range(n):
-            # r = np.sqrt(distx[ii]**2 + distz[jj]**2)
-            sigma[ii, jj] = sig_max_x[0, 0] * ( rx[ii]) + sig_max_z[0,0] * ( rz[jj] )
-            sigma[-(ii+1), jj] = sig_max_x[-1, 0]  * (rx[ii] ) + sig_max_z[-1, 0]  * (rz[jj] )
-            sigma[ii, -(jj+1)] = sig_max_x[0, -1]  * (rx[ii] ) + sig_max_z[0, -1]  * (rz[jj] )
-            sigma[-(ii+1), -(jj+1)] = sig_max_x[-1, -1] * (rx[ii] ) + sig_max_z[-1, -1] * (rz[jj] )
-            
-            kappa[ii, jj]           = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[-(ii+1), jj]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[ii, -(jj+1)]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[-(ii+1), -(jj+1)] = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            
-            alpha[ii, jj]           = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-    
     if is_seismic:
         bcoeff = np.exp( - (sigma / kappa + alpha) * dt)
     else:
@@ -671,6 +673,32 @@ def cpml_parameters(
     
     return sigma, kappa, alpha, acoeff, bcoeff
 
+# ------------------------------------------------------------------------------
+def sponge_boundary(domain, eta_max, eta):
+    distx = np.arange(0, domain.cpml) / (domain.cpml -1)
+    distz = np.arange(0, domain.cpml) / (domain.cpml -1)
+    
+    m = len(distx)
+    n = len(distz)
+    
+    for ii in range(m):
+        for jj in range(n):
+            eta[ii, jj]           += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
+            eta[-(ii+1), jj]      += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
+            eta[ii, -(jj+1)]      += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
+            eta[-(ii+1), -(jj+1)] += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
+    
+    # Left/right
+    for ii in range(domain.cpml):
+        eta[ii, :]      += eta_max * (1.0 - distx[ii])**domain.NPA
+        eta[-(ii+1), :] += eta_max * (1.0 - distx[ii])**domain.NPA
+
+    # Top/bottom
+    for jj in range(domain.cpml):
+        eta[:, jj]      += eta_max * (1.0 - distz[jj])**domain.NPA
+        eta[:, -(jj+1)] += eta_max * (1.0 - distz[jj])**domain.NPA
+    
+    return eta
 
 # ------------------------------------------------------------------------------
 def rcxgen(
