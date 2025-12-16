@@ -22,7 +22,7 @@ __all__ = [
 
 # ================================ Definitions ================================
 
-def wavelet(timevec: np.ndarray, f: float, stype: str, omni=False) -> np.ndarray:
+def wavelet(timevec: np.ndarray, f: float, stype: str = 'gaus1', omni=False) -> np.ndarray:
     """
     Generates a wavelet based on the specified type and parameters.
     """

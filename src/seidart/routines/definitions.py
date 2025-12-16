@@ -683,20 +683,20 @@ def sponge_boundary(domain, eta_max, eta):
     
     for ii in range(m):
         for jj in range(n):
-            eta[ii, jj]           += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
-            eta[-(ii+1), jj]      += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
-            eta[ii, -(jj+1)]      += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
-            eta[-(ii+1), -(jj+1)] += eta_max * ((1.0 - distx[ii]) ** domain.NPA) * ((1.0 - distz[jj]) ** domain.NPA)
+            eta[ii, jj]           += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[-(ii+1), jj]      += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[ii, -(jj+1)]      += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[-(ii+1), -(jj+1)] += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
     
     # Left/right
     for ii in range(domain.cpml):
-        eta[ii, :]      += eta_max * (1.0 - distx[ii])**domain.NPA
-        eta[-(ii+1), :] += eta_max * (1.0 - distx[ii])**domain.NPA
+        eta[ii, :]      += eta_max * (1.0 - distx[ii]) ** domain.NPS
+        eta[-(ii+1), :] += eta_max * (1.0 - distx[ii]) ** domain.NPS
 
     # Top/bottom
     for jj in range(domain.cpml):
-        eta[:, jj]      += eta_max * (1.0 - distz[jj])**domain.NPA
-        eta[:, -(jj+1)] += eta_max * (1.0 - distz[jj])**domain.NPA
+        eta[:, jj]      += eta_max * (1.0 - distz[jj]) ** domain.NPS
+        eta[:, -(jj+1)] += eta_max * (1.0 - distz[jj]) ** domain.NPS
     
     return eta
 

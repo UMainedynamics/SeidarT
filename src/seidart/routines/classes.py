@@ -44,6 +44,7 @@ class Domain:
         self.alpha_opt_scalar = None 
         self.NP = None 
         self.NPA = None 
+        self.NPS = 1.0 # Sponge exponent
         self.kappa_max = 5
         self.Rcoef = None # This is the reflection coefficient and has replaced sig_opt_scalar 
         # Some more values that might be of interest 
