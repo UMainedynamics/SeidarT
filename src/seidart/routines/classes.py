@@ -6,8 +6,10 @@ import os
 import os.path 
 from scipy.io import FortranFile
 from subprocess import call
-
+import json 
 from typing import Optional
+import trimesh
+
 import seidart.routines.materials as mf
 from seidart.routines import sourcefunction
 from seidart.routines.definitions import *
@@ -448,19 +450,9 @@ class Model:
         
         if not self.is_seismic:
             max_vel = clight/ \
-                np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].min().min() )
-            # max_vel = np.zeros(domain.nmats)
-            # for ind in range(domain.nmats):
-            #     try:
-            #         max_vel[ind] = clight / \
-            #             np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
-            #     except: #nmat = 1 case
-            #         max_vel[ind] = clight / \
-            #             np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].loc[ind].min().real)
-            
-            # max_vel = max_vel.max()     
+                np.sqrt(self.permittivity_coefficients[['e11', 'e22', 'e33']].min().min() ) 
         
-        if domain.dim == 2.5:
+        if domain.dim == 2.5 or domain.dim == 3:
             denom  = np.sqrt((1/domain.dx)**2 + (1/domain.dy)**2 + (1/domain.dz)**2) 
         else:
             denom = np.sqrt((1/domain.dx)**2 + (1/domain.dz)**2) 
@@ -561,22 +553,45 @@ class Model:
 
         """
         columns = tensor.columns
-        coef_array = np.zeros([domain.nx, domain.nz])
-        extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
         for col in columns:
             fn = col + '.dat'
-            for ii in range(domain.nx):
-                for jj in range(domain.nz):
-                    coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
             
-            # Extend values into the pml
-            extended_array[
-                    domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
-                ] = coef_array
-            extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
-            extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
-            extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
-            extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
+            if domain.dim == 3.0:
+                coef_array = np.zeros([domain.nx, domain.ny, domain.nz])
+                extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
+                for ii in range(domain.nx):
+                    for jj in range(domain.ny):
+                        for kk in range(domain.nz):
+                            coef_array[ii,jj,kk] = tensor[col][domain.geometry[ii,jj,kk]]
+                
+                # Extend values into the pml
+                extended_array[
+                        domain.cpml:domain.nx+domain.cpml,
+                        domain.cpml:domain.ny+domain.cpml,
+                        domain.cpml:domain.nz+domain.cpml
+                    ] = coef_array
+                extended_array[0:domain.cpml,:,:] = extended_array[domain.cpml+1,:,:]
+                extended_array[domain.nx+domain.cpml:,:,:] = extended_array[domain.nx+domain.cpml-1,:,:]
+                extended_array[:,0:domain.cpml,:] = extended_array[:,domain.cpml+1,:].reshape(-1,1)
+                extended_array[:,domain.ny+domain.cpml:,:] = extended_array[:,domain.ny+domain.cpml-1,:].reshape(-1,1)
+                extended_array[:,:,0:domain.cpml] = extended_array[:,:,domain.cpml+1].reshape(-1,1)
+                extended_array[:,:,domain.nz+domain.cpml:] = extended_array[:,:,domain.nz+domain.cpml-1].reshape(-1,1)
+            
+            else:
+                coef_array = np.zeros([domain.nx, domain.nz])
+                extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
+                for ii in range(domain.nx):
+                    for jj in range(domain.nz):
+                        coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
+                # Extend values into the pml
+                extended_array[
+                        domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
+                    ] = coef_array
+                extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
+                extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
+                extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
+                extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
+            
             f = FortranFile(fn, 'w')
             f.write_record(extended_array.T)
             f.close()
@@ -1350,156 +1365,280 @@ class AnimatedGif:
 
 
 # ------------------------------------------------------------------------------
-class Voxel:
+class VolumeBuilder:
     """
-    """
-    def __init__(self, domain, material) -> None:
-        super().__init__()
-        # Unpack everything so it is readable in the code 
-        self.geometry3d = None
-        self.domain = domain
-        self.material = material
-        self.geometry_labels = domain.geometry
-        self.nx = domain.nx 
-        self.ny = domain.ny 
-        self.nz = domain.nz 
-        self.dx = domain.dx
-        self.dy = domain.dy 
-        self.dz = domain.dz 
-        self.cpml = domain.cpml
+    Discretize an OBJ scene onto a regular FD grid with region labels.
     
-    # --------------------------------------------------------------------------
-    def extrude_domain_3d(self) -> np.ndarray:
-        """
-        
-        
-        """
-        if self.domain.geometry.ndim != 2:
-            raise ValueError("Geometry must be a 2-D array of shape (nz, nx).")
-        
-        nx, nz = self.domain.geometry.shape
-        if nz != self.nz or nx != self.nx:
-            raise ValueError(f"PNG geometry shape {(self.nz, self.nx)} != (nz, nx)=({nz}, {nx}).")
-        
-        self.geometry3d = np.tile(self.domain.geometry[:, None, :], (1, self.ny, 1))  # (nx, ny, nz)
-        
-    # --------------------------------------------------------------------------
-    def voxelize_surface(
+    Parameters
+    ----------
+    obj_path : str
+        Path to the OBJ file.
+    priority : dict
+        Dict mapping group names to priority (higher = later overwrite).
+        Example: {"ice": 0, "air": 1, "base": 2, "heterogeneity": 3}
+    x_min, x_max, dx : float
+    y_min, y_max, dy : float
+    z_min, z_max, dz : float
+        Grid extents and spacings in OBJ coordinates.
+    """
+    
+    def __init__(
             self,
-            surface_model: np.ndarray,
-            id: int,
-            vertical_thickness: int = 1, 
-            vertical_shift: int = 0,
-            mode: str = "below",
-            clamp: bool = True,
-            in_place: bool = True
-        ) -> np.ndarray:
-        '''
-        Insert a layer with integer ID `id` following a z-index surface `surface_model(y,x)`.
-
-        surface_model: (ny, nx) array with z-indices (top voxel = 0). If you have heights in meters,
-                       convert before calling: k = np.rint((h - z0)/dz).
-        mode: 'below' | 'above' | 'two-sided'
-        '''
-        if self.geometry3d is None or self.geometry3d.ndim != 3:
-            raise ValueError("geometry3d must be (nz, ny, nx). Run extrude_domain_3d() first.")
+            obj_path,
+            priority,
+            x_min, x_max, dx,
+            y_min, y_max, dy,
+            z_min, z_max, dz,
+            background_label=0
+        ):
+        self.obj_path = obj_path
+        base, _ = obj_path.rsplit(".", 1)
+        self.mtl_path = base + ".mtl"
+        self.priority = priority
+        self.background_label = background_label
         
-        surface_model = np.asarray(surface_model)
-        if surface_model.shape != (self.ny, self.nx):
-            raise ValueError(f"surface_model must have shape (ny, nx)=({self.ny}, {self.nx}); got {surface_model.shape}")
-        if vertical_thickness < 1:
-            raise ValueError("vertical_thickness must be >= 1.")
+        self._parse_mtl_kd() 
         
-        # Center indices (rounded) at each (y, x)
-        k_center = np.rint(surface_model).astype(np.int64) + int(vertical_shift)
-        
-        # Compute per-(y,x) start/stop indices along z based on the mode
-        T = int(vertical_thickness)
-        if mode == "below":
-            k0 = k_center
-            k1 = k_center + T
-        elif mode == "above":
-            k0 = k_center - (T - 1)
-            k1 = k_center + 1
-        elif mode == "two-sided":
-            half_lo = T // 2
-            half_hi = T - half_lo
-            k0 = k_center - half_lo
-            k1 = k_center + half_hi
+        # Load scene
+        scene = trimesh.load(self.obj_path, process=False)
+        if isinstance(scene, trimesh.Scene):
+            self.geoms = scene.geometry  # dict: name -> Trimesh [web:70][web:75]
         else:
-            raise ValueError("mode must be 'below', 'above', or 'two-sided'.")
-
-        if clamp:
-            k0 = np.clip(k0, 0, self.nz)   # allow k0==nz (empty slice)
-            k1 = np.clip(k1, 0, self.nz)
-        else:
-            if (k0 < 0).any() or (k1 > self.nz).any():
-                raise IndexError("Surface layer extends outside z bounds.")
-
-        # Build a boolean mask in a fully vectorized way
-        Z = np.arange(self.nz, dtype=np.int64)[:, None, None]        # (nz,1,1)
-        start = k0[None, :, :]                                  # (1,ny,nx)
-        stop  = k1[None, :, :]                                  # (1,ny,nx)
-        layer_mask = (Z >= start) & (Z < stop)                  # (nz,ny,nx), True where we fill
-
-        # Write into a copy (so caller can choose to keep original)
-        target = self.geometry3d.copy()
-        target[layer_mask] = int(id)
-        if in_place:
-            self.geometry3d = target
+            self.geoms = {"mesh": scene}
         
-        return target
+        # Build grid
+        self.xs = np.arange(x_min, x_max + 0.5 * dx, dx)
+        self.ys = np.arange(y_min, y_max + 0.5 * dy, dy)
+        self.zs = np.arange(z_min, z_max + 0.5 * dz, dz)
+        self.dx = dx 
+        self.dy = dy 
+        self.dz = dz 
+        self.nx, self.ny, self.nz = len(self.xs), len(self.ys), len(self.zs)
+        
+        X, Y, Z = np.meshgrid(self.xs, self.ys, self.zs, indexing="ij")
+        self.points = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
+        self.labels_1d = np.full(self.points.shape[0],
+                                 self.background_label,
+                                 dtype=np.int32)
+        self.label_grid = None
+        
     
-    # --------------------------------------------------------------------------
-    def tensor2dat(self, tensor):
+    # -------------------------
+    # internal helpers
+    # -------------------------
+    def _parse_mtl_kd(self):
         """
-        Map each label ID in geometry3d to coefficient values from `tensor` and
-        write one Fortran unformatted .dat per coefficient (column).
-
-        Fortran layout: writes array with shape (nx', ny', nz') in Fortran order,
-        where nx' = nx + 2*cpml (if pad_cpml), likewise for ny', nz'.
+        Parse a .mtl file and return {material_name: (r, g, b)} from Kd lines.
+        r,g,b are floats in [0,1].
         """
-        if self.geometry3d is None or self.geometry3d.ndim != 3:
-            raise ValueError("geometry3d must be (nz, ny, nx). Run extrude_domain_3d() first.")
+        kd_map = {}
+        current = None
         
-        present = np.unique(self.geometry3d)
-        cols = list(tensor.columns)
-        dtype = present.dtype
-        idx = tensor.index.astype(int)
+        with open(self.mtl_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split()
+                if parts[0] == "newmtl" and len(parts) > 1:
+                    current = parts[1]
+                elif parts[0] == "Kd" and current is not None and len(parts) >= 4:
+                    r, g, b = map(float, parts[1:4])
+                    kd_map[current] = (r, g, b)
         
-        if len(tensor) > 1:
-            for col in cols:
-                # Build LUT of length max_id+1; fill missing with background_value
-                max_id = int(max(present.max(), idx.max()))
-                lut = np.full(max_id + 1, 0, dtype=dtype)
-                # Only place values for indices actually present
-                lut[idx] = np.asarray(tensor[col].values, dtype=dtype)
-
-                # Vectorized map: labels -> coefficient volume
-                coef_zyx = lut[self.geometry3d]  # (nz, ny, nx)
-
-                # CPML padding (replicate edges) along z,y,x
-                coef_zyx = np.pad(coef_zyx, ((self.cpml, self.cpml), (self.cpml, self.cpml), (self.cpml, self.cpml)), mode="edge")
-
-                # Transpose to (x,y,z), enforce Fortran order, write one record
-                coef_xyz = np.transpose(coef_zyx, (2, 1, 0))
-                coef_F = np.asfortranarray(coef_xyz, dtype=dtype)
-                with FortranFile(f"{col}.dat", "w") as f:
-                    f.write_record(coef_F)
+        # Build label -> RGB (float triple) by matching tag substrings to material names
+        label_to_rgb = {}
+        for tag, label in self.priority.items():
+            rgb = None
+            for mtl_name, kd in kd_map.items():
+                if tag in mtl_name.lower():
+                    rgb = kd
+                    break
+            if rgb is None:
+                # Default color if no material matches (e.g. gray)
+                rgb = (0.5, 0.5, 0.5)
+            
+            rgb_f = np.array(rgb) 
+            rgb_arr = (rgb_f * 255 ).astype(int)
+            label_to_rgb[label] = rgb_arr    
+            
+        self.label_to_rgb = label_to_rgb
+        self.kd_map = kd_map
+    
+    def _match_tag(self, name: str):
+        """
+        Find which priority tag applies to this geometry name.
+        
+        Returns
+        -------
+        tag : str or None
+            The matched tag (key in self.priority) or None if no match.
+        """
+        lower = name.lower()
+        for tag in self.priority.keys():
+            if tag in lower:
+                return tag
+        return None
+    
+    def _get_priority_for_name(self, name: str) -> int:
+        """
+        Get the numeric priority for a geometry name.
+        """
+        tag = self._match_tag(name)
+        if tag is None:
+            return -1  # lowest
+        return self.priority[tag]
+    
+    def _get_label_for_name(self, name: str) -> int:
+        """
+        Label ID = priority value associated with matched tag.
+        """
+        tag = self._match_tag(name)
+        if tag is None:
+            return self.background_label
+        return self.priority[tag]
+    
+    # -------------------------
+    # main API
+    # -------------------------
+    
+    def label_domain(self):
+        """
+        Fill self.labels_1d and self.label_grid using priority-based overwrite.
+        
+        Returns
+        -------
+        label_grid : np.ndarray, shape (nx, ny, nz)
+        """
+        names_sorted = sorted(self.geoms.keys(), key=self._get_priority_for_name)
+        
+        for name in names_sorted:
+            mesh = self.geoms[name]
+            tag = self._match_tag(name)
+            prio = self._get_priority_for_name(name)
+            label = self._get_label_for_name(name)
+            
+            if tag is None:
+                print(f"Skipping '{name}' (no priority tag match).")
+                continue
+            
+            print(f"Processing '{name}' tag='{tag}' label={label} priority={prio}")
+            
+            bounds_min, bounds_max = mesh.bounds
+            
+            coarse = (
+                (self.points[:, 0] >= bounds_min[0]) & (self.points[:, 0] <= bounds_max[0]) &
+                (self.points[:, 1] >= bounds_min[1]) & (self.points[:, 1] <= bounds_max[1]) &
+                (self.points[:, 2] >= bounds_min[2]) & (self.points[:, 2] <= bounds_max[2])
+            )
+            
+            candidate_idx = np.where(coarse)[0]
+            if candidate_idx.size == 0:
+                print("  No points in bounding box; skipping.")
+                continue
+            
+            pts_candidate = self.points[candidate_idx]
+            
+            # --------------------------------------
+            # Geometry-based decision: AABB vs contains
+            # --------------------------------------
+            # If all vertices lie on the AABB surface (within tol),
+            # treat as axis-aligned box; otherwise, use contains().
+            verts = mesh.vertices
+            tol = 1e-6
+            on_min_x = np.isclose(verts[:, 0], bounds_min[0], atol=tol)
+            on_max_x = np.isclose(verts[:, 0], bounds_max[0], atol=tol)
+            on_min_y = np.isclose(verts[:, 1], bounds_min[1], atol=tol)
+            on_max_y = np.isclose(verts[:, 1], bounds_max[1], atol=tol)
+            on_min_z = np.isclose(verts[:, 2], bounds_min[2], atol=tol)
+            on_max_z = np.isclose(verts[:, 2], bounds_max[2], atol=tol)
+            
+            on_surface = on_min_x | on_max_x | on_min_y | on_max_y | on_min_z | on_max_z
+            all_on_surface = np.all(on_surface)
+            
+            if all_on_surface:
+                # Axis-aligned box: AABB test is exact
+                self.labels_1d[candidate_idx] = label
+                print(f"  Axis-aligned box: labeled {candidate_idx.size} cells (AABB)")
+            else:
+                # Rotated / non-box: refine with contains()
+                inside_local = mesh.contains(pts_candidate)  # [web:82][web:114]
+                self.labels_1d[candidate_idx[inside_local]] = label
+                print(f"  General mesh: coarse {candidate_idx.size}, inside {inside_local.sum()}")
+        
+        label_grid = self.labels_1d.reshape((self.nx, self.ny, self.nz))
+        # This all needs to be transposed to match the correct coordinates in Fortran
+        # self.label_grid = np.transpose(label_grid, (0, 2, 1) )
+        # self.dy, self.dz = self.dz, self.dy 
+        # self.ny, self.nz = self.nz, self.ny 
+        
+        
+        print("label_grid shape:", self.label_grid.shape)
+        
+        f = FortranFile('geometry.dat', 'w')
+        f.write_record(np.asfortranarray(self.label_grid).astype(np.int32))
+        f.close()
+        
+        return self.label_grid
+    
+    # -------------------------
+    # visualization helper
+    # -------------------------
+    
+    def plot_slice(self, index, plane="xy"):
+        """
+        Show a 2D slice of a 3D array along one of the principal planes.
+        plane: 'xy', 'xz', or 'yz'
+        """
+        Nx, Ny, Nz = self.label_grid.shape
+        if plane == "xy":
+            assert 0 <= index < Nz
+            img = self.label_grid[:, :, index]
+            xlabel, ylabel = "ix", "iy"
+            title = f"Slice plane=xy, iz={index}"
+        elif plane == "xz":
+            assert 0 <= index < Ny
+            img = self.label_grid[:, index, :]
+            xlabel, ylabel = "ix", "iz"
+            title = f"Slice plane=xz, iy={index}"
+        elif plane == "yz":
+            assert 0 <= index < Nx
+            img = self.label_grid[index, :, :]
+            xlabel, ylabel = "iy", "iz"
+            title = f"Slice plane=yz, ix={index}"
         else:
-            # Single-row → uniform material
-            row = tensor.iloc[0]
-            for col in cols:
-                val = dtype(row[col])
-                coef_zyx = np.full(geometry3d.shape, val, dtype=dtype)    
-                coef_zyx = np.pad(coef_zyx, ((self.cpml, self.cpml), (self.cpml, self.cpml), (self.cpml, self.cpml)), mode="edge")
-
-                coef_xyz = np.transpose(coef_zyx, (2, 1, 0))
-                coef_F = np.asfortranarray(coef_xyz, dtype=dtype)
-                with FortranFile(f"{col}.dat", "w") as f:
-                    f.write_record(coef_F)
+            raise ValueError("plane must be one of 'xy', 'xz', 'yz'")
+        
+        plt.figure(figsize=(6, 5))
+        plt.imshow(img)
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.tight_layout()
+        plt.show()
     
-    def save(self):
-        with FortranFile('geometry.dat', 'w') as f:
-            f.write_record(self.geometry3d)
-    
+    # ----------------------------------
+    # Create the project file
+    # ----------------------------------
+    def prjbuild(self, output_json):
+        """
+        Generate the project file like the 2/2.5D uses
+        """
+        self.material_ids = np.unique(self.label_grid)
+        self.nmats = len(self.material_ids)
+        template = generate_template(
+            self.nmats, 
+            Domain_nx = self.nx, Domain_nz = self.nz, Domain_ny = self.ny,
+            Domain_dx = self.dx, Domain_dz = self.dz, Domain_dy = self.dy,
+        )
+        updates = {}
+        
+        for i, mid in enumerate(self.material_ids):
+            rgb = self.label_to_rgb.get(mid, np.array([128, 128, 128]))
+            updates[("Materials", mid, "rgb")]  = '/'.join(rgb.astype(str))
+        
+        updates[("Domain", "image_file")] = self.obj_path 
+        updated_template = update_json(template, updates) 
+        
+        with open(output_json, 'w') as f: 
+            json.dump(updated_template, f, indent = 4) 
