@@ -292,6 +292,7 @@ class Model:
         self.vmax_x = None
         self.vmax_z = None
         self.velocity_scaling_factor = 1.0 
+        self.voigt_to_full_tensor = mf.voigt_to_full_tensor
         
     def kband_check(self, domain):
         '''
@@ -340,7 +341,7 @@ class Model:
             print(
                 f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
             )
-
+    
     # --------------------------------------------------------------------------
     def parameter_check(self) -> None:
         """
@@ -862,147 +863,17 @@ class Model:
             self.positive_definite = pd_pd
     # --------------------------------------------------------------------------
     
-    def voigt_to_full_tensor(self, C_voigt):
-        """
-        Convert a 6x6 stiffness matrix in Voigt notation to a 3x3x3x3 tensor.
-        
-        Parameters:
-            C_voigt: numpy.ndarray
-                6x6 stiffness matrix in Voigt notation.
-                
-        Returns:
-            C_full: numpy.ndarray
-                3x3x3x3 stiffness tensor.
-        """
-        # Initialize full tensor with zeros
-        C_full = np.zeros((3, 3, 3, 3))
-        
-        # Mapping from sorted index pairs to Voigt index
-        voigt_map = {
-            (0, 0): 0,
-            (1, 1): 1,
-            (2, 2): 2,
-            (1, 2): 3,
-            (0, 2): 4,
-            (0, 1): 5
-        }
-        
-        # Conversion factor: 1 if i == j, else 1/sqrt(2)
-        def factor(i, j):
-            return 1.0 if i == j else 1.0/np.sqrt(2)
-        
-        # Loop over all tensor indices
-        for i in range(3):
-            for j in range(3):
-                # Determine the Voigt index for the (i, j) pair (order doesn't matter)
-                I = voigt_map[tuple(sorted((i, j)))]
-                for k in range(3):
-                    for l in range(3):
-                        # Determine the Voigt index for the (k, l) pair
-                        J = voigt_map[tuple(sorted((k, l)))]
-                        # Multiply the appropriate conversion factors and assign
-                        C_full[i, j, k, l] = factor(i, j) * factor(k, l) * C_voigt[I, J]
-        return C_full
-    
     # --------------------------------------------------------------------------
     def get_christoffel_matrix(self, material_indice, direction):
-        direction_map = {
-            'x':  np.array([1, 0, 0]),
-            'y':  np.array([0, 1, 0]),
-            'z':  np.array([0, 0, 1]),
-            'xy': np.array([1, 1, 0]) / np.sqrt(2),
-            'xz': np.array([1, 0, 1]) / np.sqrt(2),
-            'yz': np.array([0, 1, 1]) / np.sqrt(2)
-        }
-                
-        # Handle string input (predefined directions)
-        if isinstance(direction, str):
-            if direction not in direction_map:
-                raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
-            n = direction_map[direction]
-        
-        # Handle unit vector input
-        elif isinstance(direction, np.ndarray) and direction.shape == (3,):
-            n = direction
-        else:
-            raise TypeError("Direction must be either a string ('x', 'y', ...) or a 3-element numpy array.")
-        
-        # Normalize direction vector
-        if np.linalg.norm(n) == 0:
-            raise ValueError("Propagation vector cannot be zero.")
-        n = n / np.linalg.norm(n)
-        
-        # Convert 6x6 Voigt tensor to 3x3x3x3 full tensor
-        voigt_to_tensor = {
-            0: (0, 0), 1: (1, 1), 2: (2, 2),  # Normal components
-            3: (1, 2), 4: (0, 2), 5: (0, 1)   # Shear components
-        }
-        # Define a factor for each Voigt index:
-        voigt_factor = {0: 1.0, 1: 1.0, 2: 1.0, 3: 1/np.sqrt(2), 4: 1/np.sqrt(2), 5: 1/np.sqrt(2)}
-        
         if self.is_seismic:
-            C_full = np.zeros((3, 3, 3, 3))
-            # Extract stiffness coefficients from the specified row
             row = self.stiffness_coefficients.loc[material_indice]
-            C = np.array([
-                [row['c11'], row['c12'], row['c13'], row['c14'], row['c15'], row['c16']],
-                [row['c12'], row['c22'], row['c23'], row['c24'], row['c25'], row['c26']],
-                [row['c13'], row['c23'], row['c33'], row['c34'], row['c35'], row['c36']],
-                [row['c14'], row['c24'], row['c34'], row['c44'], row['c45'], row['c46']],
-                [row['c15'], row['c25'], row['c35'], row['c45'], row['c55'], row['c56']],
-                [row['c16'], row['c26'], row['c36'], row['c46'], row['c56'], row['c66']]
-            ])
-            
-            rho = row['rho']  # Extract density
-            C_full = self.voigt_to_full_tensor(C)
-            Gamma = np.zeros((3, 3))
-            for i in range(3):
-                for j in range(3):
-                    Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
         else:
-             # Extract permittivity values from the specified row
             row_epsilon = self.permittivity_coefficients.loc[material_indice]
-            epsilon = np.array([
-                [row_epsilon['e11'], row_epsilon['e12'], row_epsilon['e13']],
-                [row_epsilon['e12'], row_epsilon['e22'], row_epsilon['e23']],
-                [row_epsilon['e13'], row_epsilon['e23'], row_epsilon['e33']]
-            ])
-
-            # Extract conductivity values from the specified row
             row_sigma = self.conductivity_coefficients.loc[material_indice]
-            sigma = np.array([
-                [row_sigma['s11'], row_sigma['s12'], row_sigma['s13']],
-                [row_sigma['s12'], row_sigma['s22'], row_sigma['s23']],
-                [row_sigma['s13'], row_sigma['s23'], row_sigma['s33']]
-            ])
-
-            # Compute the effective permittivity tensor
-            omega = 2 * np.pi * self.f0  # Angular frequency
-            epsilon_eff = epsilon + 1j * sigma / omega  # Complex permittivity
-
-            # Compute inverse of effective permittivity tensor
-            epsilon_eff_inv = np.linalg.inv(epsilon_eff)
-            
-            # Construct the electromagnetic Christoffel matrix
-            Gamma = np.zeros((3, 3), dtype=complex)
-            for i in range(3):
-                for j in range(3):
-                    Gamma[i, j] = np.sum(epsilon_eff_inv[i, :] * n[j] * n)
+            row = pd.concat([row_epsilon, row_sigma])
         
-        # Compute eigenvalues (which correspond to v^2 for wave propagation)
-        eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
-        
-        # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
-        velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
-        
-        # if not self.is_seismic:
-        #     velocities[velocities > 0] = 1/velocities[velocities>0]
-        
-        # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
-        velocities.sort()
-        
-        return Gamma, eigenvalues, eigenvectors, velocities                  
-            
+        return mf.get_christoffel_matrix(row, self.f0, self.is_seismic, direction)
+    
     # --------------------------------------------------------------------------
     def compute_christoffel_directions(self, material_index, n_theta=30, n_phi=60):
         """
@@ -1389,7 +1260,8 @@ class VolumeBuilder:
             x_min, x_max, dx,
             y_min, y_max, dy,
             z_min, z_max, dz,
-            background_label=0
+            background_label=0,
+            special_geometries = None
         ):
         self.obj_path = obj_path
         base, _ = obj_path.rsplit(".", 1)
@@ -1410,9 +1282,7 @@ class VolumeBuilder:
         self.xs = np.arange(x_min, x_max + 0.5 * dx, dx)
         self.ys = np.arange(y_min, y_max + 0.5 * dy, dy)
         self.zs = np.arange(z_min, z_max + 0.5 * dz, dz)
-        self.dx = dx 
-        self.dy = dy 
-        self.dz = dz 
+        self.dx, self.dy, self.dz = dx, dy, dz 
         self.nx, self.ny, self.nz = len(self.xs), len(self.ys), len(self.zs)
         
         X, Y, Z = np.meshgrid(self.xs, self.ys, self.zs, indexing="ij")
@@ -1421,6 +1291,15 @@ class VolumeBuilder:
                                  self.background_label,
                                  dtype=np.int32)
         self.label_grid = None
+        
+        if special_geometries is None:
+            self.special_geometries = ()
+        elif isinstance(special_geometries, str):
+            self.special_geometries = (special_geometries,)   # single-element tuple
+        elif isinstance(special_geometries, np.ndarray):
+            self.special_geometries = tuple( str(x) for x in special_geometries.ravel() )
+        else:
+            self.special_geometries = tuple(special_geometries)
         
     
     # -------------------------
@@ -1536,44 +1415,34 @@ class VolumeBuilder:
             if candidate_idx.size == 0:
                 print("  No points in bounding box; skipping.")
                 continue
-            
+
             pts_candidate = self.points[candidate_idx]
-            
-            # --------------------------------------
-            # Geometry-based decision: AABB vs contains
-            # --------------------------------------
-            # If all vertices lie on the AABB surface (within tol),
-            # treat as axis-aligned box; otherwise, use contains().
-            verts = mesh.vertices
-            tol = 1e-6
-            on_min_x = np.isclose(verts[:, 0], bounds_min[0], atol=tol)
-            on_max_x = np.isclose(verts[:, 0], bounds_max[0], atol=tol)
-            on_min_y = np.isclose(verts[:, 1], bounds_min[1], atol=tol)
-            on_max_y = np.isclose(verts[:, 1], bounds_max[1], atol=tol)
-            on_min_z = np.isclose(verts[:, 2], bounds_min[2], atol=tol)
-            on_max_z = np.isclose(verts[:, 2], bounds_max[2], atol=tol)
-            
-            on_surface = on_min_x | on_max_x | on_min_y | on_max_y | on_min_z | on_max_z
-            all_on_surface = np.all(on_surface)
-            
-            if all_on_surface:
-                # Axis-aligned box: AABB test is exact
-                self.labels_1d[candidate_idx] = label
-                print(f"  Axis-aligned box: labeled {candidate_idx.size} cells (AABB)")
-            else:
-                # Rotated / non-box: refine with contains()
-                inside_local = mesh.contains(pts_candidate)  # [web:82][web:114]
+
+            # name-based special-geometry detection
+            lower = name.lower()
+            is_special = False
+            for geometry in self.special_geometries:
+                if geometry and geometry in lower:
+                    is_special = True
+                    break
+
+            if is_special:
+                inside_local = mesh.contains(pts_candidate)
                 self.labels_1d[candidate_idx[inside_local]] = label
-                print(f"  General mesh: coarse {candidate_idx.size}, inside {inside_local.sum()}")
-        
+                print(
+                    f"  {lower}: coarse {candidate_idx.size}, "
+                    f"inside {inside_local.sum()}"
+                )
+            else:
+                # For axis-aligned cubes (ice, air, base), AABB is enough
+                self.labels_1d[candidate_idx] = label
+                print(f"  Bulk region: labeled {candidate_idx.size} cells (AABB)")
+
         label_grid = self.labels_1d.reshape((self.nx, self.ny, self.nz))
         # This all needs to be transposed to match the correct coordinates in Fortran
-        # self.label_grid = np.transpose(label_grid, (0, 2, 1) )
-        # self.dy, self.dz = self.dz, self.dy 
-        # self.ny, self.nz = self.nz, self.ny 
+        # label_grid = np.flip(np.transpose(label_grid, (1, 2, 0)), axis = 0)
         
-        
-        print("label_grid shape:", self.label_grid.shape)
+        self.label_grid = label_grid
         
         f = FortranFile('geometry.dat', 'w')
         f.write_record(np.asfortranarray(self.label_grid).astype(np.int32))
@@ -1593,7 +1462,7 @@ class VolumeBuilder:
         Nx, Ny, Nz = self.label_grid.shape
         if plane == "xy":
             assert 0 <= index < Nz
-            img = self.label_grid[:, :, index]
+            img = self.label_grid[index, :, :]
             xlabel, ylabel = "ix", "iy"
             title = f"Slice plane=xy, iz={index}"
         elif plane == "xz":
@@ -1603,7 +1472,7 @@ class VolumeBuilder:
             title = f"Slice plane=xz, iy={index}"
         elif plane == "yz":
             assert 0 <= index < Nx
-            img = self.label_grid[index, :, :]
+            img = self.label_grid[:, :, index]
             xlabel, ylabel = "iy", "iz"
             title = f"Slice plane=yz, ix={index}"
         else:

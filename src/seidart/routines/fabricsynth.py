@@ -8,6 +8,8 @@ from scipy.spatial.transform import Rotation as R
 import seaborn as sns
 import copy
 
+import seidart.routines.materials as mf
+
 class Fabric:
     def __init__(self, params, output_filename = 'euler_angles.txt', plot = False):
         """
@@ -34,24 +36,35 @@ class Fabric:
         self.contour_levels = None
         self.euler_angles = None 
         self.params = params
-        self.npts = None
+        self.npts = params['npts']
         self.plot = plot
         self.cmap_name = 'pink_r'
         self.cmap = None
         self.alpha = 0.3
         self.marker_size = 2
         self.figsize = (8,8)
-        self.build()
+        
+        # Assign some general functions needed to compute the 
+        self.trend_plunge_to_rotation_matrix = mf.trend_plunge_to_rotation_matrix
+        self.rotation_matrix_to_trend_plunge_orientation = mf.rotation_matrix_to_trend_plunge_orientation 
+        self.rotation_matrix_to_euler_angles = mf.rotation_matrix_to_euler_angles 
+        
+        # Build the fabric from the given parameters
+        self._build()
+        
+        if self.plot:
+            self.projection_plot()
+        
     
-    def build(self):
+    def _build(self):
         '''
         Build the object. 
         '''
-        self.custom_cmap()
-        self.generate_trends_plunges()
-        self.bunge_compute() 
+        self._custom_cmap()
+        self._generate_trends_plunges()
+        self._bunge_compute() 
 
-    def custom_cmap(self, n_colors = 100):
+    def _custom_cmap(self, n_colors = 100):
         '''
         Compute a custom colormap for the density plot.
         
@@ -63,83 +76,13 @@ class Fabric:
         self.cmap = sns.blend_palette(palette, as_cmap = True)
         self.cmap.set_under('white', 1.0)
     
-    # --------------------------------------------------------------------------
-    def trend_plunge_to_rotation_matrix(self, trend, plunge, orientation): 
-        '''
-        Compute the rotation matrix from a trend and plunge pair. 
-        
-        :param trend: The trend value in degrees 
-        :type trend: float 
-        :param plunge: The plunge value in degrees  
-        :type plunge: float 
-        :param orientation: The orientation/rotation angle around the axis of 
-            the plunge.
-        :type orientation: float
-        
-        :return: rotation_matrix
-        :rtype: np.ndarray
-        '''
-        # Convert trend and plunge to radians
-        trend_rad = np.radians(trend)
-        plunge_rad = np.radians(plunge)
-        orient_rad = np.radians(orientation)
-        
-        # Rotation matrix for trend (rotation around Z-axis)
-        Rt = np.array([
-            [np.cos(trend_rad), -np.sin(trend_rad), 0],
-            [np.sin(trend_rad), np.cos(trend_rad), 0],
-            [0, 0, 1]
-        ])
-        
-        # Rotation matrix for plunge (rotation around X-axis)
-        Rp = np.array([
-            [1, 0, 0],
-            [0, np.cos(plunge_rad), -np.sin(plunge_rad)],
-            [0, np.sin(plunge_rad), np.cos(plunge_rad)]
-        ])
-
-        Ro = np.array([
-            [np.cos(orient_rad), -np.sin(orient_rad), 0],
-            [np.sin(orient_rad), np.cos(orient_rad), 0],
-            [0, 0, 1]
-        ])
-        
-        # Combined rotation matrix
-        rotation_matrix = Rt @ Rp @ Ro
-        return rotation_matrix
-    
-    # --------------------------------------------------------------------------
-    def rotation_matrix_to_euler_angles(self, rotation_matrix):
-        """
-        Convert rotation matrix to Euler angles
-        
-        :param rotation_matrix: The 3-by-3 orthogonal rotation matrix
-        :type rotation_matrix: np.ndarray 
-        
-        """
-        if rotation_matrix.shape != (3, 3):
-            raise ValueError("Input matrix must be 3x3")
-        
-        # Ensure the matrix is a valid rotation matrix
-        if not np.allclose(
-                np.dot(rotation_matrix, rotation_matrix.T), np.eye(3)
-            ) or not np.isclose(np.linalg.det(rotation_matrix), 1):
-            raise ValueError("Input matrix is not a valid rotation matrix")
-        
-        # Extract the Euler angles
-        Phi = np.arccos(rotation_matrix[2, 2])
-        phi1 = np.arctan2(rotation_matrix[0, 2], -rotation_matrix[1, 2])
-        phi2 = np.arctan2(rotation_matrix[2, 0], rotation_matrix[2, 1])
-        
-        return phi1, Phi, phi2
-    
     # ------------------------------------------------------------------------------
     # Function to generate trends and plunges based on a specified distribution
-    def generate_trends_plunges(self):
+    def _generate_trends_plunges(self):
         """
         Create a set of trends and plunges according to a distribution. 
         """        
-        n = len(self.params['npts'])
+        n = len(self.npts)
         for ind in range(n):
             if self.params['distribution'] == 'normal':
                 self.trends = np.hstack((
@@ -148,7 +91,7 @@ class Fabric:
                         a=self.params['skew_trend'][ind], 
                         loc=self.params['trend'][ind], 
                         scale=self.params['trend_std'][ind], 
-                        size=self.params['npts'][ind]
+                        size=self.npts[ind]
                     )
                 ))
                 self.plunges = np.hstack((
@@ -157,7 +100,7 @@ class Fabric:
                         a=self.params['skew_plunge'][ind], 
                         loc=self.params['plunge'][ind], 
                         scale=self.params['plunge_std'][ind], 
-                        size=self.params['npts'][ind]
+                        size=self.npts[ind]
                     )
                 ))
                 self.orientations = np.hstack((
@@ -166,7 +109,7 @@ class Fabric:
                         a=self.params['skew_orientation'][ind], 
                         loc=self.params['orientation'][ind], 
                         scale=self.params['orientation_std'][ind], 
-                        size=self.params['npts'][ind]
+                        size=self.npts[ind]
                     )
                 ))
             elif self.params['distribution'] == 'uniform':
@@ -175,12 +118,12 @@ class Fabric:
                     np.random.uniform(
                         self.params['trend_low'][ind], 
                         self.params['trend_high'][ind], 
-                        self.params['npts'][ind]
+                        self.npts[ind]
                     )
                 ))
                 theta_low = np.radians(self.params['plunge_low'][ind])
                 theta_high = np.radians(self.params['plunge_high'][ind])
-                u = np.random.uniform(0, 1, self.params['npts'][ind])
+                u = np.random.uniform(0, 1, self.npts[ind])
                 cos_theta = np.cos(theta_low) - u * (np.cos(theta_low) - np.cos(theta_high) )
                 plunge_samples = np.degrees(np.arccos(cos_theta) )
                 self.plunges = np.hstack((self.plunges, plunge_samples))
@@ -189,7 +132,7 @@ class Fabric:
                     np.random.uniform(
                         self.params['orientation_low'][ind], 
                         self.params['orientation_high'][ind], 
-                        self.params['npts'][ind]
+                        self.npts[ind]
                     )
                 ))
             elif self.params['distribution'] == 'poisson':
@@ -197,21 +140,21 @@ class Fabric:
                     self.trends,
                     poisson.rvs(
                         mu = self.params['lambda_trend'][ind], 
-                        size = self.params['npts'][ind]
+                        size = self.npts[ind]
                     )
                 ))
                 self.plunges = np.hstack((
                     self.plunges,
                     poisson.rvs(
                         mu = self.params['lambda_plunge'][ind], 
-                        size = self.params['npts'][ind]
+                        size = self.npts[ind]
                     )
                 ))
                 self.orientations = np.hstack((
                     self.orientations,
                     poisson.rvs(
                         mu = self.params['lambda_orientation'][ind], 
-                        size = self.params['npts'][ind]
+                        size = self.npts[ind]
                     )
                 ))
         
@@ -279,7 +222,7 @@ class Fabric:
         plt.show()
     
     # --------------------------------------------------------------------------
-    def bunge_compute(self):
+    def _bunge_compute(self):
         """
         Compute the euler angles for the z-x-z transform (Bunge's notation). A 
         space delimited file will be produced from the output. 
@@ -304,14 +247,12 @@ class Fabric:
         self.a_plunges = np.degrees(self.a_plunges)
         self.a_trends = np.degrees(self.a_trends)
         
-        self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z', 'x', 'z'])
+        self.euler_angles = pd.DataFrame(euler_zxz, columns = ['z1', 'x', 'z2'])
         # Write the space delimited text file. 
         self.euler_angles.to_csv(
             self.output_filename, index = False, header = True, sep = " "
         )
         
-        if self.plot:
-            self.projection_plot()
 
 # --------------------------------------------------------------------------
 def main():

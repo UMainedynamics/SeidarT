@@ -4,6 +4,8 @@ from typing import Union, Tuple
 from scipy.interpolate import interp1d
 
 __all__ = [
+    'vrh2',
+    'vrh4',
     'pressure_array',
     'anisotropic_boolean',
     'get_seismic',
@@ -14,6 +16,9 @@ __all__ = [
     'porewater_correction',
     'moduli2stiffness',
     'astiffness2moduli',
+    'voigt_to_full_tensor',
+    'get_christoffel_matrix',
+    'anisotropy_parameters',
     'compute_volume_fractions',
     'bulk_modulus_water',
     'bulk_modulus_air',
@@ -31,7 +36,11 @@ __all__ = [
     'snow_conductivity',
     'sand_silt_clay_permittivity_conductivity',
     'read_ang',
-    'rotator_zxz',
+    'rotator',
+    'rotator_euler',
+    'trend_plunge_to_rotation_matrix',
+    'rotation_matrix_to_trend_plunge_orientation',
+    'rotation_matrix_to_euler_angles',
     'bond',
     'highfreq_stability_conditions',
     'fujita_complex_permittivity'
@@ -215,7 +224,7 @@ def vrh2(permittivity, conductivity, eulerangles):
     Sc = np.linalg.inv(conductivity)
     
     for k in range(0, p):
-        R = rotator_zxz(eulerangles[k,:] )
+        R = rotator_euler(eulerangles[k,:] )
         Ri = np.linalg.inv(R)
         #!!!!! We need to do the same for conductivity.  
         pvoigt = pvoigt + ( np.matmul( R, np.matmul(permittivity, R.T) ) )
@@ -246,7 +255,7 @@ def vrh4(C, eulerangles):
     cvoigt = np.zeros([6,6])
     creuss = np.zeros([6,6])
     for k in range(m):
-        R = rotator_zxz(eulerangles[k,:] )
+        R = rotator_euler(eulerangles[k,:] )
         M = bond(R)
         N = np.linalg.inv(M)
         cvoigt = cvoigt + ( np.matmul( M, np.matmul(C, M.T) ) )
@@ -303,38 +312,159 @@ def read_ang(filepath: str) -> np.ndarray:
     return(euler)
 
 # -----------------------------------------------------------------------------
-def rotator_zxz(eul: np.ndarray) -> np.ndarray:
+def rotator(angle: float, axis: str) -> np.ndarray:
     """
-    Generates a rotation matrix from Euler angles using the z-x-z rotation 
-    convention.
+    General 3x3 rotation matrix calculation for any axis. 
+    """
+    R = np.zeros([3,3])
+    if axis == 'x':
+        R[0,:] = [ 1.0, 0.0, 0.0 ]
+        R[1,:] = [ 0.0, np.cos( angle ), -np.sin( angle ) ]
+        R[2,:] = [ 0.0, np.sin( angle ),  np.cos( angle ) ]
+    if axis == 'y':
+        R[0,:] = [  np.cos( angle ), 0.0, np.sin( angle )]
+        R[1,:] = [ 0.0, 1.0, 0.0 ]
+        R[2,:] = [ -np.sin( angle ), 0.0, np.cos( angle ) ]
+    if axis == 'z':
+        R[0,:] = [ np.cos( angle ), -np.sin( angle ), 0.0 ] 
+        R[1,:] = [ np.sin( angle ),  np.cos( angle ), 0.0 ]
+        R[2,:] = [ 0.0, 0.0, 1.0 ]
+    
+    return R
+
+# This is a generic routine and the name should be changed here and anywhere it is used.
+def rotator_euler(eul: np.ndarray, rot: str = 'zxz') -> np.ndarray:
+    """
+    Generates a rotation matrix from Euler angles for a given rotation sequence.
+    Default is a 'zxz' rotation.
     
     :param eul: An array containing the three Euler angles. Angles are in radians
     :type eul: np.ndarray
     :return: The 3x3 rotation matrix derived from the Euler angles.
     :rtype: np.ndarray
     """
-    
+    if len(rot) != 3:
+        raise ValueError(
+             f"Rotation sequence needs three axes specified. For example, 'zxz' or 'xyx', etc. You have specified '{rot}'."
+        ) 
+     
     # From the 3 euler angles for the zxz rotation, compute the rotation matrix
-    R = np.zeros([3,3])
-    D = np.zeros([3,3])
-    C = np.zeros([3,3])
-    B = np.zeros([3,3])
-    
-    D[0,:] = [ np.cos( eul[0] ), -np.sin( eul[0] ), 0.0 ]
-    D[1,:] = [ np.sin( eul[0] ), np.cos( eul[0] ), 0.0 ]
-    D[2,:] = [ 0.0, 0.0, 1.0 ]
-    
-    C[0,:] = [ 1.0, 0.0, 0.0 ]
-    C[1,:] = [ 0.0, np.cos( eul[1] ), -np.sin( eul[1] ) ]
-    C[2,:] = [ 0.0, np.sin( eul[1] ), np.cos( eul[1] ) ]
-    
-    B[0,:] = [ np.cos( eul[2] ), -np.sin( eul[2] ), 0.0 ] 
-    B[1,:] = [ np.sin( eul[2] ), np.cos( eul[2] ), 0.0 ]
-    B[2,:] = [ 0.0, 0.0, 1.0 ]
+    D = rotator(eul[0], rot[0])
+    C = rotator(eul[1], rot[1]) 
+    B = rotator(eul[2], rot[2])
     
     # R = np.matmul(B, np.matmul(C, D) )
     R = B @ C @ D
     return(R)
+
+# --------------------------------------------------------------------------
+def trend_plunge_to_rotation_matrix(trend, plunge, orientation): 
+    '''
+    Compute the rotation matrix from a trend and plunge pair. 
+    
+    :param trend: The trend value in degrees 
+    :type trend: float 
+    :param plunge: The plunge value in degrees  
+    :type plunge: float 
+    :param orientation: The orientation/rotation angle around the axis of 
+        the plunge.
+    :type orientation: float
+    
+    :return: rotation_matrix
+    :rtype: np.ndarray
+    '''
+    # Convert trend and plunge to radians
+    trend_rad = np.radians(trend)
+    plunge_rad = np.radians(plunge)
+    orient_rad = np.radians(orientation)
+    
+    # Rotation matrix for trend (rotation around Z-axis)
+    Rt = np.array([
+        [np.cos(trend_rad), -np.sin(trend_rad), 0],
+        [np.sin(trend_rad), np.cos(trend_rad), 0],
+        [0, 0, 1]
+    ])
+    
+    # Rotation matrix for plunge (rotation around X-axis)
+    Rp = np.array([
+        [1, 0, 0],
+        [0, np.cos(plunge_rad), -np.sin(plunge_rad)],
+        [0, np.sin(plunge_rad), np.cos(plunge_rad)]
+    ])
+    
+    Ro = np.array([
+        [np.cos(orient_rad), -np.sin(orient_rad), 0],
+        [np.sin(orient_rad), np.cos(orient_rad), 0],
+        [0, 0, 1]
+    ])
+    
+    # Combined rotation matrix
+    rotation_matrix = Rt @ Rp @ Ro
+    return rotation_matrix
+
+def rotation_matrix_to_trend_plunge_orientation(R):
+    """
+    Consistent inverse for trendplungetorotationmatrix.
+    Returns trend, plunge, orientation in radians.
+    """
+    # 1) rotation matrix -> Bunge Euler angles (you already have this)
+    phi1, Phi, phi2 = rotation_matrix_to_euler_angles(R)
+
+    # 2) Rebuild the same rotation using your trend/plunge/orientation
+    #    but we want the c-axis, so just grab it from R directly:
+    #    c_local = (0,0,1), so c_global = R @ c_local = column 2
+    cx, cy, cz = R @ np.array([0.0, 0.0, 1.0])
+    
+    # 3) trend and plunge of c-axis
+    plunge = np.arcsin(cz)          # radians
+    trend  = np.arctan2(cy, cx)     # radians
+    
+    # 4) orientation: rotation about c-axis.
+    #    Use the image of local x as "a-axis" and measure its angle around c.
+    ax, ay, az = R @ np.array([1.0, 0.0, 0.0])
+    
+    c_vec = np.array([cx, cy, cz])
+    a_vec = np.array([ax, ay, az])
+    
+    # Project a_vec into plane perpendicular to c_vec
+    a_perp = a_vec - np.dot(a_vec, c_vec) * c_vec
+    a_perp /= np.linalg.norm(a_perp)
+    
+    # Reference direction in that plane: projection of global x
+    ref = np.array([1.0, 0.0, 0.0])
+    ref_perp = ref - np.dot(ref, c_vec) * c_vec
+    ref_perp /= np.linalg.norm(ref_perp)
+    
+    cos_o = np.clip(np.dot(ref_perp, a_perp), -1.0, 1.0)
+    sin_o = np.dot(c_vec, np.cross(ref_perp, a_perp))
+    orientation = np.arctan2(sin_o, cos_o)  # radians
+    
+    return trend, plunge, orientation
+
+# --------------------------------------------------------------------------
+def rotation_matrix_to_euler_angles(rotation_matrix):
+    """
+    Convert rotation matrix to Euler angles
+    
+    :param rotation_matrix: The 3-by-3 orthogonal rotation matrix
+    :type rotation_matrix: np.ndarray 
+    
+    """
+    if rotation_matrix.shape != (3, 3):
+        raise ValueError("Input matrix must be 3x3")
+    
+    # Ensure the matrix is a valid rotation matrix
+    if not np.allclose(
+            np.dot(rotation_matrix, rotation_matrix.T), np.eye(3)
+        ) or not np.isclose(np.linalg.det(rotation_matrix), 1):
+        raise ValueError("Input matrix is not a valid rotation matrix")
+    
+    # Extract the Euler angles
+    Phi = np.arccos(rotation_matrix[2, 2])
+    phi1 = np.arctan2(rotation_matrix[0, 2], -rotation_matrix[1, 2])
+    phi2 = np.arctan2(rotation_matrix[2, 0], rotation_matrix[2, 1])
+    
+    return phi1, Phi, phi2
 
 # -----------------------------------------------------------------------------
 def bond(R: np.ndarray) -> np.ndarray:
@@ -449,6 +579,170 @@ def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
         vz = c_light * np.sqrt(1/T[2,2])
         return vx, vy, vz 
 
+# -----------------------------------------------------------------------------
+def voigt_to_full_tensor(C_voigt):
+    """
+    Convert a 6x6 stiffness matrix in Voigt notation to a 3x3x3x3 tensor.
+    
+    Parameters:
+        C_voigt: numpy.ndarray
+            6x6 stiffness matrix in Voigt notation.
+            
+    Returns:
+        C_full: numpy.ndarray
+            3x3x3x3 stiffness tensor.
+    """
+    # Initialize full tensor with zeros
+    C_full = np.zeros((3, 3, 3, 3))
+    
+    # Mapping from sorted index pairs to Voigt index
+    voigt_map = {
+        (0, 0): 0,
+        (1, 1): 1,
+        (2, 2): 2,
+        (1, 2): 3,
+        (0, 2): 4,
+        (0, 1): 5
+    }
+    
+    # Conversion factor: 1 if i == j, else 1/sqrt(2)
+    def factor(i, j):
+        return 1.0 if i == j else 1.0/np.sqrt(2)
+    
+    # Loop over all tensor indices
+    for i in range(3):
+        for j in range(3):
+            # Determine the Voigt index for the (i, j) pair (order doesn't matter)
+            I = voigt_map[tuple(sorted((i, j)))]
+            for k in range(3):
+                for l in range(3):
+                    # Determine the Voigt index for the (k, l) pair
+                    J = voigt_map[tuple(sorted((k, l)))]
+                    # Multiply the appropriate conversion factors and assign
+                    C_full[i, j, k, l] = factor(i, j) * factor(k, l) * C_voigt[I, J]
+    return C_full
+
+# -----------------------------------------------------------------------------
+def voigt_to_mandel(C_voigt):
+    """
+    Convert a 6x6 fourth-order tensor in Voigt notation to Mandel notation.
+    
+    Parameters
+    ----------
+    C_voigt : (6, 6) array_like
+        Tensor in Voigt notation.
+    
+    Returns
+    -------
+    C_mandel : (6, 6) ndarray
+        Tensor in Mandel notation.
+    """
+    C_voigt = np.asarray(C_voigt, dtype=float)
+    
+    # Scaling vector: [1, 1, 1, sqrt(2), sqrt(2), sqrt(2)]
+    s = np.ones(6)
+    s[3:] = np.sqrt(2.0)
+    
+    # Similarity transform: C_M = S * C_V * S, with S = diag(s)
+    # Use outer product to avoid constructing the full diagonal matrix explicitly.
+    C_mandel = C_voigt * s[:, None] * s[None, :]
+    
+    return C_mandel
+
+# -----------------------------------------------------------------------------
+def get_christoffel_matrix(
+        coefficients: pd.Series, f0: float, is_seismic: bool, direction
+    ):
+    direction_map = {
+        'x':  np.array([1, 0, 0]),
+        'y':  np.array([0, 1, 0]),
+        'z':  np.array([0, 0, 1]),
+        'xy': np.array([1, 1, 0]) / np.sqrt(2),
+        'xz': np.array([1, 0, 1]) / np.sqrt(2),
+        'yz': np.array([0, 1, 1]) / np.sqrt(2)
+    }
+            
+    # Handle string input (predefined directions)
+    if isinstance(direction, str):
+        if direction not in direction_map:
+            raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
+        n = direction_map[direction]
+    
+    # Handle unit vector input
+    elif isinstance(direction, np.ndarray) and direction.shape == (3,):
+        n = direction
+    else:
+        raise TypeError("Direction must be either a string ('x', 'y', ...) or a 3-element numpy array.")
+    
+    # Normalize direction vector
+    if np.linalg.norm(n) == 0:
+        raise ValueError("Propagation vector cannot be zero.")
+    n = n / np.linalg.norm(n)
+    
+    if is_seismic:
+        C_full = np.zeros((3, 3, 3, 3))
+        # Extract stiffness coefficients from the specified row
+        C = np.array([
+            [coefficients['c11'], coefficients['c12'], coefficients['c13'], coefficients['c14'], coefficients['c15'], coefficients['c16']],
+            [coefficients['c12'], coefficients['c22'], coefficients['c23'], coefficients['c24'], coefficients['c25'], coefficients['c26']],
+            [coefficients['c13'], coefficients['c23'], coefficients['c33'], coefficients['c34'], coefficients['c35'], coefficients['c36']],
+            [coefficients['c14'], coefficients['c24'], coefficients['c34'], coefficients['c44'], coefficients['c45'], coefficients['c46']],
+            [coefficients['c15'], coefficients['c25'], coefficients['c35'], coefficients['c45'], coefficients['c55'], coefficients['c56']],
+            [coefficients['c16'], coefficients['c26'], coefficients['c36'], coefficients['c46'], coefficients['c56'], coefficients['c66']]
+        ])
+        
+        C_full = self.voigt_to_full_tensor(C)
+        Gamma = np.zeros((3, 3))
+        for i in range(3):
+            for j in range(3):
+                Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
+    else:
+            # Extract permittivity values from the specified row
+        epsilon = np.array([
+            [coefficients['e11'], coefficients['e12'], coefficients['e13']],
+            [coefficients['e12'], coefficients['e22'], coefficients['e23']],
+            [coefficients['e13'], coefficients['e23'], coefficients['e33']]
+        ])
+        
+        # Extract conductivity values from the specified row
+        sigma = np.array([
+            [coefficients['s11'], coefficients['s12'], row_sigma['s13']],
+            [coefficients['s12'], coefficients['s22'], row_sigma['s23']],
+            [coefficients['s13'], coefficients['s23'], row_sigma['s33']]
+        ])
+        
+        # Compute the effective permittivity tensor
+        omega = 2 * np.pi * f0  # Angular frequency
+        epsilon_eff = epsilon + 1j * sigma / omega  # Complex permittivity
+        
+        # Compute inverse of effective permittivity tensor
+        epsilon_eff_inv = np.linalg.inv(epsilon_eff)
+        
+        # Construct the electromagnetic Christoffel matrix
+        Gamma = np.zeros((3, 3), dtype=complex)
+        for i in range(3):
+            for j in range(3):
+                Gamma[i, j] = np.sum(epsilon_eff_inv[i, :] * n[j] * n)
+    
+    # Compute eigenvalues (which correspond to v^2 for wave propagation)
+    eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+    
+    # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
+    velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
+    
+    # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
+    velocities.sort()
+    
+    return Gamma, eigenvalues, eigenvectors, velocities                  
+
+# -----------------------------------------------------------------------------
+def anisotropy_parameters(tensor):
+    eigvals, eigvecs = np.linalg.eigh(tensor)
+    ratio = eigvals.max() / eigvals.min() 
+    birefringence = eigvals.max() - eigvals.min() 
+    spread = birefringence / eigvals.mean()
+    return ratio, birefringence, spread
+
 # ==============================================================================
 #                                   Seismic
 # ==============================================================================
@@ -460,8 +754,6 @@ def moduli2stiffness(K, G):
     return C
 
 # -----------------------------------------------------------------------------
-import numpy as np
-
 def astiffness2moduli(C, transversely_isotropic=True):
     """
     Computes the isotropic bulk and shear modulus from an anisotropic stiffness tensor
@@ -1507,11 +1799,11 @@ def ice_permittivity(
         complex_perm = fujita_complex_permittivity(
             temperature, center_frequency
         )
-        perm = complex(perm, complex_perm)
-    
-    permittivity = np.eye(3,3) * perm 
+        perm_ast = complex(perm, -complex_perm / 1.2)
+        
+    permittivity = np.eye(3,3) * perm_ast 
     if method == 'fujita':
-        permittivity[2,2] = perm + dP 
+        permittivity[2,2] = complex(perm + dP, -complex_perm) 
 
     return(permittivity)
 
@@ -1585,7 +1877,7 @@ def snow_permittivity(
         eps_i = np.diag(ice_permittivity(temperature, 917, center_frequency).imag).mean()
         complex_permittivity = eps_i * (0.52 * rho_d + 0.62 * rho_d**2)
     
-    permittivity = np.eye(3,3) * complex(perm, complex_permittivity)
+    permittivity = np.eye(3,3) * complex(perm, -complex_permittivity)
 
     return(permittivity, rho_d)
 
