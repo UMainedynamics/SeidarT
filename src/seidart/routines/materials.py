@@ -18,6 +18,7 @@ __all__ = [
     'astiffness2moduli',
     'voigt_to_full_tensor',
     'get_christoffel_matrix',
+    'get_complex_refractive_index',    
     'anisotropy_parameters',
     'compute_volume_fractions',
     'bulk_modulus_water',
@@ -257,7 +258,7 @@ def vrh4(C, eulerangles):
     for k in range(m):
         R = rotator_euler(eulerangles[k,:] )
         M = bond(R)
-        N = np.linalg.inv(M)
+        N = np.linalg.inv(M).T
         cvoigt = cvoigt + ( np.matmul( M, np.matmul(C, M.T) ) )
         creuss = creuss + ( np.matmul( N, np.matmul(S, N.T) ) )
     
@@ -321,14 +322,16 @@ def rotator(angle: float, axis: str) -> np.ndarray:
         R[0,:] = [ 1.0, 0.0, 0.0 ]
         R[1,:] = [ 0.0, np.cos( angle ), -np.sin( angle ) ]
         R[2,:] = [ 0.0, np.sin( angle ),  np.cos( angle ) ]
-    if axis == 'y':
+    elif axis == 'y':
         R[0,:] = [  np.cos( angle ), 0.0, np.sin( angle )]
         R[1,:] = [ 0.0, 1.0, 0.0 ]
         R[2,:] = [ -np.sin( angle ), 0.0, np.cos( angle ) ]
-    if axis == 'z':
+    elif axis == 'z':
         R[0,:] = [ np.cos( angle ), -np.sin( angle ), 0.0 ] 
         R[1,:] = [ np.sin( angle ),  np.cos( angle ), 0.0 ]
         R[2,:] = [ 0.0, 0.0, 1.0 ]
+    else: 
+        raise ValueError("axis must be 'x', 'y', or 'z'.")
     
     return R
 
@@ -651,8 +654,13 @@ def voigt_to_mandel(C_voigt):
 
 # -----------------------------------------------------------------------------
 def get_christoffel_matrix(
-        coefficients: pd.Series, f0: float, is_seismic: bool, direction
+        coefficients: pd.Series, 
+        f0: float, 
+        direction, 
     ):
+    """
+    
+    """
     direction_map = {
         'x':  np.array([1, 0, 0]),
         'y':  np.array([0, 1, 0]),
@@ -679,61 +687,121 @@ def get_christoffel_matrix(
         raise ValueError("Propagation vector cannot be zero.")
     n = n / np.linalg.norm(n)
     
-    if is_seismic:
-        C_full = np.zeros((3, 3, 3, 3))
-        # Extract stiffness coefficients from the specified row
-        C = np.array([
-            [coefficients['c11'], coefficients['c12'], coefficients['c13'], coefficients['c14'], coefficients['c15'], coefficients['c16']],
-            [coefficients['c12'], coefficients['c22'], coefficients['c23'], coefficients['c24'], coefficients['c25'], coefficients['c26']],
-            [coefficients['c13'], coefficients['c23'], coefficients['c33'], coefficients['c34'], coefficients['c35'], coefficients['c36']],
-            [coefficients['c14'], coefficients['c24'], coefficients['c34'], coefficients['c44'], coefficients['c45'], coefficients['c46']],
-            [coefficients['c15'], coefficients['c25'], coefficients['c35'], coefficients['c45'], coefficients['c55'], coefficients['c56']],
-            [coefficients['c16'], coefficients['c26'], coefficients['c36'], coefficients['c46'], coefficients['c56'], coefficients['c66']]
-        ])
-        
-        C_full = self.voigt_to_full_tensor(C)
-        Gamma = np.zeros((3, 3))
-        for i in range(3):
-            for j in range(3):
-                Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
+    rho = coefficients['rho']
+    C_full = np.zeros((3, 3, 3, 3))
+    # Extract stiffness coefficients from the specified row
+    C = np.array([
+        [coefficients['c11'], coefficients['c12'], coefficients['c13'], coefficients['c14'], coefficients['c15'], coefficients['c16']],
+        [coefficients['c12'], coefficients['c22'], coefficients['c23'], coefficients['c24'], coefficients['c25'], coefficients['c26']],
+        [coefficients['c13'], coefficients['c23'], coefficients['c33'], coefficients['c34'], coefficients['c35'], coefficients['c36']],
+        [coefficients['c14'], coefficients['c24'], coefficients['c34'], coefficients['c44'], coefficients['c45'], coefficients['c46']],
+        [coefficients['c15'], coefficients['c25'], coefficients['c35'], coefficients['c45'], coefficients['c55'], coefficients['c56']],
+        [coefficients['c16'], coefficients['c26'], coefficients['c36'], coefficients['c46'], coefficients['c56'], coefficients['c66']]
+    ])
+    
+    C_full = voigt_to_full_tensor(C)
+    Gamma = np.zeros((3, 3))
+    for i in range(3):
+        for j in range(3):
+            Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
+    
+    eigenvalues, eigenvectors = np.linalg.eigh(Gamma) 
+    velocities = np.sqrt(np.clip(eigenvalues, a_min=0.0, a_max = None) )
+    velocities.sort() 
+    return Gamma, eigenvalues, eigenvectors, velocities 
+
+# -----------------------------------------------------------------------------
+def get_complex_refractive_index(
+        coefficients: pd.Series, 
+        f0: float, 
+        direction, 
+        mu = 4e-7 * np.pi 
+    ):
+    """
+    Coefficients are given as relative permittivity but not relative conductivity
+    """
+    direction_map = {
+        'x':  np.array([1, 0, 0]),
+        'y':  np.array([0, 1, 0]),
+        'z':  np.array([0, 0, 1]),
+        'xy': np.array([1, 1, 0]) / np.sqrt(2),
+        'xz': np.array([1, 0, 1]) / np.sqrt(2),
+        'yz': np.array([0, 1, 1]) / np.sqrt(2)
+    }
+            
+    # Handle string input (predefined directions)
+    if isinstance(direction, str):
+        if direction not in direction_map:
+            raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
+        n = direction_map[direction]
+    
+    # Handle unit vector input
+    elif isinstance(direction, np.ndarray) and direction.shape == (3,):
+        n = direction
     else:
-            # Extract permittivity values from the specified row
-        epsilon = np.array([
-            [coefficients['e11'], coefficients['e12'], coefficients['e13']],
-            [coefficients['e12'], coefficients['e22'], coefficients['e23']],
-            [coefficients['e13'], coefficients['e23'], coefficients['e33']]
-        ])
-        
-        # Extract conductivity values from the specified row
-        sigma = np.array([
-            [coefficients['s11'], coefficients['s12'], row_sigma['s13']],
-            [coefficients['s12'], coefficients['s22'], row_sigma['s23']],
-            [coefficients['s13'], coefficients['s23'], row_sigma['s33']]
-        ])
-        
-        # Compute the effective permittivity tensor
-        omega = 2 * np.pi * f0  # Angular frequency
-        epsilon_eff = epsilon + 1j * sigma / omega  # Complex permittivity
-        
-        # Compute inverse of effective permittivity tensor
-        epsilon_eff_inv = np.linalg.inv(epsilon_eff)
-        
-        # Construct the electromagnetic Christoffel matrix
-        Gamma = np.zeros((3, 3), dtype=complex)
-        for i in range(3):
-            for j in range(3):
-                Gamma[i, j] = np.sum(epsilon_eff_inv[i, :] * n[j] * n)
+        raise TypeError("Direction must be either a string ('x', 'y', ...) or a 3-element numpy array.")
     
-    # Compute eigenvalues (which correspond to v^2 for wave propagation)
-    eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+    # Normalize direction vector
+    if np.linalg.norm(n) == 0:
+        raise ValueError("Propagation vector cannot be zero.")
+    n = n / np.linalg.norm(n)
     
-    # Convert to phase velocities (v = sqrt(v^2)) ensuring non-negative values
-    velocities = np.sqrt(np.abs(eigenvalues))  # Take absolute value before sqrt
+    # --------------------------------------------------------------------------
+        
+    # Extract permittivity values from the specified row
+    epsilon = np.array([
+        [coefficients['e11'], coefficients['e12'], coefficients['e13']],
+        [coefficients['e12'], coefficients['e22'], coefficients['e23']],
+        [coefficients['e13'], coefficients['e23'], coefficients['e33']]
+    ], dtype = float)
     
-    # Sort eigenvalues to match P-wave (fastest), S1, and S2 waves
-    velocities.sort()
+    # Extract conductivity values from the specified row
+    sigma = np.array([
+        [coefficients['s11'], coefficients['s12'], coefficients['s13']],
+        [coefficients['s12'], coefficients['s22'], coefficients['s23']],
+        [coefficients['s13'], coefficients['s23'], coefficients['s33']]
+    ], dtype = float)
     
-    return Gamma, eigenvalues, eigenvectors, velocities                  
+    omega = 2.0 * np.pi * f0  # Angular frequency
+    
+    # complex permittivity
+    epsilon_eff = epsilon - 1j * sigma / (omega*eps0)  # Complex permittivity
+    # epsilon_eff *= eps0
+    epsilon_eff_inv = np.linalg.inv(epsilon_eff)
+    
+    # --------------------------------------------------------------------------
+    I = np.eye(3, dtype = float) 
+    P = I - np.outer(n,n)
+    A = P @ epsilon_eff_inv @ P
+    
+    # --------------------------------------------------------------------------
+    e1 = np.cross(n, [0.0, 0.0, 1.0] )
+    if np.linalg.norm(e1) < 1e-8:
+        e1 = np.cross(n, [0.0, 1.0, 0.0])
+    
+    e1 = e1 / np.linalg.norm(e1)
+    e2 = np.cross(n, e1)
+    e2 = e2 / np.linalg.norm(e2) 
+    
+    A_perp = np.array([
+        [e1 @ A @ e1, e1 @ A @ e2], 
+        [e2 @ A @ e1, e2 @ A @ e2]
+    ], dtype = complex) 
+    
+    lam, vecs = np.linalg.eig(A_perp) 
+    
+    complex_index = np.empty_like(lam, dtype = complex) 
+    for i, val in enumerate(lam):
+        if val == 0.0:
+            complex_index[i] = np.nan + 1j * np.nan 
+        else:
+            index_i = 1.0 / np.sqrt(val)
+            if index_i.real < 0:
+                index_i = -index_i
+            
+            complex_index[i] = index_i
+    
+    return lam, vecs, complex_index                 
 
 # -----------------------------------------------------------------------------
 def anisotropy_parameters(tensor):

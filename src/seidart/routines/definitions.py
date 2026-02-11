@@ -284,7 +284,7 @@ def loadproject(
         seismic.x, seismic.y, seismic.z, 
         seismic.xind, seismic.yind, seismic.zind,
         seismic.f0, seismic.theta, seismic.phi, seismic.psi,
-        seismic.source_amplitude, seismic.source_type, seismic.source_wavelet    
+        seismic.source_amplitude, seismic.source_wavelet, seismic.source_type    
     ) = list(data['Seismic']['Source'].values())
     
     (

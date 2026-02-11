@@ -293,6 +293,7 @@ class Model:
         self.vmax_z = None
         self.velocity_scaling_factor = 1.0 
         self.voigt_to_full_tensor = mf.voigt_to_full_tensor
+        self.gamma_max = None # Sponge layer parameter
         
     def kband_check(self, domain):
         '''
@@ -864,15 +865,18 @@ class Model:
     # --------------------------------------------------------------------------
     
     # --------------------------------------------------------------------------
+    # Need to finish the EM version of this.
     def get_christoffel_matrix(self, material_indice, direction):
         if self.is_seismic:
             row = self.stiffness_coefficients.loc[material_indice]
+            return mf.get_christoffel_matrix(row, self.f0, direction)
         else:
             row_epsilon = self.permittivity_coefficients.loc[material_indice]
             row_sigma = self.conductivity_coefficients.loc[material_indice]
             row = pd.concat([row_epsilon, row_sigma])
+            return mf.get_complex_refractive_index(row, self.f0, direction)
         
-        return mf.get_christoffel_matrix(row, self.f0, self.is_seismic, direction)
+            
     
     # --------------------------------------------------------------------------
     def compute_christoffel_directions(self, material_index, n_theta=30, n_phi=60):
