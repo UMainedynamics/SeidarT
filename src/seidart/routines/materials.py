@@ -1613,7 +1613,43 @@ def porewater_correction(
 
     return(density, grams_air, grams_water)
 
+# -----------------------------------------------------------------------------
+# Some functions for the Biot values 
+def fabric_tensor(euler_angles):
+    F = np.zeros([3,3])
+    m,n = euler_angles.shape
+    
+    for ii in range(m):
+        phi, theta, psi = euler_angles[ii,0], \
+                            euler_angles[ii,1], \
+                                euler_angles[ii,2]
+        R = rotator_euler(phi, theta, psi)
+        n = R[:,2] 
+        F += np.outer(n,n) 
+    
+    F /= float(m) 
+    return F 
 
+def permeability(porosity, grain_size, euler_angles):
+    """
+    porosity - value is 0,1 with 1 being air/undefined 
+    grain_size - the characteristic grain size 
+    """
+    k = (porosity**3 * grain_size**2) / (( 1.0 - porosity)**2)
+    F = fabric_tensor(euler_angles)
+    eigval, eigvec = np.linalg.eig(F) 
+
+    if np.sum(eigval) <= 0.0:
+        # Degenerate: fallback isotropic
+        k_global = k * np.eye(3)
+        return k, k_global
+    
+    eigval_norm =  eigval / np.sum(eigval) 
+
+    k_principal = np.diag(3.0 * k * eigval_norm)
+    k_global = eigvec @ k_principal @ eigvec.T
+     
+    return(k, k_global)
 # ==============================================================================
 #                                Permittivity
 # ==============================================================================
