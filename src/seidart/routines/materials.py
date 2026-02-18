@@ -1628,7 +1628,7 @@ def fabric_tensor(euler_angles):
         F += np.outer(n,n) 
     
     F /= float(m) 
-    return F 
+    return F
 
 def permeability(porosity, grain_size, euler_angles):
     """
@@ -1650,6 +1650,74 @@ def permeability(porosity, grain_size, euler_angles):
     k_global = eigvec @ k_principal @ eigvec.T
      
     return(k, k_global)
+
+def viscosity_water(temperature, method = "andrade-vogel", units = "mPas"):
+    """
+    temperature in degrees C 
+    method: options are "andrade-vogel" (default), "patek"
+    
+    returns the dyanmic viscosity, mu, with units mPa*s
+    """
+    tempK = temperature + 273.15
+    method = method.lower()
+
+    if temperature < -5 and method == "andrade-vogel":
+        print('For super cooled water consider using method="platek"')
+    
+    if method == "patek":
+        if tempK >= 253.15:
+            a = np.array([280.68, 511.45, 61.13, 0.4590])
+            b = np.array([-1.9, -7.7,-19.6, -40.0])
+        else:
+            a = np.array([749.95, 56.39, 55.70, 5.77e-4])
+            b = np.array([-4.6, -13.2, -22.0, -71.7])
+
+        tempK = tempK / 300.0
+        mu = np.sum(a*tempK**b)
+    else: # Default method "andrade-vogel"
+        A, B, C = -3.7188, 578.919, -137.546
+        mu = exp( A + B / ( C + tempK ) )
+
+    if units.lower() == "pas":
+        return mu*1.0e-3
+    else:
+        return mu
+
+def biot_stress(K_dry, K_mineral, K_fluid, porosity, euler_angles = None):
+    """
+    K_?? - effective bulk moduli
+    porosity - [0,1) 
+    F - fabric tensor
+    """
+    alpha = 1 - K_dry / K_mineral 
+
+    F = fabric_tensor(euler_angles)
+    eigval, eigvec = np.linalg.eig(F) 
+
+    if np.sum(eigval) <= 0.0:
+        # Degenerate: fallback isotropic
+        alpha_global = alpha * np.eye(3)
+        Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
+        return alpha, alpha_global 
+    
+    eigval_norm =  eigval / np.sum(eigval) 
+
+    alpha_principal = np.diag(3.0 * alpha * eigval_norm)
+    alpha_global = eigvec @ alpha_principal @ eigvec.T
+    Minv = (alpha_global - porosity) / K_mineral + porosity / K_fluid
+
+    return alpha, alpha_global, Minv
+
+def mass_matrix_tensor(rho_s, rho_f, porosity, alpha, ):
+    """
+    rho_s - effective density of the solid matrix
+    rho_f - effective density of the fluid 
+    porosity - [0,1)
+    alpha - 
+    """
+
+    if F:
+        
 # ==============================================================================
 #                                Permittivity
 # ==============================================================================
