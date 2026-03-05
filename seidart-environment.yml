@@ -26,5 +26,7 @@ dependencies:
   - ninja
   - json
   - json-fortran
+  - trimesh
   - pip:
       - mplstereonet
+      - disba
