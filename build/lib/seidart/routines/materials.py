@@ -143,16 +143,15 @@ def pressure_array(
         pressure at each grid point.
     :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray]
     """
-
-
+    
     # First match the size of 
     k = np.unique(im)
-
+    
     m, n = im.shape
     # allocate the pressure, temperature and density
     pressure = np.zeros([m, n])
     density = np.zeros([m, n])
-
+    
     if not temp.shape == im.shape:
         temperature = np.zeros([m, n])
     for j in range(0,n):
@@ -188,11 +187,11 @@ def anisotropic_boolean(
         the second contains angular file names.
     :rtype: Tuple[np.ndarray, np.ndarray]
     """
-
+    
     m,n = im.shape
     anisotropic = np.zeros([m,n], dtype = bool)
     afile = np.zeros([m,n], dtype = str)
-
+    
     for i in range(0, m):
         for j in range(0,n):
 
@@ -205,7 +204,7 @@ def anisotropic_boolean(
             
             if anisotropic[i,j]:
                 afile[i,j] = angvect[ im[i,j] ]
-
+    
     return(anisotropic, afile)
 
 # -----------------------------------------------------------------------------
@@ -266,7 +265,7 @@ def vrh4(C, eulerangles):
     cvoigt /= m
     creuss /= m 
     creuss = np.linalg.inv(creuss) 
-
+    
     # Calculate the hill average 
     hill = (cvoigt + creuss)/2
     return hill
@@ -277,38 +276,38 @@ def read_ang(filepath: str) -> np.ndarray:
     Reads Euler angles from a space delimited .ang file, typically associated 
     with EBSD (Electron Backscatter Diffraction) data. Synthetic data can be 
     built with the fabricsynth module.
-
+    
     :param filepath: The path to the .ang file.
     :type filepath: str
     :return: An array of Euler angles extracted from the file.
     :rtype: np.ndarray
-
+    
     Note:
         The .ang file is expected to contain columns for Euler angles in 
         radians, following Bunge's notation (z-x-z rotation), among other data 
         related to EBSD measurements.
     """
-
+    
     # Load the file in as a data frame
     euler = pd.read_table(filepath, delimiter = " ").to_numpy()
     
     # take only the euler angles...for now
     if euler.shape[0] > 3 :
         euler = euler[:,0:3]
-
+    
     # Unfortunately, the space delimiters are inconsistent :(
     # We know there are 10 columns and the rows shouldn't contain all NA's
     m, n = np.shape(euler)
-
+    
     # reshape to M-by-1 vector
     euler = euler.reshape(m*n,1)
-
+    
     # remvoe 'nan'
     euler = euler[~np.isnan(euler)]
-
+    
     # reshape back to array
     euler = euler.reshape(m, int( len(euler)/m ) )
-
+    
     # save ferris
     return(euler)
 
@@ -412,7 +411,7 @@ def rotation_matrix_to_trend_plunge_orientation(R):
     """
     # 1) rotation matrix -> Bunge Euler angles (you already have this)
     phi1, Phi, phi2 = rotation_matrix_to_euler_angles(R)
-
+    
     # 2) Rebuild the same rotation using your trend/plunge/orientation
     #    but we want the c-axis, so just grab it from R directly:
     #    c_local = (0,0,1), so c_global = R @ c_local = column 2
@@ -475,16 +474,16 @@ def bond(R: np.ndarray) -> np.ndarray:
     Calculates the 6x6 Bond transformation matrix from a 3x3 rotation matrix, 
     useful for transforming stiffness or compliance matrices in crystallography 
     and materials science.
-
+    
     :param R: The 3x3 rotation matrix.
     :type R: np.ndarray
     :return M: The 6x6 Bond transformation matrix.
     :rtype M: np.ndarray
     """
-
+    
     # Initialize the 6x6 Bond matrix
     M = np.zeros([6,6])
-
+    
     # Fill the Bond matrix according to the transformation rules
     M[0,:] = [ 
         R[0,0]**2, R[0,1]**2, R[0,2]**2, 
@@ -510,7 +509,7 @@ def bond(R: np.ndarray) -> np.ndarray:
         R[0,0]*R[1,0], R[0,1]*R[1,1], R[0,2]*R[1,2], 
         R[0,1]*R[1,2] + R[0,2]*R[1,1], R[0,2]*R[1,0] + R[0,0]*R[1,2], R[0,0]*R[1,1] + R[0,1]*R[1,0] 
     ]
-
+    
     return M
 
 # ------------------------------------------------------------------------------
@@ -529,14 +528,14 @@ def highfreq_stability_conditions(T):
         (( T[0,1]+T[2,2] )**2 + T[2,2]*(T[1,1] - T[2,2] ))
     cond2 = ( T[0,1] + 2 * T[2,2] )**2 - T[0,0]*T[1,1]
     cond3 = ( T[0,1] + T[2,2] )**2 - T[0,0]*T[2,2] - T[2,2]**2
-
+    
     if cond1 > 0:
         print('Failed to pass high frequency stability condition 1.')
     if cond2 > 0:
         print('Failed to pass high frequency stability condition 2.')
     if cond3 > 0:
         print('Failed to pass high frequency stability condition 3.')
-
+    
     return cond1, cond2, cond3 
 
 # -----------------------------------------------------------------------------
@@ -880,7 +879,7 @@ def astiffness2moduli(C, transversely_isotropic=True):
 
     return K_iso, mu_iso, C_isotropic
 
-    
+
 # -----------------------------------------------------------------------------
 def bulk_modulus_water(T):
     """
@@ -1638,17 +1637,17 @@ def permeability(porosity, grain_size, euler_angles):
     k = (porosity**3 * grain_size**2) / (( 1.0 - porosity)**2)
     F = fabric_tensor(euler_angles)
     eigval, eigvec = np.linalg.eig(F) 
-
+	
     if np.sum(eigval) <= 0.0:
         # Degenerate: fallback isotropic
         k_global = k * np.eye(3)
         return k, k_global
     
     eigval_norm =  eigval / np.sum(eigval) 
-
+    
     k_principal = np.diag(3.0 * k * eigval_norm)
     k_global = eigvec @ k_principal @ eigvec.T
-     
+    
     return(k, k_global)
 
 def viscosity_water(temperature, method = "andrade-vogel", units = "mPas"):
@@ -1660,7 +1659,7 @@ def viscosity_water(temperature, method = "andrade-vogel", units = "mPas"):
     """
     tempK = temperature + 273.15
     method = method.lower()
-
+    
     if temperature < -5 and method == "andrade-vogel":
         print('For super cooled water consider using method="platek"')
     
@@ -1671,13 +1670,13 @@ def viscosity_water(temperature, method = "andrade-vogel", units = "mPas"):
         else:
             a = np.array([749.95, 56.39, 55.70, 5.77e-4])
             b = np.array([-4.6, -13.2, -22.0, -71.7])
-
+    
         tempK = tempK / 300.0
         mu = np.sum(a*tempK**b)
     else: # Default method "andrade-vogel"
         A, B, C = -3.7188, 578.919, -137.546
         mu = exp( A + B / ( C + tempK ) )
-
+    
     if units.lower() == "pas":
         return mu*1.0e-3
     else:
@@ -1690,10 +1689,10 @@ def biot_stress(K_dry, K_mineral, K_fluid, porosity, euler_angles = None):
     F - fabric tensor
     """
     alpha = 1 - K_dry / K_mineral 
-
+    
     F = fabric_tensor(euler_angles)
     eigval, eigvec = np.linalg.eig(F) 
-
+    
     if np.sum(eigval) <= 0.0:
         # Degenerate: fallback isotropic
         alpha_global = alpha * np.eye(3)
@@ -1701,23 +1700,32 @@ def biot_stress(K_dry, K_mineral, K_fluid, porosity, euler_angles = None):
         return alpha, alpha_global 
     
     eigval_norm =  eigval / np.sum(eigval) 
-
+    
     alpha_principal = np.diag(3.0 * alpha * eigval_norm)
     alpha_global = eigvec @ alpha_principal @ eigvec.T
-    Minv = (alpha_global - porosity) / K_mineral + porosity / K_fluid
-
+    Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
+    
     return alpha, alpha_global, Minv
 
-def mass_matrix_tensor(rho_s, rho_f, porosity, alpha, ):
+def mass_matrix_tensor(rho_s, rho_f, porosity, tau = None):
     """
     rho_s - effective density of the solid matrix
     rho_f - effective density of the fluid 
     porosity - [0,1)
-    alpha - 
+    tau - tortuosity tensor (optional)
     """
-
-    if F:
+    I = np.eye(3)
+    
+    if tau is None:
+        tau = I.copy()
         
+    rho11 = (1 - porosity) * rho_s * I + porosity * rho_f * tau
+    rho12 = porosity * rho_f * (tau - I ) 
+    rho22 = porosity * rho_f * tau
+    
+    return rho11, rho12, rho22
+
+
 # ==============================================================================
 #                                Permittivity
 # ==============================================================================
@@ -1744,14 +1752,14 @@ def sand_silt_clay_permittivity_conductivity(
     # Check that composition sums to 1
     if not np.isclose(sum(composition.values()), 1.0):
         raise ValueError("Composition fractions must sum to 1.")
-
+    
     # Material properties for sand, silt, and clay (from experimental data)
     properties = {
         "sand": {"epsilon": 4.7, "sigma": 1e-3},  # Relative permittivity, Conductivity (S/m)
         "silt": {"epsilon": 6.0, "sigma": 2e-3},
         "clay": {"epsilon": 12.0, "sigma": 1e-2},
     }
-
+    
     # Permittivity and conductivity of water at given temperature (Debye model)
     epsilon_water = 80.36 - 0.3 * (T - 25)  # Empirical relationship
     sigma_water = 0.055 * np.exp(0.02 * (T - 25))  # S/m (increases with temp)
@@ -1770,7 +1778,7 @@ def sand_silt_clay_permittivity_conductivity(
         (porosity * (1 - lwc)) * np.log(epsilon_air) +
         (porosity * lwc) * np.log(epsilon_water)
     )
-
+    
     # Mix conductivity using a weighted average model
     sigma = (1 - porosity) * sigma_dry_mix + \
         porosity * (1 - lwc) * sigma_air + \
@@ -1890,14 +1898,14 @@ def isotropic_permittivity_tensor(
     :return: A tuple containing the permittivity and conductivity tensors.
     :rtype: Tuple[np.ndarray, np.ndarray]
     """
-
+    
     material_limits = isotropic_materials[ material_name ]
     perm0 = material_limits[4]
     perm1 = material_limits[5]
-
+    
     cond0 = material_limits[6]
     cond1 = material_limits[7]
-
+    
     # Calculate the slope         
     if material_name == 'ice1h':
         # We'll assume that the maximum porosity of ice (a.k.a. fresh pow pow)

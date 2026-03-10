@@ -1,4 +1,5 @@
 import numpy as np 
+import pandas as pd
 import matplotlib.pyplot as plt 
 import matplotlib.image as mpimg 
 import matplotlib.animation as anim
@@ -504,7 +505,7 @@ class Model:
             # a single material, this will return an error. Booooo, errors!
             if domain.nmats > 1:
                 self.domain_density = airsurf(material, domain, self.air_gradient_integer)
-                self.domain_density = np.ones([domain.nx, domain.nz]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                self.domain_density = np.ones([domain.nx, domain.nz]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             else:
                 self.domain_density = np.ones([domain.nx, domain.nz])
             
