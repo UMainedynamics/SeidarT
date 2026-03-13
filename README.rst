@@ -79,6 +79,12 @@ This will create the *seidart* executable and put them in the binaries folder as
 
 If you see multiple *seidartfdtd* files, delete them and recompile again with the *build.sh* script seen above. 
 
+*SeidarT-Recipes* does not need to be installed but it contains examples to help get started. You can simply pull it from Github in your preferred location::
+    
+    git clone https://github.com/UMainedynamics/SeidarT-Recipes.git 
+
+It was built with the intent of being installable via pip so it has a src directory layout. You will find examples in the src/seidart-recipes folder
+
 
 .. =============================================================================
 
