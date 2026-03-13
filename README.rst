@@ -52,7 +52,7 @@ Installation
 
 will create the SeidarT folder in the current working folder. Change directories into the root folder (SeidarT) and you will find the environment YAML file for creating the Miniconda/Anaconda environment and install all dependencies. Create the environment from the Bash terminal with the following commands::
 
-    conda create -f seidart-environment.yml 
+    conda env create -f seidart-environment.yml 
     conda activate seidart
 
 To finish installing run::

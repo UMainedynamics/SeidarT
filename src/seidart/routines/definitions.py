@@ -11,7 +11,7 @@ from numpy.typing import ArrayLike, NDArray
 from subprocess import call
 from scipy.io import FortranFile
 from scipy.signal import hilbert, correlate, butter, filtfilt, sosfiltfilt, firwin, minimum_phase, savgol_filter
-
+from scipy.ndimage import gaussian_filter
 from scipy.signal.windows import tukey
 
 import glob2

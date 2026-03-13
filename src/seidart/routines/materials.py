@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Union, Tuple
+from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
 __all__ = [
@@ -208,66 +209,181 @@ def anisotropic_boolean(
     return(anisotropic, afile)
 
 # -----------------------------------------------------------------------------
-def vrh2(permittivity, conductivity, eulerangles):
+def vrh2(
+        permittivity: NDArray[np.floating],
+        conductivity: NDArray[np.floating],
+        eulerangles: NDArray[np.floating],
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
     """
+    Compute Voigt-Reuss-Hill averages for 2nd-order permittivity and conductivity tensors.
+
+    The function takes a single anisotropic permittivity and conductivity
+    tensor and a set of crystal/element orientations given by Euler
+    angles. For each orientation, tensors are rotated, Voigt and Reuss
+    bounds are formed, and their Hill (arithmetic) average is returned
+    for both permittivity and conductivity.
+
+    :param permittivity: Base permittivity tensor of shape ``(3, 3)`` in
+                         the material coordinate system.
+    :type permittivity: numpy.typing.NDArray[numpy.floating]
+    :param conductivity: Base conductivity tensor of shape ``(3, 3)`` in
+                         the material coordinate system.
+    :type conductivity: numpy.typing.NDArray[numpy.floating]
+    :param eulerangles: Array of Euler angle triplets with shape
+                        ``(P, 3)``, where ``P`` is the number of
+                        orientations. Angles are interpreted according
+                        to the convention used by :func:`rotator_euler`.
+    :type eulerangles: numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(eps_vrh, sigma_vrh)`` where:
+              ``eps_vrh`` is the Voigt–Reuss–Hill averaged permittivity
+              tensor of shape ``(3, 3)``, and
+              ``sigma_vrh`` is the corresponding averaged conductivity
+              tensor of shape ``(3, 3)``.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
+    :raises ValueError: If the input tensors are not 3x3 or if
+                        ``eulerangles`` does not have shape ``(P, 3)``.
+    
+    .. note::
+    
+       Voigt averages are formed by rotating the tensors into the
+       laboratory frame for each orientation and averaging directly.
+       Reuss averages are formed by averaging the inverses (compliance
+       tensors) in the rotated frames and then inverting the result.
+       The Voigt–Reuss–Hill estimate is the arithmetic mean of these
+       two bounds.
+    
+       The rotation matrices are obtained from :func:`rotator_euler`,
+       which must be consistent with the Euler angle convention used to
+       describe the orientations.
+    
+    .. code-block:: python
+    
+       # Example: VRH average over a set of orientations
+       eps = np.eye(3) * 5.0
+       sigma = np.eye(3) * 1e-3
+       eulers = np.array([
+           [0.0, 0.0, 0.0],
+           [30.0, 45.0, 60.0],
+       ])  # units must match rotator_euler
+    
+       eps_vrh, sigma_vrh = vrh2(eps, sigma, eulers)
     
     """
+    if permittivity.shape != (3, 3) or conductivity.shape != (3, 3):
+        raise ValueError("permittivity and conductivity must be 3x3 tensors")
+    if eulerangles.ndim != 2 or eulerangles.shape[1] != 3:
+        raise ValueError("eulerangles must have shape (P, 3)")
     
-    p = len(eulerangles[:,0])
+    p = len(eulerangles[:, 0])
     
-    pvoigt = np.zeros([3,3])
-    cvoigt = np.zeros([3,3])
-    preuss = np.zeros([3,3])
-    creuss = np.zeros([3,3])
+    pvoigt = np.zeros((3, 3), dtype=float)
+    cvoigt = np.zeros((3, 3), dtype=float)
+    preuss = np.zeros((3, 3), dtype=float)
+    creuss = np.zeros((3, 3), dtype=float)
     
     Sp = np.linalg.inv(permittivity)
     Sc = np.linalg.inv(conductivity)
     
-    for k in range(0, p):
-        R = rotator_euler(eulerangles[k,:] )
+    for k in range(p):
+        R = rotator_euler(eulerangles[k, :])
         Ri = np.linalg.inv(R)
-        #!!!!! We need to do the same for conductivity.  
-        pvoigt = pvoigt + ( np.matmul( R, np.matmul(permittivity, R.T) ) )
-        cvoigt = cvoigt + ( np.matmul( R, np.matmul(conductivity, R.T) ) )
-        preuss = preuss + ( np.matmul( Ri, np.matmul(Sp, Ri.T) ) )
-        creuss = creuss + ( np.matmul( Ri, np.matmul(Sc, Ri.T) ) )
+        
+        pvoigt = pvoigt + R @ permittivity @ R.T
+        cvoigt = cvoigt + R @ conductivity @ R.T
+        preuss = preuss + Ri @ Sp @ Ri.T
+        creuss = creuss + Ri @ Sc @ Ri.T
     
-    pvoigt = pvoigt/p
-    cvoigt = cvoigt/p
-    preuss = preuss/p 
-    creuss = creuss/p 
-    preuss = np.linalg.inv(preuss) 
-    creuss = np.linalg.inv(creuss) 
+    pvoigt = pvoigt / p
+    cvoigt = cvoigt / p
+    preuss = preuss / p
+    creuss = creuss / p
+    preuss = np.linalg.inv(preuss)
+    creuss = np.linalg.inv(creuss)
     
-    # Calculate the hill average 
-    permittivity = (pvoigt + preuss)/2
-    conductivity = (cvoigt + creuss)/2
+    # Calculate the Hill average
+    permittivity_vrh = (pvoigt + preuss) / 2.0
+    conductivity_vrh = (cvoigt + creuss) / 2.0
     
-    return permittivity, conductivity
+    return permittivity_vrh, conductivity_vrh
 
 # -----------------------------------------------------------------------------
-def vrh4(C, eulerangles):
+def vrh4(
+        C: NDArray[np.floating],
+        eulerangles: NDArray[np.floating],
+    ) -> NDArray[np.floating]:
     """
+    Compute Voigt–Reuss–Hill estimates for a 4th-order tensor in Voigt notation.
+    
+    The input stiffness tensor in 6x6 Voigt notation is averaged over a
+    set of orientations given by Euler angles. For each orientation, the
+    tensor is rotated, Voigt and Reuss bounds are formed, and their Hill
+    (arithmetic) average is returned as an effective stiffness tensor.
+    
+    :param C: Stiffness tensor in 6x6 Voigt notation, with shape ``(6, 6)``.
+    :type C: numpy.typing.NDArray[numpy.floating]
+    :param eulerangles: Array of Euler angle triplets with shape
+                        ``(M, 3)``, where ``M`` is the number of
+                        orientations. Angles must follow the same
+                        convention as used in :func:`rotator_euler`.
+    :type eulerangles: numpy.typing.NDArray[numpy.floating]
+    :returns: Voigt–Reuss–Hill averaged stiffness tensor in 6x6 Voigt
+              notation with shape ``(6, 6)``.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``C`` is not 6x6 or ``eulerangles`` does not
+                        have shape ``(M, 3)``.
+    
+    .. note::
+    
+       Voigt averages are obtained by rotating the stiffness tensor
+       into the laboratory frame for each orientation using the Bond
+       transformation matrix :math:`M` and averaging the results.
+       Reuss averages are obtained by averaging the rotated compliance
+       tensors (inverses of stiffness) using the inverse Bond transform
+       :math:`N`, and then inverting the result.
+    
+       The Hill estimate is defined as the arithmetic mean of the Voigt
+       and Reuss bounds. The functions :func:`rotator_euler` and
+       :func:`bond` must be consistent in their use of Euler angles and
+       coordinate conventions.
+    
+    .. code-block:: python
+    
+       # Example: VRH averaging of a stiffness tensor over orientations
+       C = np.eye(6) * 1e9  # simple isotropic-like placeholder
+       eulers = np.array([
+           [0.0, 0.0, 0.0],
+           [30.0, 45.0, 60.0],
+       ])  # units must match rotator_euler
+
+       C_vrh = vrh4(C, eulers)
     
     """
+    if C.shape != (6, 6):
+        raise ValueError("C must be a 6x6 stiffness tensor in Voigt notation")
+    if eulerangles.ndim != 2 or eulerangles.shape[1] != 3:
+        raise ValueError("eulerangles must have shape (M, 3)")
+    
     S = np.linalg.inv(C)
     m, n = eulerangles.shape
-    cvoigt = np.zeros([6,6])
-    creuss = np.zeros([6,6])
+    cvoigt = np.zeros((6, 6), dtype=float)
+    creuss = np.zeros((6, 6), dtype=float)
     for k in range(m):
-        R = rotator_euler(eulerangles[k,:] )
+        R = rotator_euler(eulerangles[k, :])
         M = bond(R)
         N = np.linalg.inv(M).T
-        cvoigt = cvoigt + ( np.matmul( M, np.matmul(C, M.T) ) )
-        creuss = creuss + ( np.matmul( N, np.matmul(S, N.T) ) )
+        cvoigt = cvoigt + M @ C @ M.T
+        creuss = creuss + N @ S @ N.T
     
     # Normalize the Voigt and Reuss estimates
     cvoigt /= m
-    creuss /= m 
-    creuss = np.linalg.inv(creuss) 
+    creuss /= m
+    creuss = np.linalg.inv(creuss)
     
-    # Calculate the hill average 
-    hill = (cvoigt + creuss)/2
+    # Calculate the Hill average
+    hill = (cvoigt + creuss) / 2.0
     return hill
 
 # -----------------------------------------------------------------------------
@@ -312,52 +428,107 @@ def read_ang(filepath: str) -> np.ndarray:
     return(euler)
 
 # -----------------------------------------------------------------------------
-def rotator(angle: float, axis: str) -> np.ndarray:
+def rotator(angle: float, axis: str) -> NDArray[np.floating]:
     """
-    General 3x3 rotation matrix calculation for any axis. 
+    Construct a 3x3 rotation matrix for a rotation about a coordinate axis.
+    
+    The rotation is performed in 3D about one of the Cartesian axes
+    (``'x'``, ``'y'``, or ``'z'``) by the specified angle in radians.
+    
+    :param angle: Rotation angle in radians.
+    :type angle: float
+    :param axis: Axis of rotation; must be one of ``'x'``, ``'y'``, or ``'z'``.
+    :type axis: str
+    :returns: 3x3 rotation matrix corresponding to the requested axis and angle.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``axis`` is not one of ``'x'``, ``'y'``, or ``'z'``.
+    
+    .. note::
+    
+       The rotation matrices are defined in the standard right-handed
+       Cartesian coordinate system. Angles follow the right-hand rule:
+       a positive angle corresponds to a counter-clockwise rotation when
+       looking along the positive axis toward the origin.
+    
+    .. code-block:: python
+    
+       # Example: rotate a vector by 30 degrees about the z-axis
+       v = np.array([1.0, 0.0, 0.0])
+       R = rotator(np.deg2rad(30.0), axis="z")
+       v_rot = R @ v
+    
     """
-    R = np.zeros([3,3])
-    if axis == 'x':
-        R[0,:] = [ 1.0, 0.0, 0.0 ]
-        R[1,:] = [ 0.0, np.cos( angle ), -np.sin( angle ) ]
-        R[2,:] = [ 0.0, np.sin( angle ),  np.cos( angle ) ]
-    elif axis == 'y':
-        R[0,:] = [  np.cos( angle ), 0.0, np.sin( angle )]
-        R[1,:] = [ 0.0, 1.0, 0.0 ]
-        R[2,:] = [ -np.sin( angle ), 0.0, np.cos( angle ) ]
-    elif axis == 'z':
-        R[0,:] = [ np.cos( angle ), -np.sin( angle ), 0.0 ] 
-        R[1,:] = [ np.sin( angle ),  np.cos( angle ), 0.0 ]
-        R[2,:] = [ 0.0, 0.0, 1.0 ]
-    else: 
+    R = np.zeros((3, 3), dtype=float)
+    if axis == "x":
+        R[0, :] = [1.0, 0.0, 0.0]
+        R[1, :] = [0.0, np.cos(angle), -np.sin(angle)]
+        R[2, :] = [0.0, np.sin(angle), np.cos(angle)]
+    elif axis == "y":
+        R[0, :] = [np.cos(angle), 0.0, np.sin(angle)]
+        R[1, :] = [0.0, 1.0, 0.0]
+        R[2, :] = [-np.sin(angle), 0.0, np.cos(angle)]
+    elif axis == "z":
+        R[0, :] = [np.cos(angle), -np.sin(angle), 0.0]
+        R[1, :] = [np.sin(angle), np.cos(angle), 0.0]
+        R[2, :] = [0.0, 0.0, 1.0]
+    else:
         raise ValueError("axis must be 'x', 'y', or 'z'.")
     
     return R
 
-# This is a generic routine and the name should be changed here and anywhere it is used.
-def rotator_euler(eul: np.ndarray, rot: str = 'zxz') -> np.ndarray:
+# ------------------------------------------------------------------------------
+def rotator_euler(
+        eul: NDArray[np.floating], rot: str = "zxz"
+    ) -> NDArray[np.floating]:
     """
-    Generates a rotation matrix from Euler angles for a given rotation sequence.
-    Default is a 'zxz' rotation.
+    Generate a 3x3 rotation matrix from Euler angles for a given rotation sequence.
     
-    :param eul: An array containing the three Euler angles. Angles are in radians
-    :type eul: np.ndarray
-    :return: The 3x3 rotation matrix derived from the Euler angles.
-    :rtype: np.ndarray
+    The three Euler angles are applied in the order specified by the
+    rotation sequence string (e.g. ``"zxz"``, ``"zyx"``), using
+    :func:`rotator` to build the individual axis rotations. The default
+    sequence is ``"zxz"``.
+    
+    :param eul: Array containing the three Euler angles in radians, in
+                the order implied by ``rot``.
+    :type eul: numpy.typing.NDArray[numpy.floating]
+    :param rot: Rotation sequence as a three-character string specifying
+                the axes of rotation (e.g. ``"zxz"``, ``"xyx"``,
+                ``"zyx"``). Default is ``"zxz"``.
+    :type rot: str
+    :returns: 3x3 rotation matrix derived from the Euler angles and
+              rotation sequence.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``rot`` does not contain exactly three axis
+                        characters.
+    
+    .. note::
+    
+       The order of rotations and the active/passive convention must be
+       consistent with how you interpret the Euler angles elsewhere in
+       your code. The individual axis rotations are constructed using
+       :func:`rotator`, and combined as ``R = R3 @ R2 @ R1`` where each
+       ``Ri`` corresponds to one Euler angle and axis from ``rot``.
+    
+    .. code-block:: python
+    
+       # Example: build a zxz Euler rotation from three angles
+       angles = np.array([0.1, 0.2, 0.3])  # radians
+       R = rotator_euler(angles, rot="zxz")
+    
     """
     if len(rot) != 3:
         raise ValueError(
-             f"Rotation sequence needs three axes specified. For example, 'zxz' or 'xyx', etc. You have specified '{rot}'."
-        ) 
-     
-    # From the 3 euler angles for the zxz rotation, compute the rotation matrix
+            "Rotation sequence needs three axes specified, "
+            f"for example 'zxz' or 'xyx'. You have specified '{rot}'."
+        )
+    
+    # From the 3 Euler angles and rotation sequence, compute the rotation matrix
     D = rotator(eul[0], rot[0])
-    C = rotator(eul[1], rot[1]) 
+    C = rotator(eul[1], rot[1])
     B = rotator(eul[2], rot[2])
     
-    # R = np.matmul(B, np.matmul(C, D) )
     R = B @ C @ D
-    return(R)
+    return R
 
 # --------------------------------------------------------------------------
 def trend_plunge_to_rotation_matrix(trend, plunge, orientation): 
@@ -404,24 +575,64 @@ def trend_plunge_to_rotation_matrix(trend, plunge, orientation):
     rotation_matrix = Rt @ Rp @ Ro
     return rotation_matrix
 
-def rotation_matrix_to_trend_plunge_orientation(R):
+# --------------------------------------------------------------------------
+def rotation_matrix_to_trend_plunge_orientation(
+        R: NDArray[np.floating],
+    ) -> Tuple[float, float, float]:
     """
-    Consistent inverse for trendplungetorotationmatrix.
-    Returns trend, plunge, orientation in radians.
+    Convert a rotation matrix to trend, plunge, and orientation angles.
+    
+    This is the inverse of a trend–plunge–orientation based rotation
+    construction. From a 3x3 rotation matrix, it recovers the trend and
+    plunge of the transformed c-axis and the rotation (orientation)
+    about that axis, all in radians.
+    
+    :param R: 3x3 rotation matrix.
+    :type R: numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(trend, plunge, orientation)`` where all angles
+              are in radians. ``trend`` is the azimuth of the c-axis
+              measured in the horizontal plane, ``plunge`` is the angle
+              of the c-axis from horizontal (positive downward), and
+              ``orientation`` is the rotation about the c-axis.
+    :rtype: tuple[float, float, float]
+    :raises ValueError: If ``R`` is not a 3x3 matrix or if numerical
+                        issues prevent defining a unique orientation.
+    
+    .. note::
+    
+       The c-axis direction is obtained as the image of the local
+       :math:`(0, 0, 1)` vector under ``R``. The trend and plunge are
+       then computed from this direction. The orientation is determined
+       by projecting the transformed local x-axis into the plane
+       perpendicular to the c-axis and measuring its angle relative to
+       the similarly projected global x-axis.
+    
+       The helper function :func:`rotation_matrix_to_euler_angles` is
+       called internally, though its Euler angles are not used directly
+       in the final trend–plunge–orientation values here.
+    
+    .. code-block:: python
+    
+       # Example: recover trend, plunge, orientation from a rotation
+       R = rotator_euler(np.array([0.2, 0.3, 0.4]), rot="zxz")
+       trend, plunge, orientation = rotation_matrix_to_trend_plunge_orientation(R)
+    
     """
-    # 1) rotation matrix -> Bunge Euler angles (you already have this)
+    R = np.asarray(R, dtype=float)
+    if R.shape != (3, 3):
+        raise ValueError("R must be a 3x3 rotation matrix")
+    
+    # 1) rotation matrix -> Bunge Euler angles (not used further here but kept for consistency)
     phi1, Phi, phi2 = rotation_matrix_to_euler_angles(R)
     
-    # 2) Rebuild the same rotation using your trend/plunge/orientation
-    #    but we want the c-axis, so just grab it from R directly:
-    #    c_local = (0,0,1), so c_global = R @ c_local = column 2
+    # 2) c-axis: image of local (0, 0, 1)
     cx, cy, cz = R @ np.array([0.0, 0.0, 1.0])
     
     # 3) trend and plunge of c-axis
     plunge = np.arcsin(cz)          # radians
-    trend  = np.arctan2(cy, cx)     # radians
+    trend = np.arctan2(cy, cx)      # radians
     
-    # 4) orientation: rotation about c-axis.
+    # 4) orientation: rotation about c-axis
     #    Use the image of local x as "a-axis" and measure its angle around c.
     ax, ay, az = R @ np.array([1.0, 0.0, 0.0])
     
@@ -444,21 +655,48 @@ def rotation_matrix_to_trend_plunge_orientation(R):
     return trend, plunge, orientation
 
 # --------------------------------------------------------------------------
-def rotation_matrix_to_euler_angles(rotation_matrix):
+def rotation_matrix_to_euler_angles(
+        rotation_matrix: NDArray[np.floating],
+    ) -> Tuple[float, float, float]:
     """
-    Convert rotation matrix to Euler angles
+    Convert a 3x3 rotation matrix to Euler angles.
     
-    :param rotation_matrix: The 3-by-3 orthogonal rotation matrix
-    :type rotation_matrix: np.ndarray 
+    The input orthogonal rotation matrix is converted to a set of
+    three Euler angles (``phi1``, ``Phi``, ``phi2``) in radians,
+    following the same convention used in the associated rotation
+    routines.
+    
+    :param rotation_matrix: 3x3 orthogonal rotation matrix with
+                            determinant 1.
+    :type rotation_matrix: numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(phi1, Phi, phi2)`` of Euler angles in radians.
+    :rtype: tuple[float, float, float]
+    :raises ValueError: If the input matrix is not 3x3 or is not a
+                        valid rotation matrix (orthogonal with
+                        determinant equal to 1).
+    
+    .. note::
+    
+       The matrix is first checked for orthogonality and unit
+       determinant within numerical tolerance to ensure it represents
+       a valid rotation. The angle extraction formula assumes a specific
+       Euler-angle convention consistent with the rest of your
+       rotation utilities.
+    
+    .. code-block:: python
+    
+       # Example: recover Euler angles from a rotation matrix
+       R = rotator_euler(np.array([0.2, 0.3, 0.4]), rot="zxz")
+       phi1, Phi, phi2 = rotation_matrix_to_euler_angles(R)
     
     """
     if rotation_matrix.shape != (3, 3):
         raise ValueError("Input matrix must be 3x3")
     
     # Ensure the matrix is a valid rotation matrix
-    if not np.allclose(
-            np.dot(rotation_matrix, rotation_matrix.T), np.eye(3)
-        ) or not np.isclose(np.linalg.det(rotation_matrix), 1):
+    if not np.allclose(rotation_matrix @ rotation_matrix.T, np.eye(3)) or not np.isclose(
+        np.linalg.det(rotation_matrix), 1
+    ):
         raise ValueError("Input matrix is not a valid rotation matrix")
     
     # Extract the Euler angles
@@ -467,6 +705,7 @@ def rotation_matrix_to_euler_angles(rotation_matrix):
     phi2 = np.arctan2(rotation_matrix[2, 0], rotation_matrix[2, 1])
     
     return phi1, Phi, phi2
+
 
 # -----------------------------------------------------------------------------
 def bond(R: np.ndarray) -> np.ndarray:
@@ -539,63 +778,166 @@ def highfreq_stability_conditions(T):
     return cond1, cond2, cond3 
 
 # -----------------------------------------------------------------------------
-def tensor2velocities(T: np.ndarray, rho: float = 910, seismic: bool = True):
+def tensor2velocities(
+        T: Union[NDArray[np.floating], pd.DataFrame],
+        rho: float = 910.0,
+        seismic: bool = True,
+    ):
+    """
+    Compute characteristic velocities from elastic or dielectric tensors.
+    
+    The input can be a Voigt-form tensor for seismic stiffness (6 or 21
+    components), a full matrix, or a DataFrame with named components.
+    Depending on ``seismic``, the function returns either seismic
+    velocities (``vpv, vph, vsv, vsh``) or EM phase velocities
+    (``vx, vy, vz``).
+    
+    :param T: Tensor representation. Accepted forms are:
+              - 1D array of length 6 (upper-triangular 2nd-order tensor),
+              - 1D array of length 21 (upper-triangular 4th-order tensor
+                in 6x6 Voigt notation),
+              - 3x3 or 6x6 full NumPy array, or
+              - :class:`pandas.DataFrame` with appropriate column names
+                (e.g. ``'e11'``, ``'e22'``, ``'e33'`` for EM, or
+                ``'c11'``, ``'c12'``, ``'c33'``, ``'c44'``, ``'rho'`` for
+                seismic).
+    :type T: numpy.typing.NDArray[numpy.floating] or pandas.DataFrame
+    :param rho: Density in kg/m^3 used for seismic velocity calculation.
+                Ignored when a DataFrame with its own ``'rho'`` column
+                is provided. Default is ``910.0``.
+    :type rho: float
+    :param seismic: If ``True``, interpret ``T`` as a stiffness tensor
+                    and return seismic velocities. If ``False``,
+                    interpret ``T`` as a dielectric tensor and return EM
+                    phase velocities.
+    :type seismic: bool
+    :returns: If ``seismic`` is ``True``, returns a tuple
+              ``(vpv, vph, vsv, vsh)`` (all in m/s). If ``seismic`` is
+              ``False``, returns a tuple ``(vx, vy, vz)`` of EM phase
+              velocities (m/s) along the principal axes.
+    :rtype: tuple[float, float, float, float] or tuple[float, float, float]
+    :raises ValueError: If ``T`` has an unsupported shape or required
+                        fields are missing from the DataFrame.
+    
+    .. note::
+    
+       For 1D NumPy arrays, upper-triangular Voigt-style representations
+       are expanded into full symmetric tensors before velocities are
+       computed. For seismic tensors, the standard relationships
+       :math:`v = \\sqrt{C / \\rho}` are used for the relevant stiffness
+       components. For dielectric tensors, the phase velocities are
+       computed from the principal permittivities using
+       :math:`v = c_0 \\sqrt{1 / \\varepsilon}`.
+    
+       When a :class:`pandas.DataFrame` is provided, field names such as
+       ``'e11'``, ``'e22'``, ``'e33'`` (EM) or ``'c11'``, ``'c12'``,
+       ``'c33'``, ``'c44'``, and ``'rho'`` (seismic) are expected.
+    
+    .. code-block:: python
+    
+       # Example (seismic): velocities from a Voigt stiffness vector
+       T_voigt = np.array([
+           c11, c12, c13, c22, c23, c33,
+           c44, c45, c46, c55, c56,
+           c66, c14, c15, c16, c24, c25, c26, c34, c35, c36
+       ])  # length 21
+       vpv, vph, vsv, vsh = tensor2velocities(T_voigt, rho=2000.0, seismic=True)
+    
+       # Example (EM): velocities from diagonal permittivity entries
+       eps_vec = np.array([eps_xx, eps_yy, eps_zz, 0.0, 0.0, 0.0])
+       vx, vy, vz = tensor2velocities(eps_vec, seismic=False)
+    
+    """
+    # 6-component 2nd-order tensor
     if T.shape == (6,):
         if isinstance(T, pd.DataFrame):
-            vx = c_light * np.sqrt(1/T['e11'])
-            vy = c_light * np.sqrt(1/T['e22'])
-            vz = c_light * np.sqrt(1/T['e33'])
+            vx = c_light * np.sqrt(1.0 / T["e11"])
+            vy = c_light * np.sqrt(1.0 / T["e22"])
+            vz = c_light * np.sqrt(1.0 / T["e33"])
             return vx, vy, vz
         else:
-            temp = np.zeros([3,3])
-            temp[0,:] = T[0:3] 
-            temp[1,1:] = T[3:5]
-            temp[2,2] = T[5]
+            temp = np.zeros((3, 3), dtype=float)
+            temp[0, :] = T[0:3]
+            temp[1, 1:] = T[3:5]
+            temp[2, 2] = T[5]
             T = np.triu(temp).T + np.triu(temp, 1)
-    if T.shape == (21,) or T.shape == (22,): # First case is a numpy array and second is a dataframe
-        temp = np.zeros([6,6])
+    
+    # 21- or 22-component 4th-order tensor in Voigt notation
+    if T.shape == (21,) or T.shape == (22,):
+        temp = np.zeros((6, 6), dtype=float)
         if isinstance(T, pd.DataFrame):
-            rho = T['rho']
-            vpv = np.sqrt(T['c33']/rho)
-            vph = np.sqrt(T['c11']/rho)
-            vsv = np.sqrt(T['c44']/rho)
-            vsh = np.sqrt( (T['c11'] - T['c12'] )/(2*rho))
+            rho = T["rho"]
+            vpv = np.sqrt(T["c33"] / rho)
+            vph = np.sqrt(T["c11"] / rho)
+            vsv = np.sqrt(T["c44"] / rho)
+            vsh = np.sqrt((T["c11"] - T["c12"]) / (2.0 * rho))
             return vpv, vph, vsv, vsh
         else:
-            temp[0,:] = T[0:6] 
-            temp[1,1:] = T[6:11]
-            temp[2,2:] = T[11:15]
-            temp[3,3:] = T[15:18]
-            temp[4,4:] = T[18:20]
-            temp[5,5] = T[20] 
+            temp[0, :] = T[0:6]
+            temp[1, 1:] = T[6:11]
+            temp[2, 2:] = T[11:15]
+            temp[3, 3:] = T[15:18]
+            temp[4, 4:] = T[18:20]
+            temp[5, 5] = T[20]
             T = np.triu(temp).T + np.triu(temp, 1)
+    
+    # At this point, T is expected to be a full 3x3 or 6x6 array
     if seismic:
-        vpv = np.sqrt( T[2,2]/rho )
-        vph = np.sqrt( T[0,0]/rho )
-        vsv = np.sqrt( T[3,3]/rho )
-        vsh = np.sqrt( (T[0,0] - T[0,1])/(2*rho) )
+        # Seismic velocities from stiffness tensor
+        vpv = np.sqrt(T[2, 2] / rho)
+        vph = np.sqrt(T[0, 0] / rho)
+        vsv = np.sqrt(T[3, 3] / rho)
+        vsh = np.sqrt((T[0, 0] - T[0, 1]) / (2.0 * rho))
         return vpv, vph, vsv, vsh
     else:
-        vx = c_light * np.sqrt(1/T[0,0])
-        vy = c_light * np.sqrt(1/T[1,1])
-        vz = c_light * np.sqrt(1/T[2,2])
-        return vx, vy, vz 
+        # EM phase velocities from permittivity tensor
+        vx = c_light * np.sqrt(1.0 / T[0, 0])
+        vy = c_light * np.sqrt(1.0 / T[1, 1])
+        vz = c_light * np.sqrt(1.0 / T[2, 2])
+        return vx, vy, vz
 
 # -----------------------------------------------------------------------------
-def voigt_to_full_tensor(C_voigt):
+def voigt_to_full_tensor(C_voigt: NDArray[np.floating]) -> NDArray[np.floating]:
     """
     Convert a 6x6 stiffness matrix in Voigt notation to a 3x3x3x3 tensor.
     
-    Parameters:
-        C_voigt: numpy.ndarray
-            6x6 stiffness matrix in Voigt notation.
-            
-    Returns:
-        C_full: numpy.ndarray
-            3x3x3x3 stiffness tensor.
+    The input stiffness matrix in 6x6 Voigt notation is expanded into the
+    full 4th-order stiffness tensor :math:`C_{ijkl}` using the standard
+    Voigt index mapping and appropriate normalization factors for shear
+    components.
+    
+    :param C_voigt: Stiffness matrix in Voigt notation with shape
+                    ``(6, 6)``.
+    :type C_voigt: numpy.typing.NDArray[numpy.floating]
+    :returns: Full stiffness tensor with shape ``(3, 3, 3, 3)``.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``C_voigt`` is not a 6x6 array.
+    
+    .. note::
+    
+       The mapping from index pairs :math:`(i, j)` to Voigt indices
+       :math:`I` follows the standard convention:
+       ``(0,0)->0``, ``(1,1)->1``, ``(2,2)->2``, ``(1,2)->3``,
+       ``(0,2)->4``, ``(0,1)->5`` (with symmetric pairs treated
+       identically). Shear components include a factor of
+       :math:`1/\\sqrt{2}` to ensure consistent energy normalization.
+    
+    .. code-block:: python
+    
+       # Example: convert an isotropic stiffness matrix to full tensor
+       C_voigt = np.zeros((6, 6))
+       C_voigt[0, 0] = C_voigt[1, 1] = C_voigt[2, 2] = 10.0
+       C_voigt[3, 3] = C_voigt[4, 4] = C_voigt[5, 5] = 5.0
+    
+       C_full = voigt_to_full_tensor(C_voigt)
+    
     """
+    C_voigt = np.asarray(C_voigt, dtype=float)
+    if C_voigt.shape != (6, 6):
+        raise ValueError("C_voigt must be a 6x6 stiffness matrix in Voigt notation")
+    
     # Initialize full tensor with zeros
-    C_full = np.zeros((3, 3, 3, 3))
+    C_full = np.zeros((3, 3, 3, 3), dtype=float)
     
     # Mapping from sorted index pairs to Voigt index
     voigt_map = {
@@ -604,75 +946,152 @@ def voigt_to_full_tensor(C_voigt):
         (2, 2): 2,
         (1, 2): 3,
         (0, 2): 4,
-        (0, 1): 5
+        (0, 1): 5,
     }
     
     # Conversion factor: 1 if i == j, else 1/sqrt(2)
-    def factor(i, j):
-        return 1.0 if i == j else 1.0/np.sqrt(2)
+    def factor(i: int, j: int) -> float:
+        return 1.0 if i == j else 1.0 / np.sqrt(2.0)
     
     # Loop over all tensor indices
     for i in range(3):
         for j in range(3):
-            # Determine the Voigt index for the (i, j) pair (order doesn't matter)
             I = voigt_map[tuple(sorted((i, j)))]
             for k in range(3):
                 for l in range(3):
-                    # Determine the Voigt index for the (k, l) pair
                     J = voigt_map[tuple(sorted((k, l)))]
-                    # Multiply the appropriate conversion factors and assign
                     C_full[i, j, k, l] = factor(i, j) * factor(k, l) * C_voigt[I, J]
+    
     return C_full
 
 # -----------------------------------------------------------------------------
-def voigt_to_mandel(C_voigt):
+def voigt_to_mandel(C_voigt) -> NDArray[np.floating]:
     """
-    Convert a 6x6 fourth-order tensor in Voigt notation to Mandel notation.
+    Convert a 6x6 fourth-order tensor from Voigt to Mandel notation.
     
-    Parameters
-    ----------
-    C_voigt : (6, 6) array_like
-        Tensor in Voigt notation.
+    The Voigt representation is rescaled so that shear components are
+    weighted by :math:`\\sqrt{2}`, yielding the Mandel form, which is
+    often more convenient for inner products and energy norms.
     
-    Returns
-    -------
-    C_mandel : (6, 6) ndarray
-        Tensor in Mandel notation.
+    :param C_voigt: 6x6 tensor in Voigt notation.
+    :type C_voigt: array_like
+    :returns: 6x6 tensor in Mandel notation.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``C_voigt`` is not a 6x6 array.
+    
+    .. note::
+    
+       The Mandel tensor :math:`C^{M}` is related to the Voigt tensor
+       :math:`C^{V}` via a similarity transform
+       :math:`C^{M} = S C^{V} S`, where
+       :math:`S = \\mathrm{diag}(1, 1, 1, \\sqrt{2}, \\sqrt{2}, \\sqrt{2})`.
+       This preserves tensor norms and inner products in the 6D space.
+    
+    .. code-block:: python
+    
+       # Example: convert a Voigt stiffness matrix to Mandel notation
+       C_voigt = np.eye(6)
+       C_mandel = voigt_to_mandel(C_voigt)
+    
     """
     C_voigt = np.asarray(C_voigt, dtype=float)
+    if C_voigt.shape != (6, 6):
+        raise ValueError("C_voigt must be a 6x6 tensor in Voigt notation")
     
     # Scaling vector: [1, 1, 1, sqrt(2), sqrt(2), sqrt(2)]
-    s = np.ones(6)
+    s = np.ones(6, dtype=float)
     s[3:] = np.sqrt(2.0)
     
     # Similarity transform: C_M = S * C_V * S, with S = diag(s)
-    # Use outer product to avoid constructing the full diagonal matrix explicitly.
     C_mandel = C_voigt * s[:, None] * s[None, :]
     
     return C_mandel
 
 # -----------------------------------------------------------------------------
 def get_christoffel_matrix(
-        coefficients: pd.Series, 
-        f0: float, 
-        direction, 
+        coefficients: pd.Series,
+        f0: float,
+        direction: Union[str, NDArray[np.floating]],
     ):
     """
+    Build the Christoffel matrix and wave velocities for a given propagation direction.
+    
+    The stiffness coefficients and density from a single row (e.g., a
+    :class:`pandas.Series`) are used to construct the 4th-order stiffness
+    tensor. For a specified propagation direction, the Christoffel matrix
+    is formed and its eigen-decomposition yields phase velocities and
+    polarization vectors.
+    
+    :param coefficients: Material properties for a single medium, stored
+                         as a Series with keys ``'rho'`` and ``'c11'``,
+                         ``'c12'``, ..., ``'c66'``.
+    :type coefficients: pandas.Series
+    :param f0: Reference frequency in Hz (currently unused, reserved for
+               future frequency-dependent extensions).
+    :type f0: float
+    :param direction: Propagation direction, either as a string key
+                      (``'x'``, ``'y'``, ``'z'``, ``'xy'``, ``'xz'``,
+                      ``'yz'``) or as a 3-element NumPy array specifying
+                      the direction vector.
+    :type direction: str or numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(Gamma, eigenvalues, eigenvectors, velocities)``
+              where:
+              ``Gamma`` is the 3x3 Christoffel matrix,
+              ``eigenvalues`` are its eigenvalues,
+              ``eigenvectors`` are the corresponding eigenvectors, and
+              ``velocities`` are the (sorted) phase velocities obtained
+              as the square roots of the eigenvalues (with negative
+              values clipped to zero).
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
+    :raises ValueError: If ``direction`` is an invalid string key, if the
+                        propagation vector is zero, or if required
+                        stiffness/density fields are missing.
+    :raises TypeError: If ``direction`` is neither a recognized string
+                       nor a 3-element NumPy array.
+    
+    .. note::
+    
+       For string-valued directions, predefined unit vectors are used
+       (e.g. ``'x'`` maps to :math:`[1, 0, 0]`, ``'xy'`` maps to
+       :math:`[1, 1, 0]/\\sqrt{2}`). For array input, the vector is
+       normalized to unit length before forming the Christoffel matrix.
+    
+       The stiffness matrix in Voigt notation is first assembled from
+       the ``cij`` fields, converted to a 3x3x3x3 tensor by
+       :func:`voigt_to_full_tensor`, and then contracted with the
+       propagation direction to produce the Christoffel matrix.
+    
+    .. code-block:: python
+    
+       # Example: compute Christoffel matrix and velocities along x
+       row = df.iloc[0]  # pandas Series with c11..c66 and rho
+       Gamma, eigvals, eigvecs, velocities = get_christoffel_matrix(
+           row,
+           f0=10.0,
+           direction="x",
+       )
     
     """
     direction_map = {
-        'x':  np.array([1, 0, 0]),
-        'y':  np.array([0, 1, 0]),
-        'z':  np.array([0, 0, 1]),
-        'xy': np.array([1, 1, 0]) / np.sqrt(2),
-        'xz': np.array([1, 0, 1]) / np.sqrt(2),
-        'yz': np.array([0, 1, 1]) / np.sqrt(2)
+        "x": np.array([1.0, 0.0, 0.0]),
+        "y": np.array([0.0, 1.0, 0.0]),
+        "z": np.array([0.0, 0.0, 1.0]),
+        "xy": np.array([1.0, 1.0, 0.0]) / np.sqrt(2.0),
+        "xz": np.array([1.0, 0.0, 1.0]) / np.sqrt(2.0),
+        "yz": np.array([0.0, 1.0, 1.0]) / np.sqrt(2.0),
     }
-            
+    
     # Handle string input (predefined directions)
     if isinstance(direction, str):
         if direction not in direction_map:
-            raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
+            raise ValueError(
+                f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}."
+            )
         n = direction_map[direction]
     
     # Handle unit vector input
@@ -686,52 +1105,166 @@ def get_christoffel_matrix(
         raise ValueError("Propagation vector cannot be zero.")
     n = n / np.linalg.norm(n)
     
-    rho = coefficients['rho']
-    C_full = np.zeros((3, 3, 3, 3))
+    rho = coefficients["rho"]
+    
     # Extract stiffness coefficients from the specified row
-    C = np.array([
-        [coefficients['c11'], coefficients['c12'], coefficients['c13'], coefficients['c14'], coefficients['c15'], coefficients['c16']],
-        [coefficients['c12'], coefficients['c22'], coefficients['c23'], coefficients['c24'], coefficients['c25'], coefficients['c26']],
-        [coefficients['c13'], coefficients['c23'], coefficients['c33'], coefficients['c34'], coefficients['c35'], coefficients['c36']],
-        [coefficients['c14'], coefficients['c24'], coefficients['c34'], coefficients['c44'], coefficients['c45'], coefficients['c46']],
-        [coefficients['c15'], coefficients['c25'], coefficients['c35'], coefficients['c45'], coefficients['c55'], coefficients['c56']],
-        [coefficients['c16'], coefficients['c26'], coefficients['c36'], coefficients['c46'], coefficients['c56'], coefficients['c66']]
-    ])
+    C = np.array(
+        [
+            [
+                coefficients["c11"],
+                coefficients["c12"],
+                coefficients["c13"],
+                coefficients["c14"],
+                coefficients["c15"],
+                coefficients["c16"],
+            ],
+            [
+                coefficients["c12"],
+                coefficients["c22"],
+                coefficients["c23"],
+                coefficients["c24"],
+                coefficients["c25"],
+                coefficients["c26"],
+            ],
+            [
+                coefficients["c13"],
+                coefficients["c23"],
+                coefficients["c33"],
+                coefficients["c34"],
+                coefficients["c35"],
+                coefficients["c36"],
+            ],
+            [
+                coefficients["c14"],
+                coefficients["c24"],
+                coefficients["c34"],
+                coefficients["c44"],
+                coefficients["c45"],
+                coefficients["c46"],
+            ],
+            [
+                coefficients["c15"],
+                coefficients["c25"],
+                coefficients["c35"],
+                coefficients["c45"],
+                coefficients["c55"],
+                coefficients["c56"],
+            ],
+            [
+                coefficients["c16"],
+                coefficients["c26"],
+                coefficients["c36"],
+                coefficients["c46"],
+                coefficients["c56"],
+                coefficients["c66"],
+            ],
+        ]
+    )
     
     C_full = voigt_to_full_tensor(C)
-    Gamma = np.zeros((3, 3))
+    
+    Gamma = np.zeros((3, 3), dtype=float)
     for i in range(3):
         for j in range(3):
-            Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n))/rho
+            Gamma[i, j] = np.sum(C_full[i, :, j, :] * np.outer(n, n)) / rho
     
-    eigenvalues, eigenvectors = np.linalg.eigh(Gamma) 
-    velocities = np.sqrt(np.clip(eigenvalues, a_min=0.0, a_max = None) )
-    velocities.sort() 
-    return Gamma, eigenvalues, eigenvectors, velocities 
+    eigenvalues, eigenvectors = np.linalg.eigh(Gamma)
+    velocities = np.sqrt(np.clip(eigenvalues, a_min=0.0, a_max=None))
+    velocities.sort()
+    return Gamma, eigenvalues, eigenvectors, velocities
 
 # -----------------------------------------------------------------------------
 def get_complex_refractive_index(
-        coefficients: pd.Series, 
-        f0: float, 
-        direction, 
-        mu = 4e-7 * np.pi 
+        coefficients: pd.Series,
+        f0: float,
+        direction,
+        mu: float = 4e-7 * np.pi,
     ):
     """
-    Coefficients are given as relative permittivity but not relative conductivity
+    Compute complex refractive indices for a given propagation direction.
+    
+    Relative permittivity and (absolute) conductivity tensors are taken
+    from a coefficient row, combined into a complex permittivity, and
+    projected onto the plane perpendicular to the propagation direction.
+    The resulting 2x2 operator is diagonalized to obtain complex
+    refractive indices for the two transverse modes.
+    
+    :param coefficients: Material properties for a single medium stored
+                         as a Series with entries ``'e11'``, ``'e12'``,
+                         ``'e13'``, ``'e22'``, ``'e23'``, ``'e33'`` for
+                         relative permittivity and ``'s11'``, ``'s12'``,
+                         ``'s13'``, ``'s22'``, ``'s23'``, ``'s33'`` for
+                         conductivity.
+    :type coefficients: pandas.Series
+    :param f0: Reference frequency in Hz.
+    :type f0: float
+    :param direction: Propagation direction, either as a string key
+                      (``'x'``, ``'y'``, ``'z'``, ``'xy'``, ``'xz'``,
+                      ``'yz'``) or as a 3-element NumPy array specifying
+                      the direction vector.
+    :type direction: str or numpy.typing.NDArray[numpy.floating]
+    :param mu: Magnetic permeability in H/m. Default is the vacuum
+               permeability ``4e-7 * pi``. (Currently not used in the
+               computation but included for completeness.)
+    :type mu: float
+    :returns: A tuple ``(lam, vecs, complex_index)`` where:
+              ``lam`` is a 1D array of eigenvalues of the transverse
+              operator,
+              ``vecs`` is the corresponding 2x2 matrix of eigenvectors,
+              and ``complex_index`` is a 1D array of complex refractive
+              indices for the two transverse modes.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.complexfloating],
+        numpy.typing.NDArray[numpy.complexfloating]
+    ]
+    :raises ValueError: If an invalid direction key is given, the
+                        propagation vector is zero, or required fields
+                        are missing.
+    :raises TypeError: If ``direction`` is neither a recognized string
+                       nor a 3-element NumPy array.
+    
+    .. note::
+    
+       The complex permittivity is formed as
+       :math:`\\varepsilon_\\mathrm{eff} = \\varepsilon - i \\, \\sigma / (\\omega \\varepsilon_0)`
+       using relative permittivity components and conductivity, where
+       :math:`\\omega = 2\\pi f_0`. The operator is then projected onto
+       the plane perpendicular to the propagation direction and
+       diagonalized.
+    
+       Complex refractive indices are obtained as
+       :math:`n = 1 / \\sqrt{\\lambda}` for each eigenvalue
+       :math:`\\lambda`. Indices with non-positive real part are flipped
+       to enforce a positive real component. Zero eigenvalues are mapped
+       to ``NaN + 1j*NaN``.
+    
+    .. code-block:: python
+    
+       # Example: compute complex indices along x
+       row = df.iloc[0]  # pandas Series with e.. and s.. fields
+       lam, vecs, n_complex = get_complex_refractive_index(
+           row,
+           f0=10.0,
+           direction="x",
+       )
+    
     """
     direction_map = {
-        'x':  np.array([1, 0, 0]),
-        'y':  np.array([0, 1, 0]),
-        'z':  np.array([0, 0, 1]),
-        'xy': np.array([1, 1, 0]) / np.sqrt(2),
-        'xz': np.array([1, 0, 1]) / np.sqrt(2),
-        'yz': np.array([0, 1, 1]) / np.sqrt(2)
+        "x": np.array([1.0, 0.0, 0.0]),
+        "y": np.array([0.0, 1.0, 0.0]),
+        "z": np.array([0.0, 0.0, 1.0]),
+        "xy": np.array([1.0, 1.0, 0.0]) / np.sqrt(2.0),
+        "xz": np.array([1.0, 0.0, 1.0]) / np.sqrt(2.0),
+        "yz": np.array([0.0, 1.0, 1.0]) / np.sqrt(2.0),
     }
-            
+    
     # Handle string input (predefined directions)
     if isinstance(direction, str):
         if direction not in direction_map:
-            raise ValueError(f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}.")
+            raise ValueError(
+                f"Invalid direction: {direction}. Choose from {list(direction_map.keys())}."
+            )
         n = direction_map[direction]
     
     # Handle unit vector input
@@ -745,152 +1278,295 @@ def get_complex_refractive_index(
         raise ValueError("Propagation vector cannot be zero.")
     n = n / np.linalg.norm(n)
     
-    # --------------------------------------------------------------------------
-        
-    # Extract permittivity values from the specified row
-    epsilon = np.array([
-        [coefficients['e11'], coefficients['e12'], coefficients['e13']],
-        [coefficients['e12'], coefficients['e22'], coefficients['e23']],
-        [coefficients['e13'], coefficients['e23'], coefficients['e33']]
-    ], dtype = float)
+    # Extract permittivity values from the specified row (relative)
+    epsilon = np.array(
+        [
+            [coefficients["e11"], coefficients["e12"], coefficients["e13"]],
+            [coefficients["e12"], coefficients["e22"], coefficients["e23"]],
+            [coefficients["e13"], coefficients["e23"], coefficients["e33"]],
+        ],
+        dtype=float,
+    )
     
     # Extract conductivity values from the specified row
-    sigma = np.array([
-        [coefficients['s11'], coefficients['s12'], coefficients['s13']],
-        [coefficients['s12'], coefficients['s22'], coefficients['s23']],
-        [coefficients['s13'], coefficients['s23'], coefficients['s33']]
-    ], dtype = float)
+    sigma = np.array(
+        [
+            [coefficients["s11"], coefficients["s12"], coefficients["s13"]],
+            [coefficients["s12"], coefficients["s22"], coefficients["s23"]],
+            [coefficients["s13"], coefficients["s23"], coefficients["s33"]],
+        ],
+        dtype=float,
+    )
     
     omega = 2.0 * np.pi * f0  # Angular frequency
     
     # complex permittivity
-    epsilon_eff = epsilon - 1j * sigma / (omega*eps0)  # Complex permittivity
-    # epsilon_eff *= eps0
+    epsilon_eff = epsilon - 1j * sigma / (omega * eps0)
     epsilon_eff_inv = np.linalg.inv(epsilon_eff)
     
-    # --------------------------------------------------------------------------
-    I = np.eye(3, dtype = float) 
-    P = I - np.outer(n,n)
+    I = np.eye(3, dtype=float)
+    P = I - np.outer(n, n)
     A = P @ epsilon_eff_inv @ P
     
-    # --------------------------------------------------------------------------
-    e1 = np.cross(n, [0.0, 0.0, 1.0] )
+    # Build orthonormal basis in plane perpendicular to n
+    e1 = np.cross(n, [0.0, 0.0, 1.0])
     if np.linalg.norm(e1) < 1e-8:
         e1 = np.cross(n, [0.0, 1.0, 0.0])
     
     e1 = e1 / np.linalg.norm(e1)
     e2 = np.cross(n, e1)
-    e2 = e2 / np.linalg.norm(e2) 
+    e2 = e2 / np.linalg.norm(e2)
     
-    A_perp = np.array([
-        [e1 @ A @ e1, e1 @ A @ e2], 
-        [e2 @ A @ e1, e2 @ A @ e2]
-    ], dtype = complex) 
+    A_perp = np.array(
+        [
+            [e1 @ A @ e1, e1 @ A @ e2],
+            [e2 @ A @ e1, e2 @ A @ e2],
+        ],
+        dtype=complex,
+    )
     
-    lam, vecs = np.linalg.eig(A_perp) 
+    lam, vecs = np.linalg.eig(A_perp)
     
-    complex_index = np.empty_like(lam, dtype = complex) 
+    complex_index = np.empty_like(lam, dtype=complex)
     for i, val in enumerate(lam):
         if val == 0.0:
-            complex_index[i] = np.nan + 1j * np.nan 
+            complex_index[i] = np.nan + 1j * np.nan
         else:
             index_i = 1.0 / np.sqrt(val)
             if index_i.real < 0:
                 index_i = -index_i
-            
             complex_index[i] = index_i
     
-    return lam, vecs, complex_index                 
+    return lam, vecs, complex_index
 
 # -----------------------------------------------------------------------------
-def anisotropy_parameters(tensor):
+def anisotropy_parameters(tensor: NDArray[np.floating]) -> Tuple[float, float, float]:
+    """
+    Compute simple anisotropy measures from a symmetric 3x3 tensor.
+    
+    Eigenvalues of the input tensor are used to derive a ratio, absolute
+    birefringence, and normalized spread as scalar measures of anisotropy.
+    
+    :param tensor: Symmetric 3x3 tensor (e.g., permittivity or stiffness
+                   in a principal coordinate basis).
+    :type tensor: numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(ratio, birefringence, spread)`` where:
+              ``ratio`` is ``max(eigvals) / min(eigvals)``,
+              ``birefringence`` is ``max(eigvals) - min(eigvals)``, and
+              ``spread`` is ``birefringence / mean(eigvals)``.
+    :rtype: tuple[float, float, float]
+    :raises ValueError: If ``tensor`` is not 3x3 or if its smallest
+                        eigenvalue is effectively zero.
+    
+    .. note::
+    
+       These parameters provide a compact summary of anisotropy strength.
+       A ratio close to 1 and small birefringence indicate near-isotropy,
+       while larger values reflect stronger anisotropy.
+    
+    .. code-block:: python
+    
+       # Example: anisotropy of a diagonal tensor
+       T = np.diag([1.0, 1.2, 1.5])
+       ratio, biref, spread = anisotropy_parameters(T)
+    
+    """
+    tensor = np.asarray(tensor, dtype=float)
+    if tensor.shape != (3, 3):
+        raise ValueError("tensor must be a 3x3 array")
+    
     eigvals, eigvecs = np.linalg.eigh(tensor)
-    ratio = eigvals.max() / eigvals.min() 
-    birefringence = eigvals.max() - eigvals.min() 
+    if np.isclose(eigvals.min(), 0.0):
+        raise ValueError("Smallest eigenvalue is too close to zero to form a stable ratio")
+    
+    ratio = eigvals.max() / eigvals.min()
+    birefringence = eigvals.max() - eigvals.min()
     spread = birefringence / eigvals.mean()
     return ratio, birefringence, spread
 
 # ==============================================================================
 #                                   Seismic
 # ==============================================================================
-def moduli2stiffness(K, G):
-    C = np.zeros([6,6])
-    C[(0,1,2),(0,1,2)] = K + 4*G / 3 
-    C[(0,0,1,1,2,2),(1,2,0,2,0,1)] = K - 2*G/3
-    C[(3,4,5),(3,4,5)] = G
+def moduli2stiffness(K: float, G: float) -> NDArray[np.floating]:
+    """
+    Construct an isotropic stiffness matrix in Voigt notation from bulk and shear moduli.
+    
+    Given the bulk modulus :math:`K` and shear modulus :math:`G`, this
+    function returns the 6x6 stiffness matrix for an isotropic material
+    in Voigt notation.
+    
+    :param K: Bulk modulus in consistent units (e.g., Pa).
+    :type K: float
+    :param G: Shear modulus in consistent units (e.g., Pa).
+    :type G: float
+    :returns: 6x6 stiffness matrix in Voigt notation.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    
+    .. note::
+    
+       For isotropic media, the normal components satisfy
+       :math:`C_{11} = C_{22} = C_{33} = K + 4G/3` and
+       :math:`C_{12} = C_{13} = C_{23} = K - 2G/3`, while the shear
+       components are :math:`C_{44} = C_{55} = C_{66} = G`. Off-diagonal
+       shear terms are zero.
+    
+    .. code-block:: python
+    
+       # Example: build isotropic stiffness from K and G
+       K, G = 20e9, 10e9
+       C_iso = moduli2stiffness(K, G)
+
+    """
+    C = np.zeros((6, 6), dtype=float)
+    C[(0, 1, 2), (0, 1, 2)] = K + 4.0 * G / 3.0
+    C[(0, 0, 1, 1, 2, 2), (1, 2, 0, 2, 0, 1)] = K - 2.0 * G / 3.0
+    C[(3, 4, 5), (3, 4, 5)] = G
     return C
 
 # -----------------------------------------------------------------------------
-def astiffness2moduli(C, transversely_isotropic=True):
+def astiffness2moduli(
+        C: NDArray[np.floating],
+        transversely_isotropic: bool = True,
+    ) -> Tuple[float, float, NDArray[np.floating]]:
     """
-    Computes the isotropic bulk and shear modulus from an anisotropic stiffness tensor
-    using Hill's average for a transversely isotropic stiffness tensor.
+    Compute isotropic bulk and shear moduli from an anisotropic stiffness tensor.
+
+    Hill (Voigt–Reuss) averages are used to derive effective isotropic bulk
+    and shear moduli from a 6x6 anisotropic stiffness tensor. For
+    transversely isotropic media, specialized approximate formulas are
+    used; otherwise, general isotropic Voigt–Reuss expressions are
+    applied.
     
-    Parameters:
-        C (numpy.ndarray): 6x6 stiffness tensor in Voigt notation (Pa)
+    :param C: Anisotropic stiffness tensor in 6x6 Voigt notation (Pa).
+    :type C: numpy.typing.NDArray[numpy.floating]
+    :param transversely_isotropic: If ``True``, use formulas tailored to
+                                   transversely isotropic (TI) media.
+                                   If ``False``, use general isotropic
+                                   Voigt–Reuss expressions.
+    :type transversely_isotropic: bool
+    :returns: A tuple ``(K_iso, mu_iso, C_isotropic)`` where:
+              ``K_iso`` is the effective isotropic bulk modulus (Pa),
+              ``mu_iso`` is the effective isotropic shear modulus (Pa),
+              and ``C_isotropic`` is the corresponding 6x6 isotropic
+              stiffness tensor (Pa).
+    :rtype: tuple[float, float, numpy.typing.NDArray[numpy.floating]]
+    :raises ValueError: If ``C`` is not a 6x6 array or is singular.
     
-    Returns:
-        (K_iso, mu_iso, C_isotropic): Tuple of isotropic bulk modulus (Pa), shear modulus (Pa),
-                                      and the 6x6 isotropic stiffness tensor (Pa)
+    .. note::
+    
+       The Voigt bulk modulus is computed directly from stiffness
+       components, while the Reuss bulk modulus is derived from the
+       compliance matrix (inverse of ``C``). The Hill bulk modulus is
+       the arithmetic mean of these two bounds, and similarly for the
+       shear modulus.
+    
+       The resulting isotropic stiffness tensor is constructed from
+       ``K_iso`` and ``mu_iso`` using standard isotropic relationships,
+       with Lamé parameter :math:`\\lambda = K_\\mathrm{iso} - 2
+       \\mu_\\mathrm{iso} / 3`.
+    
+    .. code-block:: python
+    
+       # Example: isotropic moduli from a TI stiffness tensor
+       C_ti = np.zeros((6, 6))
+       # ... fill C_ti with TI stiffness components ...
+       K_iso, mu_iso, C_iso = astiffness2moduli(C_ti, transversely_isotropic=True)
+
     """
+    C = np.asarray(C, dtype=float)
+    if C.shape != (6, 6):
+        raise ValueError("C must be a 6x6 stiffness tensor in Voigt notation")
+    
+    # Compliance matrix
     S = np.linalg.inv(C)
     
     if transversely_isotropic:
-        # --- Voigt average for bulk modulus ---
-        Kv = (C[0,0] + C[0,1] + 2*C[0,2] + 2*C[2,2] + 2*C[3,3]) / 6  # fixed typo in parens
-
-        # --- Reuss average for bulk modulus (approximate form for TI) ---
-        # Use compliance-based version to be safe
-        Kr = 1 / (S[0,0] + S[1,1] + S[2,2] + 2 * (S[0,1] + S[0,2] + S[1,2]))  # matches isotropic form
-
-        # --- Voigt average for shear modulus ---
-        mu_V = (2*C[5,5] + C[3,3] + C[4,4] + C[3,3]) / 5  # general TI, no assumption about c44=c55
-
-        # --- Reuss average for shear modulus ---
-        mu_R = 5 / (2/C[5,5] + 1/C[3,3] + 1/C[4,4] + 1/C[3,3])  # same terms in reciprocal
+        # --- Voigt average for bulk modulus (TI) ---
+        Kv = (C[0, 0] + C[0, 1] + 2 * C[0, 2] + 2 * C[2, 2] + 2 * C[3, 3]) / 6.0
+        
+        # --- Reuss average for bulk modulus (compliance-based, TI-like form) ---
+        Kr = 1.0 / (
+            S[0, 0] + S[1, 1] + S[2, 2] + 2.0 * (S[0, 1] + S[0, 2] + S[1, 2])
+        )
+        
+        # --- Voigt average for shear modulus (TI) ---
+        mu_V = (2.0 * C[5, 5] + C[3, 3] + C[4, 4] + C[3, 3]) / 5.0
+        
+        # --- Reuss average for shear modulus (TI) ---
+        mu_R = 5.0 / (2.0 / C[5, 5] + 1.0 / C[3, 3] + 1.0 / C[4, 4] + 1.0 / C[3, 3])
     else:
-        # --- Voigt average ---
-        K_V = (C[0,0] + C[1,1] + C[2,2] + 2 * (C[0,1] + C[0,2] + C[1,2])) / 9
-        mu_V = ((C[0,0] + C[1,1] + C[2,2] - C[0,1] - C[0,2] - C[1,2]) +
-                3 * (C[3,3] + C[4,4] + C[5,5])) / 15
-
-        # --- Reuss average ---
-        K_R = 1 / (S[0,0] + S[1,1] + S[2,2] + 2 * (S[0,1] + S[0,2] + S[1,2]))
-        mu_R = 15 / ((4 * (S[0,0] + S[1,1] + S[2,2] - S[0,1] - S[0,2] - S[1,2])) +
-                     3 * (S[3,3] + S[4,4] + S[5,5]))
-
+        # --- Voigt averages (general isotropic formulas) ---
+        K_V = (
+            C[0, 0]+ C[1, 1] + C[2, 2]
+            + 2.0 * (C[0, 1] + C[0, 2] + C[1, 2])
+        ) / 9.0
+        mu_V = ((C[0, 0] + C[1, 1] + C[2, 2] - C[0, 1] - C[0, 2] \
+             - C[1, 2]) + 3.0 * (C[3, 3] + C[4, 4] + C[5, 5])) / 15.0
+        
+        # --- Reuss averages (compliance-based) ---
+        K_R = 1.0 / (S[0, 0] + S[1, 1] + S[2, 2] + 2.0 * (S[0, 1] + S[0, 2] + S[1, 2]))
+        mu_R = 15.0 / (4.0 \
+            * (S[0, 0]+ S[1, 1]+ S[2, 2]- S[0, 1]- S[0, 2]- \
+               S[1, 2]) + 3.0 * (S[3, 3] + S[4, 4] + S[5, 5]))
+        
         Kv = K_V
         Kr = K_R
-
+    
     # --- Hill averages ---
-    K_iso = (Kv + Kr) / 2
-    mu_iso = (mu_V + mu_R) / 2
-
+    K_iso = (Kv + Kr) / 2.0
+    mu_iso = (mu_V + mu_R) / 2.0
+    
     # --- Construct isotropic stiffness tensor ---
-    C_isotropic = np.zeros((6, 6))
-    lam = K_iso - 2 * mu_iso / 3
-
+    C_isotropic = np.zeros((6, 6), dtype=float)
+    lam = K_iso - 2.0 * mu_iso / 3.0
+    
     for i in range(3):
         for j in range(3):
             C_isotropic[i, j] = lam
-        C_isotropic[i, i] = lam + 2 * mu_iso
-
+        C_isotropic[i, i] = lam + 2.0 * mu_iso
+    
     C_isotropic[3:, 3:] = np.eye(3) * mu_iso
-
+    
     return K_iso, mu_iso, C_isotropic
 
-
 # -----------------------------------------------------------------------------
-def bulk_modulus_water(T):
+import numpy as np
+from numpy.typing import NDArray
+from typing import Tuple
+
+
+def bulk_modulus_water(T: float) -> Tuple[float, NDArray[np.floating]]:
     """
-    Returns the bulk modulus of water (in GPa) as a function of temperature (°C).
-    Includes the supercooled regime down to -30°C.
+    Compute the bulk modulus of water as a function of temperature.
     
-    See the journal article:
+    The bulk modulus is evaluated from empirical polynomial fits for
+    liquid and supercooled water and returned in pascals. An equivalent
+    isotropic stiffness matrix in 6x6 Voigt notation is also constructed
+    with the bulk modulus in the normal components.
     
-    Compressibility of water as a function of temperature and pressure
-    by
-    Fine and Millero 1973
+    :param T: Temperature in degrees Celsius. Valid range is
+              approximately ``[-30, 100]``.
+    :type T: float
+    :returns: A tuple ``(K, C)`` where:
+              ``K`` is the bulk modulus in pascals and
+              ``C`` is a 6x6 isotropic stiffness matrix in Voigt
+              notation with normal components equal to ``K``.
+    :rtype: tuple[float, numpy.typing.NDArray[numpy.floating]]
+    :raises ValueError: If the temperature is below ``-30`` °C, outside
+                        the range covered by the empirical fits.
+    
+    .. note::
+    
+       For ``T >= 0`` °C, a cubic polynomial is used for liquid water.
+       For ``-30 <= T < 0`` °C, a quadratic fit is used to represent
+       the supercooled regime. The returned stiffness matrix ``C``
+       places ``K`` on the normal entries (0–2, 0–2) and zeros elsewhere.
+    
+    .. code-bl  ock:: python
+    
+       # Example: bulk modulus and stiffness at 20 °C
+       K, C = bulk_modulus_water(20.0)
+    
     """
     if T >= 0:
         # Liquid water (0°C to 100°C)
@@ -901,9 +1577,11 @@ def bulk_modulus_water(T):
     else:
         raise ValueError("Temperature is too low for known water bulk modulus data.")
     
+    # Convert from GPa to Pa
     K *= 1e9
-    C = np.zeros([6,6])
-    C[0:3,0:3] = K
+    
+    C = np.zeros((6, 6), dtype=float)
+    C[0:3, 0:3] = K
     
     return K, C
 
@@ -932,22 +1610,62 @@ def bulk_modulus_air(T, P=101325):
     return K, C, rho
 
 # -----------------------------------------------------------------------------
-def moduli_basalt(T, P):
-    # Pressure needs to be in MPa
-    K = (50e9 - 0.02e9 * T + 0.1 * P)  # Pa
-    G = (32e9 - 0.015e9 * T + 0.08 * P)  # Pa
+def moduli_rock(
+        rock_type: str,
+        T: float,
+        P: float,
+    ) -> Tuple[float, float]:
+    """
+    Dispatch to rock-type-specific bulk and shear modulus models.
     
-    return K, G
+    This function selects an empirical modulus model based on the
+    specified rock type (e.g. basalt, granite, gneiss) and returns the
+    corresponding bulk and shear moduli as functions of temperature
+    and confining pressure.
+    
+    :param rock_type: Name of the rock type. Supported values include
+                      ``"basalt"``, ``"granite"``, and ``"gneiss"``.
+                      The comparison is case-insensitive.
+    :type rock_type: str
+    :param T: Temperature in degrees Celsius.
+    :type T: float
+    :param P: Confining pressure in megapascals (MPa).
+    :type P: float
+    :returns: Bulk modulus ``K`` and shear modulus ``G`` in pascals.
+    :rtype: tuple[float, float]
+    :raises ValueError: If ``rock_type`` is not recognized.
+    
+    .. note::
+    
+       This dispatcher computes the moduli directly using internal
+       empirical relations for each supported rock type. Additional
+       rock types can be added by extending the conditional branches
+       with new parameterizations.
+    
+    .. code-block:: python
+    
+       # Example: get moduli for basalt at 60 °C and 30 MPa
+       K, G = moduli_rock("basalt", T=60.0, P=30.0)
 
-# -----------------------------------------------------------------------------
-def moduli_granite(T, P):
-    K = (45e9 - 0.025e9 * T + 0.12 * P)  # Pa
-    G = (27e9 - 0.02e9 * T + 0.1 * P)  # Pa
-
-# -----------------------------------------------------------------------------
-def moduli_gneiss(T, P):
-    K = (50e9 - 0.03e9 * T + 0.15 * P)  # Pa
-    G = (25e9 - 0.02e9 * T + 0.1 * P)  # Pa
+    """
+    rock_key = rock_type.lower()
+    
+    if rock_key == "basalt":
+        K = (50e9 - 0.02e9 * T + 0.1 * P)  # Pa
+        G = (32e9 - 0.015e9 * T + 0.08 * P)  # Pa
+    elif rock_key == "granite":
+        K = (45e9 - 0.025e9 * T + 0.12 * P)  # Pa
+        G = (27e9 - 0.02e9 * T + 0.1 * P)  # Pa
+    elif rock_key == "gneiss":
+        K = (50e9 - 0.03e9 * T + 0.15 * P)  # Pa
+        G = (25e9 - 0.02e9 * T + 0.1 * P)  # Pa
+    else:
+        raise ValueError(
+            f"Unsupported rock_type '{rock_type}'. "
+            "Supported types include 'basalt', 'granite', and 'gneiss'."
+        )
+    
+    return K,G 
 
 # -----------------------------------------------------------------------------
 def moduli_sand_silt_clay(
@@ -1017,6 +1735,7 @@ def moduli_sand_silt_clay(
     
     return K, G, rho_eff
 
+# -----------------------------------------------------------------------------
 def gassmann_bulk_modulus(K_dry, K_mineral, K_fluid, porosity, small_denominator=1e-12):
     """
     Computes the bulk modulus of a fluid-saturated porous material using Gassmann's equation.
@@ -1038,25 +1757,57 @@ def gassmann_bulk_modulus(K_dry, K_mineral, K_fluid, porosity, small_denominator
     
     return K_dry + (numerator / denominator)
 
-def compute_dry_bulk_modulus(K_ice, porosity_percent, exponent=2):
+# -----------------------------------------------------------------------------
+def compute_dry_bulk_modulus(
+        K_ice: float,
+        porosity_percent: float,
+        exponent: float = 2.0,
+    ) -> float:
     """
-    Estimate the dry frame bulk modulus (K_dry) for porous snow/ice
-    using the relationship:
-    
-        K_dry = K_ice * (1 - porosity_fraction)**exponent
-        
-    Parameters:
-        K_ice (float): Bulk modulus of ice (Pa).
-        porosity_percent (float): Porosity as a percentage (0-100).
-        exponent (float, optional): Exponent controlling sensitivity. 
-                                    Default is 2.
-    
-    Returns:
-        float: Estimated dry frame bulk modulus (Pa).
-    """
-    porosity_fraction = porosity_percent / 100.0
-    return K_ice * (1 - porosity_fraction) ** exponent
+    Estimate the dry frame bulk modulus for porous snow or ice.
 
+    The estimate is based on an empirical scaling of the solid ice bulk
+    modulus with porosity:
+
+    .. math::
+
+       K_\\mathrm{dry} = K_\\mathrm{ice} (1 - \\phi)^n,
+
+    where :math:`\\phi` is porosity (fraction) and :math:`n` is a
+    user-defined exponent.
+
+    :param K_ice: Bulk modulus of solid ice in pascals.
+    :type K_ice: float
+    :param porosity_percent: Porosity as a percentage in the range
+                             ``0``–``100``.
+    :type porosity_percent: float
+    :param exponent: Exponent controlling sensitivity to porosity.
+                     Default is ``2.0``.
+    :type exponent: float
+    :returns: Estimated dry frame bulk modulus in pascals.
+    :rtype: float
+    :raises ValueError: If ``porosity_percent`` is outside ``[0, 100]``.
+    
+    .. note::
+    
+       This simple power-law scaling is often used as a first-order
+       approximation for porous media. Higher exponents produce a
+       stronger reduction of the bulk modulus with porosity.
+    
+    .. code-block:: python
+    
+       # Example: K_dry for 40% porosity snow
+       K_ice = 9.0e9  # Pa
+       K_dry = compute_dry_bulk_modulus(K_ice, porosity_percent=40.0, exponent=2.0)
+    
+    """
+    if not (0.0 <= porosity_percent <= 100.0):
+        raise ValueError("porosity_percent must lie between 0 and 100")
+    
+    porosity_fraction = porosity_percent / 100.0
+    return K_ice * (1.0 - porosity_fraction) ** exponent
+
+# -----------------------------------------------------------------------------
 def compute_volume_fractions(porosity, lwc):
     """
     Computes volume fractions of ice, air, and water based on porosity and liquid water content.
@@ -1089,27 +1840,81 @@ def eshelby_tensor(C_matrix, aspect_ratio=1.0):
     return S
 
 # -----------------------------------------------------------------------------
-def self_consistent_approximation(C, C_air, porosity, tol=1e-6, max_iter=100):
+def self_consistent_approximation(
+        C: NDArray[np.floating],
+        C_air: NDArray[np.floating],
+        porosity: float,
+        tol: float = 1e-6,
+        max_iter: int = 100,
+    ) -> NDArray[np.floating]:
     """
-    Computes the effective stiffness tensor for highly porous snow using SCA.
+    Compute the effective stiffness tensor via a self-consistent approximation (SCA).
     
-    :param C: 6x6 stiffness tensor.
-    :param porosity: Volume fraction of air (0 to 1).
-    :return: 6x6 effective stiffness tensor of porous media.
+    A self-consistent scheme is used to estimate the effective stiffness
+    of a porous solid with spherical pores, given the matrix stiffness
+    tensor and the pore (air) stiffness tensor in Voigt notation.
+
+    :param C: 6x6 stiffness tensor of the solid matrix (Pa) in Voigt notation.
+    :type C: numpy.typing.NDArray[numpy.floating]
+    :param C_air: 6x6 stiffness tensor of the pore phase (e.g., air) in
+                  Voigt notation.
+    :type C_air: numpy.typing.NDArray[numpy.floating]
+    :param porosity: Volume fraction of the pore phase in the range
+                     ``0``–``1``.
+    :type porosity: float
+    :param tol: Convergence tolerance for the iterative update of the
+                effective stiffness tensor. Default is ``1e-6``.
+    :type tol: float
+    :param max_iter: Maximum number of iterations allowed. Default is
+                     ``100``.
+    :type max_iter: int
+    :returns: Effective 6x6 stiffness tensor of the porous medium in
+              Voigt notation.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``porosity`` is not in ``[0, 1]`` or the
+                        input tensors are not 6x6.
+    
+    .. note::
+    
+       The method uses a self-consistent fixed-point iteration. The
+       Eshelby tensor for spherical inclusions is computed from the
+       current estimate of ``C`` via :func:`eshelby_tensor`, and an
+       interaction tensor is formed to update ``C_eff`` until the
+       change falls below ``tol`` or ``max_iter`` is reached.
+    
+    .. code-block:: python
+    
+       # Example: effective stiffness of a porous snow frame
+       C_matrix = moduli2stiffness(K=5.0e9, G=2.0e9)
+       C_air = np.zeros((6, 6))
+       C_eff = self_consistent_approximation(
+           C_matrix,
+           C_air,
+           porosity=0.6,
+       )
+    
     """
+    C = np.asarray(C, dtype=float)
+    C_air = np.asarray(C_air, dtype=float)
     
-    C_eff = (1 - porosity) * C  # Initial guess
+    if C.shape != (6, 6) or C_air.shape != (6, 6):
+        raise ValueError("C and C_air must both be 6x6 tensors in Voigt notation")
+    if not (0.0 <= porosity <= 1.0):
+        raise ValueError("porosity must lie between 0 and 1")
+    
+    C_eff = (1.0 - porosity) * C  # Initial guess
     S = eshelby_tensor(C)  # Compute Eshelby tensor for spherical pores
     
     for _ in range(max_iter):
         # Compute the interaction tensor
-        P = np.linalg.inv(np.eye(6) + np.matmul(S, (C_air - C_eff)))
+        P = np.linalg.inv(np.eye(6) + S @ (C_air - C_eff))
         
         # Update the effective stiffness tensor
-        C_new = C_eff + porosity * np.matmul((C_air - C_eff), P)
+        C_new = C_eff + porosity * (C_air - C_eff) @ P
         
         # Convergence check
         if np.linalg.norm(C_new - C_eff) < tol:
+            C_eff = C_new
             break
         
         C_eff = C_new
@@ -1613,22 +2418,59 @@ def porewater_correction(
     return(density, grams_air, grams_water)
 
 # -----------------------------------------------------------------------------
-# Some functions for the Biot values 
-def fabric_tensor(euler_angles):
-    F = np.zeros([3,3])
-    m,n = euler_angles.shape
+# Some functions for the Biot poroelasticity values 
+def fabric_tensor(euler_angles: NDArray[np.floating]) -> NDArray[np.floating]:
+    """
+    Compute a second-order fabric tensor from a set of orientations.
+    
+    For each orientation given by Euler angles, the associated rotation
+    matrix is formed and the (global) c-axis direction is extracted.
+    The fabric tensor is then computed as the average of the dyadic
+    products :math:`n \\otimes n` over all orientations.
+    
+    :param euler_angles: Array of Euler angle triplets with shape
+                         ``(M, 3)``, where each row contains
+                         ``(phi, theta, psi)`` in radians.
+    :type euler_angles: numpy.typing.NDArray[numpy.floating]
+    :returns: Symmetric 3x3 fabric tensor.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``euler_angles`` does not have shape ``(M, 3)``.
+    
+    .. note::
+    
+       The rotation matrix for each orientation is obtained via
+       :func:`rotator_euler`. The unit vector corresponding to the local
+       c-axis is taken as the third column of this matrix, and its outer
+       product with itself is accumulated and averaged.
+    
+       The resulting tensor summarizes the preferred orientation of the
+       c-axis distribution and is often used as a measure of material
+       anisotropy.
+    
+    .. code-block:: python
+    
+       # Example: fabric tensor from random orientations
+       eulers = np.random.rand(100, 3)  # radians
+       F = fabric_tensor(eulers)
+    
+    """
+    euler_angles = np.asarray(euler_angles, dtype=float)
+    if euler_angles.ndim != 2 or euler_angles.shape[1] != 3:
+        raise ValueError("euler_angles must have shape (M, 3)")
+    
+    F = np.zeros((3, 3), dtype=float)
+    m, n = euler_angles.shape
     
     for ii in range(m):
-        phi, theta, psi = euler_angles[ii,0], \
-                            euler_angles[ii,1], \
-                                euler_angles[ii,2]
-        R = rotator_euler(phi, theta, psi)
-        n = R[:,2] 
-        F += np.outer(n,n) 
+        phi, theta, psi = euler_angles[ii, 0], euler_angles[ii, 1], euler_angles[ii, 2]
+        R = rotator_euler(euler_angles[ii, :])
+        n_vec = R[:, 2]
+        F += np.outer(n_vec, n_vec)
     
-    F /= float(m) 
+    F /= float(m)
     return F
 
+# -----------------------------------------------------------------------------
 def permeability(porosity, grain_size, euler_angles):
     """
     porosity - value is 0,1 with 1 being air/undefined 
