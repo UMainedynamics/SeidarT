@@ -9,34 +9,44 @@ SeidarT
 .. [Hardware Requirements](#hardware-requirements)  
 .. [Operating System Requirements](#operating-system-requirements)   -->
 
-Full documentation appears in the docs folder. We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_ which can be easily installed via pip. 
+SeidarT: Seismic and Radar Toolbox for full-waveform modeling in snow, ice, and other complex materials.
 
+Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_
 ..  ======================================================================
 
 Introduction
 ------------
 
-The Seismic and Radar Toolbox (SeidarT) is a collaboration between researchers at the Universities of Maine and Washington to provide an open source platform for forward modeling mechanical and electromagnetic wave propagation. The major objective of the project is to easily and quickly implement isotropic and anisotropic complex geometries and/or velocity structures to develop prior constraints for - not limited too - investigating, estimating, and imaging englacial ice structure, sub-glacial boundary conditions on the sub-regional scale. Larger problems would require the curvature of the Earth to be taken into consideration, but many glacier seismic and radar experiments do not expand into regional parameter estimation and velocity modeling.
+Introduction
+------------
 
-Much of the Staggered Grid FDTD code has been adopted from the *SEISMIC_CPML* software provided by  `Computational Infrastucture for Geophysics (CIG) <https://geodynamics.org/cig/software/>`_. Further details to the backend numerical code can be found in the [References](#references) section below.
+The Seismic and Radar Toolbox (SeidarT) is an open-source, community-driven software package for full-waveform finite-difference time-domain (FDTD) modeling of elastic and electromagnetic wave propagation in heterogeneous, anisotropic, and attenuating media.  SeidarT targets applications in snow and ice but is general enough for other geological and engineered materials, including porous and partially saturated media.
+
+SeidarT natively supports full-tensor anisotropy (all 21 stiffness coefficients), frequency-independent attenuation via a generalized Q formulation, and unified treatment of both seismic and electromagnetic wave physics on a simple Cartesian grid.  The computational core is implemented in Fortran for performance, while a Python interface provides an accessible command-line and scripting environment for model construction, workflow automation, and post-processing.
+
+Models are defined using an intuitive image-plus-JSON workflow: users draw the model geometry as a PNG image (e.g., in Gimp or Inkscape), where pixel colors map to material IDs, and configure the simulation through a human-readable JSON project file specifying domain size, material properties (stiffness or permittivity tensors, density, conductivity), sources, and boundary conditions.  This approach eliminates complex meshing and makes it easy to implement isotropic and anisotropic complex geometries and velocity structures for building priors, performing parameter studies, and generating synthetic data.
+
+Although the manuscript focuses on cryospheric use cases (e.g., glacier internal structure, temperate layers, and englacial aquifers), SeidarT is designed as a general wave-physics toolbox.  It can be used for problems such as environmental monitoring, subsurface and infrastructure characterization, and other scenarios where fully coupled elastic or electromagnetic wavefields are needed.
 
 
 Dependencies
 ^^^^^^^^^^^^
 
-SeidarT was built with the goal of having minimal system dependencies to avoid system updates causing deprecations and incompatability. First, ensure that the GCC compiler is up to date with version 14 or greater. Second, install Miniconda (recommended) or Anaconda by following the directions posted on their `install page <https://docs.anaconda.com/miniconda/install/>`_.
+
+SeidarT was built with the goal of having minimal system dependencies to avoid system updates causing deprecations and incompatibility. First, ensure that the GCC (gfortran) compiler is up to date with version 14 or greater. Second, install Miniconda (recommended) or Anaconda by following the directions posted on their `install page <https://docs.anaconda.com/miniconda/install/>`_.
 
 .. note::
 
     Documentation for managing conda environments with Miniconda or Anaconda can be found `here <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. The full Anaconda release has a GUI called Navigator for managing environments. This can be found on the `webpage <https://docs.anaconda.com/free/navigator/tutorials/manage-environments/>`_.
 
+SeidarT uses Python 3 as the high-level interface and Fortran for the time-critical finite-difference solvers.  Runtime dependencies include NumPy and standard scientific Python tools for I/O and visualization; see the environment YAML file in the repository for the exact dependency list. 
 
 Installation
 ^^^^^^^^^^^^
 
-*SeidarT* was built to be installed on 64bit Arm and Intel architectures for Linux and Mac operating systems. For Windows users , `Windows Subsystem for Linux <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_ is recommended. Windows Subsystem for Linux (WSL) which allows users to run a Linux environment without the need for a separate virtual machine or dual boot. `Setup and Install <https://learn.microsoft.com/en-us/windows/wsl/install>`_ of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared.  *SeidarT* has been tested on Fedora, Solus 2, and Debian which covers a variety of flavors of Linux. The dynamical programming language of **Python3** is used as a command line interface to run the more computationally extensive modeling schemes in **Fortran**. There are a number of ways to install this software depending on your desired level of control over the process.
+*SeidarT* was built to be installed on 64bit Arm and Intel architectures for Linux and Mac operating systems. For Windows users , `Windows Subsystem for Linux <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_ is recommended. Windows Subsystem for Linux (WSL) allows users to run a Linux environment without the need for a separate virtual machine or dual boot. `Setup and Install <https://learn.microsoft.com/en-us/windows/wsl/install>`_ of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared.  *SeidarT* has been tested on Fedora, Solus 2, and Debian which covers a variety of flavors of Linux. The dynamical programming language of **Python3** is used as a command line interface to run the more computationally extensive modeling schemes in **Fortran**. There are a number of ways to install this software depending on your desired level of control over the process.
 
-SeidarT package binaries are publicly availble on the `PyPi repository <https://pypi.org/project/seidart/>`_ and `source code <https://github.com/UMainedynamics/SeidarT>`_ can be found on GitHub. To get started, clone or download and extract the Github repo. The dropdown in the green "<> Code" will provide the option to download the ZIP file. If cloning via command line you will need to use the HTTPS link. From the command line::
+`Source code <https://github.com/UMainedynamics/SeidarT>`_ can be found on GitHub. To get started, clone or download and extract the Github repo. The dropdown in the green "<> Code" will provide the option to download the ZIP file. If cloning via command line you will need to use the HTTPS link. From the command line::
 
     git clone https://github.com/UMainedynamics/SeidarT.git 
 
@@ -49,13 +59,13 @@ To finish installing run::
 
     pip install . 
 
-This will install the SeidarT package via source code in the *src* folder. Many of the standard routines are setup as entry points and can be called via the command line. To easily test if SeidarT was installed, you can call the help menu of one of the routines. For instance,::
+This will install the SeidarT package via source code in the *src* folder. To be sure that the installation was successful enter:: 
+    
+    conda list | grep seidart 
 
-    prjbuild -h 
+If there are any issues on install please submit a ticket on the repository `issue tracker <https://github.com/UMainedynamics/SeidarT/issues>`_ This will help accommodate more system architectures and operating systems. 
 
-If a **command not found** output is returned, make sure that the *seidart* environment is activated and was activated during the *pip install .* command. If the problem persists then it is likely an issue with the precompiled binaries. The precompiled binaries are in the *src/seidart/binaries* folder which will be put in the correct path during the *pip* install, however it is possible that your system architecture is incompatible even if you are using Mac or Linux. Please submit a ticket on the repository `issue tracker <https://github.com/UMainedynamics/SeidarT/issues>`_ This will help accommodate more system architectures and operating systems. 
-
-Building the binaries locally should solve any incompatibilities. To do so, you will need to clone the *SeidarT-Backend* repo::
+Fortran binaries are built locally to avoid operating system incompatibilities. To do so, you will need to clone the *SeidarT-Backend* repo::
 
     git clone https://github.com/UMainedynamics/SeidarT-Backend.git
 
@@ -75,21 +85,27 @@ If you see multiple *seidartfdtd* files, delete them and recompile again with th
 Hardware Requirements
 ^^^^^^^^^^^^^^^^^^^^^
 
-*SeidarT* was tested and developed on a quad core 5th gen i7 processor with 16 Gb of RAM without any burden on the system so a typical modern laptop is sufficient for many application. When running models with large domains or a high number of time steps, the computational load is increased, however the storage requirements become more significant. It can be easy to fill up 10's of Gb of storage, but an external drive can resolve that problem. We have tested *SeidarT* on a limited number of operating systems due to practical considerations. The Apple M chips and previous Intel based Apple computer chips have not been an issue. Firmware and software variations between operating systems are most likely the cause of incompatibility issues. For animations of large models, there may be some limits from graphics cards that can't sufficiently support them.
+SeidarT was tested and developed on a quad-core 5th-generation Intel i7 processor with 16 GB of RAM without any noticeable burden on the system, so a typical modern laptop is sufficient for many applications.  For models with large domains, high temporal sampling, or 2.5D surveys, computational load and especially storage requirements increase; full-wavefield output can easily reach tens of gigabytes, so using an external or high-capacity internal drive is recommended. 
+
+The software has been exercised on a limited number of operating systems in practice, but runs without issue on Apple M-series chips and previous Intel-based Apple architectures.  Remaining incompatibilities are most likely related to system-specific firmware, drivers, or library versions rather than to the SeidarT source itself, and issues can usually be resolved by rebuilding the Fortran backend in the target environment. 
+
+For animations or interactive visualization of large models, GPU and display limitations may become the bottleneck rather than CPU or memory; in those cases, subsampling output in space or time and exporting pre-rendered animations can improve usability. 
 
 .. =============================================================================
-
 Operating System requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All of the development was carried out on a Linux operating system and limited to Debian, Ubuntu, Solus 2, and Fedora. No compatibility issues between Linux flavors arose. The binaries are built on Github Actions for Windows 10 and 11 (latest), MacOS 13 and 14 (latest), and most flavors of Linux. Cross-platform usability is one of the core tenets in the development of the software and needs to be maintained in future development. 
+All core development was carried out on Linux, primarily Debian, Ubuntu, Solus 2, and Fedora, and no compatibility issues were observed between these distributions when using locally compiled Fortran binaries and conda environments.  The SeidarT backend is built and tested via continuous integration on GitHub Actions for Windows 10/11 (latest), macOS 13/14 (latest), and multiple Linux distributions, and binaries are intended to be portable across common 64‑bit Intel and ARM platforms. 
+
+Cross‑platform usability is a core tenet of SeidarT’s design.  For users on native Windows systems, Windows Subsystem for Linux (WSL) is recommended and has been successfully used to run the Linux toolchain and simulations. 
 
 .. =============================================================================
 
 Upgrading Versions
 ^^^^^^^^^^^^^^^^^^
 
-If you want to keep up to date on the version and this is the install method that works for you, pull updates from the main branch first::
-    
-    git pull origin main 
+If you want to keep up to date with the latest version, then in the top folder for the repository pull updates from the main branch first::
 
+    git pull origin main
+
+After pulling changes in the SeidarT-Backend folder, re-run the build of the Fortran backend to ensure that any updates to the numerical kernels are reflected in your local binaries.  When upgrading across major versions, consult the project documentation and changelog for notes on any changes to the JSON project format, material-parameter handling, or default stability and CPML settings. 

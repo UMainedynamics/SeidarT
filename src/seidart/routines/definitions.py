@@ -7,6 +7,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import os.path
 from typing import Tuple, Optional, Dict, List, Union
+from numpy.typing import ArrayLike, NDArray
 from subprocess import call
 from scipy.io import FortranFile
 from scipy.signal import hilbert, correlate, butter, filtfilt, sosfiltfilt, firwin, minimum_phase, savgol_filter
@@ -583,7 +584,25 @@ def cpmlcompute(
     return sigma, kappa, alpha, acoef, bcoef
 
 # ------------------------------------------------------------------------------
-def smooth1d(x, k = 7, passes = 1):
+def smooth1d(x: ArrayLike, k: int = 7, passes: int = 1) -> NDArray[np.floating]:
+    """
+    Smooth a 1D array using an arithmetic moving average.
+    
+    The function applies a length-``k`` moving-average filter to the input
+    one or more times. The window size is coerced to an odd integer of at
+    least 3 to keep the kernel symmetric.
+    
+    :param x: Input 1D data. Any array-like object convertible to a NumPy array.
+    :type x: ArrayLike
+    :param k: Nominal window length for the moving average. Must be positive;
+              values are coerced to the nearest odd integer greater than or
+              equal to 3.
+    :type k: int
+    :param passes: Number of times to apply the moving-average filter.
+    :type passes: int
+    :returns: Smoothed data with the same shape as the input.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    """
     # arithmetic moving average smoother
     k = max(3, int(k) | 1)  # ensure odd >=3
     kernel = np.ones(k, dtype=float) / k
@@ -592,91 +611,171 @@ def smooth1d(x, k = 7, passes = 1):
         y = np.convolve(y, kernel, mode="same")
     return y
 
+# ------------------------------------------------------------------------------
 def cpml_parameters(
-        sig_max_x, 
-        sig_max_z, 
-        alpha_max, 
-        kappa_max, 
-        nx,
-        nz,
-        distancex,
-        distancez, 
-        NP, 
-        NPA, 
-        dt,
-        is_seismic=False,
+        sig_max_x: NDArray[np.floating],
+        sig_max_z: NDArray[np.floating],
+        alpha_max: float,
+        kappa_max: float,
+        nx: int,
+        nz: int,
+        distancex: NDArray[np.floating],
+        distancez: NDArray[np.floating],
+        NP: float,
+        NPA: float,
+        dt: float,
+        is_seismic: bool = False,
     ):
     """
+    Compute CPML damping parameters on a 2D grid.
+
+    This routine constructs the conductivity, stretching, and auxiliary
+    coefficients for a convolutional perfectly matched layer (CPML) in
+    two dimensions, using user-specified maximum values and polynomial
+    grading in the damping profiles.
+
+    :param sig_max_x: Maximum conductivity values along the x boundaries.
+                      Typically a 2-by-``nz`` array, with first and last
+                      rows corresponding to the low and high x boundaries.
+    :type sig_max_x: numpy.typing.NDArray[numpy.floating]
+    :param sig_max_z: Maximum conductivity values along the z boundaries.
+                      Typically an ``nx``-by-2 array, with first and last
+                      columns corresponding to the low and high z boundaries.
+    :type sig_max_z: numpy.typing.NDArray[numpy.floating]
+    :param alpha_max: Maximum value of the CPML :math:`\\alpha` parameter.
+    :type alpha_max: float
+    :param kappa_max: Maximum value of the CPML :math:`\\kappa` stretching
+                      parameter.
+    :type kappa_max: float
+    :param nx: Number of grid points in the x direction.
+    :type nx: int
+    :param nz: Number of grid points in the z direction.
+    :type nz: int
+    :param distancex: Distance profile in the x direction, used to grade
+                      the CPML profiles. Expected to be normalized or
+                      normalizable to :math:`[0, 1]`.
+    :type distancex: numpy.typing.NDArray[numpy.floating]
+    :param distancez: Distance profile in the z direction, used to grade
+                      the CPML profiles. Expected to be normalized or
+                      normalizable to :math:`[0, 1]`.
+    :type distancez: numpy.typing.NDArray[numpy.floating]
+    :param NP: Polynomial order for the :math:`\\sigma` and :math:`\\kappa`
+               grading.
+    :type NP: float
+    :param NPA: Polynomial order for the :math:`\\alpha` grading.
+    :type NPA: float
+    :param dt: Time step size.
+    :type dt: float
+    :param is_seismic: If ``True``, use a seismic formulation for the
+                       damping coefficients. If ``False``, use an
+                       electromagnetic formulation that depends on the
+                       permittivity constant ``eps0``.
+    :type is_seismic: bool
+
+    :returns: Tuple ``(sigma, kappa, alpha, acoeff, bcoeff)``, where each
+              element is a 2D array of shape ``(nx, nz)``:
+              ``sigma`` is the CPML conductivity profile,
+              ``kappa`` is the CPML stretching profile,
+              ``alpha`` is the CPML attenuation profile,
+              ``acoeff`` and ``bcoeff`` are auxiliary CPML coefficients.
+    :rtype: tuple[numpy.typing.NDArray[numpy.floating], \
+    numpy.typing.NDArray[numpy.floating], \
+    numpy.typing.NDArray[numpy.floating], \
+    numpy.typing.NDArray[numpy.floating], \
+    numpy.typing.NDArray[numpy.floating]]
     """
-    kappa = np.ones([nx,nz])
-    alpha = np.zeros([nx,nz])
-    sigma = np.zeros([nx,nz])
-    acoeff = np.zeros([nx,nz])
-    bcoeff = np.zeros([nx,nz])
+    kappa = np.ones([nx, nz])
+    alpha = np.zeros([nx, nz])
+    sigma = np.zeros([nx, nz])
+    acoeff = np.zeros([nx, nz])
+    bcoeff = np.zeros([nx, nz])
     
-    distx = distancex/distancex.max() 
-    distz = distancez/distancez.max()
-    
-    rx = distx ** NP 
-    rz = distz ** NP 
+    distx = distancex / distancex.max()
+    distz = distancez / distancez.max()
+
+    rx = distx ** NP
+    rz = distz ** NP
     m = len(distx)
     n = len(distz)
-    
+
     for ii in range(m):
         for jj in range(n):
             # r = np.sqrt(distx[ii]**2 + distz[jj]**2)
-            sigma[ii, jj] = sig_max_x[0, 0] * ( rx[ii]) + sig_max_z[0,0] * ( rz[jj] )
-            sigma[-(ii+1), jj] = sig_max_x[-1, 0]  * (rx[ii] ) + sig_max_z[-1, 0]  * (rz[jj] )
-            sigma[ii, -(jj+1)] = sig_max_x[0, -1]  * (rx[ii] ) + sig_max_z[0, -1]  * (rz[jj] )
-            sigma[-(ii+1), -(jj+1)] = sig_max_x[-1, -1] * (rx[ii] ) + sig_max_z[-1, -1] * (rz[jj] )
-            
-            kappa[ii, jj]           = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[-(ii+1), jj]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[ii, -(jj+1)]      = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            kappa[-(ii+1), -(jj+1)] = ( 1.0 + (kappa_max - 1.0) * (rx[ii]) ) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
-            
-            alpha[ii, jj]           = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[-(ii+1), jj]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[ii, -(jj+1)]      = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-            alpha[-(ii+1), -(jj+1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
-    
+            sigma[ii, jj] = sig_max_x[0, 0] * (rx[ii]) + sig_max_z[0, 0] * (rz[jj])
+            sigma[-(ii + 1), jj] = sig_max_x[-1, 0] * (rx[ii]) + sig_max_z[-1, 0] * (rz[jj])
+            sigma[ii, -(jj + 1)] = sig_max_x[0, -1] * (rx[ii]) + sig_max_z[0, -1] * (rz[jj])
+            sigma[-(ii + 1), -(jj + 1)] = sig_max_x[-1, -1] * (rx[ii]) + sig_max_z[-1, -1] * (rz[jj])
+
+            kappa[ii, jj] = (1.0 + (kappa_max - 1.0) * (rx[ii])) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii + 1), jj] = (1.0 + (kappa_max - 1.0) * (rx[ii])) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[ii, -(jj + 1)] = (1.0 + (kappa_max - 1.0) * (rx[ii])) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+            kappa[-(ii + 1), -(jj + 1)] = (1.0 + (kappa_max - 1.0) * (rx[ii])) * (1.0 + (kappa_max - 1.0) * (rz[jj]))
+
+            alpha[ii, jj] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii + 1), jj] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[ii, -(jj + 1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+            alpha[-(ii + 1), -(jj + 1)] = alpha_max * ((1.0 - distx[ii]) ** NPA) * ((1.0 - distz[jj]) ** NPA)
+
     # Compute in the x, and z direction
     for ind in range(0, m):
-        sigma[ind,m:-m] = sig_max_x[0,:] * (rx[ind])
-        kappa[ind,:] = 1.0 + (kappa_max - 1.0) * (rx[ind])
-        alpha[ind,:] = alpha_max * (1 - distx[ind])**NPA
-        
-        # From the end 
-        sigma[-(ind+1),m:-m] = sig_max_x[-1,:]*rx[ind]
-        kappa[-(ind+1),:] = 1 + (kappa_max - 1) * (rx[ind])
-        alpha[-(ind+1),:] = alpha_max * (1 - distx[ind])**NPA
-    
-    for ind in range(0, n):        
-        sigma[n:-n,ind] = sig_max_z[:,0] * (rz[ind])
-        kappa[:,ind] = 1.0 + (kappa_max - 1.0) * (rz[ind])
-        alpha[:,ind] = alpha_max * (1 - distz[ind])**NPA
-                    
-        sigma[n:-n,-(ind+1)] = sig_max_z[:,-1]*rz[ind]
-        kappa[:,-(ind+1)] = 1 + (kappa_max - 1) * (rz[ind])
-        alpha[:,-(ind+1)] = alpha_max * (1 - distz[ind])**NPA
-    
+        sigma[ind, m:-m] = sig_max_x[0, :] * (rx[ind])
+        kappa[ind, :] = 1.0 + (kappa_max - 1.0) * (rx[ind])
+        alpha[ind, :] = alpha_max * (1 - distx[ind]) ** NPA
+
+        # From the end
+        sigma[-(ind + 1), m:-m] = sig_max_x[-1, :] * rx[ind]
+        kappa[-(ind + 1), :] = 1 + (kappa_max - 1) * (rx[ind])
+        alpha[-(ind + 1), :] = alpha_max * (1 - distx[ind]) ** NPA
+
+    for ind in range(0, n):
+        sigma[n:-n, ind] = sig_max_z[:, 0] * (rz[ind])
+        kappa[:, ind] = 1.0 + (kappa_max - 1.0) * (rz[ind])
+        alpha[:, ind] = alpha_max * (1 - distz[ind]) ** NPA
+
+        sigma[n:-n, -(ind + 1)] = sig_max_z[:, -1] * rz[ind]
+        kappa[:, -(ind + 1)] = 1 + (kappa_max - 1) * (rz[ind])
+        alpha[:, -(ind + 1)] = alpha_max * (1 - distz[ind]) ** NPA
+
     if is_seismic:
-        bcoeff = np.exp( - (sigma / kappa + alpha) * dt)
+        bcoeff = np.exp(-(sigma / kappa + alpha) * dt)
     else:
-        bcoeff = np.exp( - (sigma / kappa + alpha) * (dt/eps0) )
-    
-    # Compute the a-coefficients 
+        bcoeff = np.exp(-(sigma / kappa + alpha) * (dt / eps0))
+
+    # Compute the a-coefficients
     alpha[np.where(alpha < 0.0)] = 0.0
     indices = np.where(np.abs(sigma) > 1.0e-6)
-    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / \
-            (kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices] )
-    
+    acoeff[indices] = sigma[indices] * (bcoeff[indices] - 1) / (
+        kappa[indices] * sigma[indices] + kappa[indices] * alpha[indices]
+    )
+
     return sigma, kappa, alpha, acoeff, bcoeff
 
 # ------------------------------------------------------------------------------
-def sponge_boundary(domain, eta_max, eta):
-    distx = np.arange(0, domain.cpml) / (domain.cpml -1)
-    distz = np.arange(0, domain.cpml) / (domain.cpml -1)
+def sponge_boundary(
+        domain, eta_max: float, eta: NDArray[np.floating]
+    ) -> NDArray[np.floating]:
+    """
+    Apply a polynomial sponge boundary to a 2D damping field.
+    
+    A polynomial sponge profile is added near the domain boundaries to
+    gradually damp outgoing waves. The strength and thickness of the
+    sponge are controlled by attributes of ``domain``.
+    
+    :param domain: Simulation domain object providing sponge parameters.
+                   Must define ``cpml`` (sponge thickness in grid points)
+                   and ``NPS`` (polynomial order for the sponge profile).
+    :type domain: Any
+    :param eta_max: Maximum sponge damping coefficient applied at the
+                    boundaries.
+    :type eta_max: float
+    :param eta: Existing 2D damping field to be modified in place by
+                adding the sponge boundary contribution.
+    :type eta: numpy.typing.NDArray[numpy.floating]
+    :returns: The updated damping field with sponge boundary applied.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    """
+    distx = np.arange(0, domain.cpml) / (domain.cpml - 1)
+    distz = np.arange(0, domain.cpml) / (domain.cpml - 1)
     
     m = len(distx)
     n = len(distz)
@@ -684,19 +783,19 @@ def sponge_boundary(domain, eta_max, eta):
     for ii in range(m):
         for jj in range(n):
             eta[ii, jj]           += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
-            eta[-(ii+1), jj]      += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
-            eta[ii, -(jj+1)]      += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
-            eta[-(ii+1), -(jj+1)] += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[-(ii + 1), jj]    += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[ii, -(jj + 1)]    += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
+            eta[-(ii + 1), -(jj + 1)] += eta_max * ((1.0 - distx[ii]) ** domain.NPS) * ((1.0 - distz[jj]) ** domain.NPS)
     
     # Left/right
     for ii in range(domain.cpml):
         eta[ii, :]      += eta_max * (1.0 - distx[ii]) ** domain.NPS
-        eta[-(ii+1), :] += eta_max * (1.0 - distx[ii]) ** domain.NPS
-
+        eta[-(ii + 1), :] += eta_max * (1.0 - distx[ii]) ** domain.NPS
+    
     # Top/bottom
     for jj in range(domain.cpml):
         eta[:, jj]      += eta_max * (1.0 - distz[jj]) ** domain.NPS
-        eta[:, -(jj+1)] += eta_max * (1.0 - distz[jj]) ** domain.NPS
+        eta[:, -(jj + 1)] += eta_max * (1.0 - distz[jj]) ** domain.NPS
     
     return eta
 
@@ -1248,48 +1347,103 @@ def plot_hodogram(data, dt, window=None, components=('L', 'Q', 'T'), title='Hodo
 
 
 # ------------------------------------------------------------------------------
-def compute_envelope(signal, pad_width=50):
+def compute_envelope(signal: ArrayLike, pad_width: int = 50) -> NDArray[np.floating]:
     """
-    Compute the amplitude envelope of a signal using the Hilbert transform.
-    Pads the signal (using reflection) to reduce edge effects, then removes the pad.
+    Compute the amplitude envelope of a 1D signal using the Hilbert transform.
+    
+    The signal is first padded by reflection at both ends to reduce edge
+    effects in the Hilbert transform. The envelope is then computed on
+    the padded signal and the padding is removed before returning.
+
+    :param signal: Real-valued input signal.
+    :type signal: ArrayLike
+    :param pad_width: Number of samples to pad on each side using
+                      reflection. The input length must be at least
+                      ``2 * pad_width``.
+    :type pad_width: int
+    :returns: Amplitude envelope of the input signal with the same length
+              as the original (unpadded) signal.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If the input signal is shorter than
+                        ``2 * pad_width``.
+    
+    .. note::
+    
+       Reflection padding helps mitigate boundary artifacts introduced
+       by the Hilbert transform. If the signal is very short or strongly
+       non-stationary near the edges, you may need to adjust
+       ``pad_width`` to obtain a stable envelope.
+
     """
-    if len(signal) < 2*pad_width:
+    if len(signal) < 2 * pad_width:
         raise ValueError("Signal too short for the given pad_width.")
-    padded = np.pad(signal, pad_width, mode='reflect')
+    padded = np.pad(signal, pad_width, mode="reflect")
     analytic = hilbert(padded)
     envelope = np.abs(analytic)
     # Remove the padded regions.
     return envelope[pad_width:-pad_width]
 
 # ------------------------------------------------------------------------------
-def polarization_analysis(data, dt, M, alpha=0.1):
+def polarization_analysis(
+        data: NDArray[np.floating],
+        dt: float,
+        M: int,
+        alpha: float = 0.1,
+    ) -> tuple[
+        NDArray[np.floating],
+        NDArray[np.floating],
+        NDArray[np.floating],
+        NDArray[np.floating],
+        NDArray[np.bool_],
+    ]:
     """
     Compute rectilinearity, backazimuth, and incidence angle using a sliding Tukey window.
-    Handles signal edges with internal padding and shorter windows near boundaries.
 
-    Parameters
-    ----------
-    data : ndarray (N x 3)
-        3-component motion data (e.g., LQT, ZRT, or XYZ).
-    dt : float
-        Time step in seconds.
-    M : int
-        Window length (samples).
-    alpha : float
-        Tukey window shape parameter (default = 0.1).
-    
-    Returns
-    -------
-    times : ndarray
-        Time vector (seconds).
-    rectilinearity : ndarray
-        Rectilinearity values.
-    backazimuth : ndarray
-        Backazimuth angles (degrees from y-axis).
-    incidence : ndarray
-        Incidence angles (degrees from vertical).
-    cone_mask : ndarray
-        Boolean array, True where full-length window is used (i.e., outside the cone of influence).
+    The analysis uses a sliding window over 3-component motion data to
+    estimate polarization attributes via covariance eigen-decomposition.
+    Near the signal edges, shorter windows are used, and a cone-of-influence
+    mask is returned to indicate where the full window length is available.
+
+    :param data: 3-component motion data with shape ``(N, 3)`` (e.g., LQT,
+                 ZRT, or XYZ).
+    :type data: numpy.typing.NDArray[numpy.floating]
+    :param dt: Time step in seconds.
+    :type dt: float
+    :param M: Window length in samples.
+    :type M: int
+    :param alpha: Tukey window shape parameter in ``[0, 1]``. Default is
+                  ``0.1``.
+    :type alpha: float
+    :returns: A tuple ``(times, rectilinearity, backazimuth, incidence,
+              cone_mask)`` where:
+              ``times`` is the time vector in seconds,
+              ``rectilinearity`` contains rectilinearity values,
+              ``backazimuth`` contains backazimuth angles in degrees from
+              the y-axis,
+              ``incidence`` contains incidence angles in degrees from the
+              vertical,
+              ``cone_mask`` is a boolean array that is ``True`` where a
+              full-length window is used.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.bool_]
+    ]
+
+    .. note::
+
+       The polarization attributes are computed from the eigenvectors and
+       eigenvalues of the windowed covariance matrix. The principal
+       eigenvector is forced to point in a consistent (upward) direction
+       by flipping it when its vertical component is negative.
+
+       Near the series boundaries, the effective window is shorter than
+       ``M`` samples. In these regions, the estimates may be less stable;
+       the ``cone_mask`` output can be used to restrict interpretation to
+       times where the full window length is available.
+
     """
     N = data.shape[0]
     times = np.arange(N) * dt
@@ -1339,82 +1493,138 @@ def polarization_analysis(data, dt, M, alpha=0.1):
         
         # Flag if this is a full window
         cone_mask[i] = (win_len == M)
-        
+    
     return times, rectilinearity, backazimuth, incidence, cone_mask
 
 # ------------------------------------------------------------------------------
-def compute_polar_energy(E_x, E_y, dt, angles, to_db=False, corrected=False):
+def compute_polar_energy(
+        E_x: ArrayLike,
+        E_y: ArrayLike,
+        dt: float,
+        angles: ArrayLike,
+        to_db: bool = False,
+        corrected: bool = False,
+    ) -> NDArray[np.floating]:
     """
-    Compute the integrated energy of the horizontal field projection 
-    onto multiple polarization angles for a 3C time series.
+    Compute the integrated energy of the horizontal field projection.
+
+    The horizontal field is projected onto multiple polarization angles
+    for a 3-component time series (using the x and y components), and the
+    energy is integrated over time for each projection angle.
+
+    :param E_x: 1D array of the x-component time series.
+    :type E_x: ArrayLike
+    :param E_y: 1D array of the y-component time series.
+    :type E_y: ArrayLike
+    :param dt: Time-step interval in seconds.
+    :type dt: float
+    :param angles: 1D array of polarization angles in radians at which to
+                   project the horizontal field.
+    :type angles: ArrayLike
+    :param to_db: If ``True``, convert energies to dB scale using
+                  ``10 * log10(E / E.max())``. Default is ``False``.
+    :type to_db: bool
+    :param corrected: If ``True``, apply a cosine-squared baseline
+                      correction based on the projection geometry and
+                      return the corrected energies in dB. Default is
+                      ``False``.
+    :type corrected: bool
+    :returns: Array of shape ``(len(angles),)`` containing the energy
+              at each projection angle. If ``to_db`` is ``True`` and
+              ``corrected`` is ``False``, the values are in dB relative
+              to the maximum energy. If ``corrected`` is ``True``, the
+              returned values are baseline-corrected and expressed in dB.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+
+    .. note::
     
-    Parameters
-    ----------
-    E_x : array_like
-        1D array of the x-component time series.
-    E_y : array_like
-        1D array of the y-component time series.
-    dt : float
-        Time-step interval (seconds).
-    angles : array_like
-        1D array of angles (radians) at which to project the field.
-    to_db : bool, optional
-        If True, convert energies to dB scale: 10*log10(E/E.max()).
-    
-    Returns
-    -------
-    energies : np.ndarray
-        Array of shape (len(angles),) containing the energy at each angle,
-        or in dB if `to_db=True`.
+       For each angle :math:`\\theta`, the horizontal field is projected
+       as :math:`E_\\theta = E_x \\cos(\\theta) + E_y \\sin(\\theta)`,
+       and the energy is computed as the discrete integral
+       :math:`\\sum |E_\\theta|^2 \\Delta t`.
+
+       When ``corrected`` is ``True``, the raw energy pattern is divided
+       by a cosine-squared baseline (``cos(angles)**2``) to account for
+       purely geometric projection effects before converting to dB. This
+       can be useful when comparing polarization strength across angles.
+
     """
     E_x = np.asarray(E_x)
     E_y = np.asarray(E_y)
+    angles = np.asarray(angles)
     energies = np.empty(len(angles))
     
     for i, theta in enumerate(angles):
         # Project onto the polarization direction theta
         E_theta = E_x * np.cos(theta) + E_y * np.sin(theta)
         # Compute energy = integral of |E|^2 dt
-        energies[i] = np.sum(np.abs(E_theta)**2) * dt
+        energies[i] = np.sum(np.abs(E_theta) ** 2) * dt
     
     if to_db:
         # Normalize to max and convert to dB
         energies = 10 * np.log10(energies / np.max(energies))
     
     if corrected:
-        baseline = np.cos(angles)**2
-        corr = energies / baseline 
-        return 10*np.log10(corr / corr.max() )
+        baseline = np.cos(angles) ** 2
+        corr = energies / baseline
+        return 10 * np.log10(corr / corr.max())
     else:
         return energies
 
 # ------------------------------------------------------------------------------
-def compute_phase_gain(ts_ref, ts, f0, dt):
+def compute_phase_gain(
+        ts_ref: ArrayLike,
+        ts: ArrayLike,
+        f0: float,
+        dt: float,
+    ) -> tuple[float, float]:
     """
-    Compute phase shift and gain (in dB) between two time series at a specific frequency.
+    Compute phase shift and gain between two time series at a specific frequency.
     
-    Parameters
-    ----------
-    ts_ref : array_like
-        Reference time series (1D array).
-    ts : array_like
-        Comparison time series (same shape as ts_ref).
-    f0 : float
-        Center frequency in Hz at which to compute phase and gain.
-    dt : float
-        Sampling interval in seconds.
+    The function computes the real FFT of both input time series, locates
+    the frequency bin closest to ``f0``, and evaluates the complex transfer
+    function between the spectra. From this transfer function, it returns
+    the phase shift (in degrees) and gain (in decibels).
     
-    Returns
-    -------
-    phase_deg : float
-        Phase shift of `ts` relative to `ts_ref` at f0, in degrees.
-    gain_db : float
-        Gain in decibels: 20 * log10(|H|), where H is the complex ratio of spectral amplitudes.
+    :param ts_ref: Reference time series (1D array).
+    :type ts_ref: ArrayLike
+    :param ts: Comparison time series, with the same shape as ``ts_ref``.
+    :type ts: ArrayLike
+    :param f0: Center frequency in Hz at which to compute phase and gain.
+    :type f0: float
+    :param dt: Sampling interval in seconds.
+    :type dt: float
+    :returns: A tuple ``(phase_deg, gain_db)`` where:
+              ``phase_deg`` is the phase shift of ``ts`` relative to
+              ``ts_ref`` at ``f0``, in degrees, and
+              ``gain_db`` is the gain in decibels, computed as
+              ``20 * log10(|H|)`` with ``H`` the complex spectral ratio.
+    :rtype: tuple[float, float]
+    :raises ValueError: If the input time series do not have the same shape
+                        or are empty.
+    
+    .. note::
+
+       The frequency bin used for the calculation is chosen as the one
+       whose center frequency is closest to ``f0`` in the real FFT
+       frequency grid (as returned by ``numpy.fft.rfftfreq``). For more
+       accurate estimates at arbitrary frequencies, a longer time series
+       or additional spectral interpolation may be required.
+
+       If the reference spectrum is (near) zero at the selected bin,
+       the transfer function may be ill-conditioned and the resulting
+       gain or phase can be unstable. It is recommended to check that
+       the reference signal has sufficient energy near ``f0``.
+
     """
     ts_ref = np.asarray(ts_ref)
     ts = np.asarray(ts)
+    
     if ts_ref.shape != ts.shape:
         raise ValueError("Input time series must have the same shape")
+    if ts_ref.size == 0:
+        raise ValueError("Input time series must be non-empty")
+    
     N = ts_ref.size
     
     # Compute real FFTs
@@ -1434,35 +1644,65 @@ def compute_phase_gain(ts_ref, ts, f0, dt):
     return phase_deg, gain_db
 
 # ------------------------------------------------------------------------------
-def rotate_to_zrt(data, source=None, receiver=None, direction=None):
+def rotate_to_zrt(
+        data: NDArray[np.floating],
+        source: ArrayLike | None = None,
+        receiver: ArrayLike | None = None,
+        direction: ArrayLike | None = None,
+    ) -> NDArray[np.floating]:
     """
-    Rotate seismogram data from Cartesian (vx, vy, vz) to Z, R, T components.
+    Rotate seismogram data from Cartesian components to Z, R, T components.
     
-    Parameters
-    ----------
-    data : numpy.ndarray
-        Array of shape (n_samples, 3) containing the seismogram data in (vx, vy, vz).
-    source : array_like, optional
-        Source coordinates as a 3-element array [x, y, z].
-    receiver : array_like, optional
-        Receiver coordinates as a 3-element array [x, y, z].
-    direction : array_like, optional
-        Propagation direction vector (3 elements). If provided, its horizontal 
-        projection is used to define the radial direction.
+    The input 3-component seismogram data (``vx, vy, vz``) are rotated into
+    a local coordinate system defined by the vertical, radial, and transverse
+    directions. The radial direction is determined either from a propagation
+    direction vector or from the source–receiver geometry.
+    
+    :param data: Seismogram data in Cartesian components, with shape
+                 ``(n_samples, 3)`` and components ordered as ``(vx, vy, vz)``.
+    :type data: numpy.typing.NDArray[numpy.floating]
+    :param source: Source coordinates as a 3-element array ``[x, y, z]``.
+                   Used together with ``receiver`` when ``direction`` is not
+                   provided.
+    :type source: array_like or None
+    :param receiver: Receiver coordinates as a 3-element array ``[x, y, z]``.
+                     Used together with ``source`` when ``direction`` is not
+                     provided.
+    :type receiver: array_like or None
+    :param direction: Propagation direction vector (3 elements). If provided,
+                      its horizontal projection defines the radial direction.
+    :type direction: array_like or None
+    :returns: Rotated seismogram data with shape ``(n_samples, 3)`` and
+              components ordered as ``(Z, R, T)``.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If neither ``direction`` nor a valid ``source`` and
+                        ``receiver`` pair is provided, if the direction
+                        vector has zero length, or if the source–receiver
+                        horizontal separation is effectively zero.
+    
+    .. note::
+
+       If ``direction`` is provided, it is normalized and its horizontal
+       :math:`(x, y)` components are used to define the radial direction.
+
+       If ``direction`` is not provided, both ``source`` and ``receiver``
+       must be given. The horizontal difference ``receiver - source`` is
+       used to determine the azimuth and radial direction.
+
+       The vertical unit vector is assumed to be :math:`[0, 0, 1]`, and the
+       transverse direction is computed as the cross product of the vertical
+       and radial directions, ensuring an approximately right-handed
+       coordinate system.
+    
+    .. code-block:: python
+    
+       # Example: rotate from vx, vy, vz to Z, R, T using source/receiver
+       data = np.random.randn(1000, 3)  # (vx, vy, vz)
+       source = [0.0, 0.0, 0.0]
+       receiver = [10.0, 5.0, 0.0]
         
-    Returns
-    -------
-    rotated_data : numpy.ndarray
-        Array of shape (n_samples, 3) containing the rotated seismogram data in (Z, R, T).
-    
-    Notes
-    -----
-    - If 'direction' is provided, it is normalized and its horizontal (x,y) components
-    are used for the radial direction.
-    - If 'direction' is not provided, both 'source' and 'receiver' must be given. The 
-    horizontal difference (receiver - source) is used to compute the azimuth.
-    - The vertical unit vector is assumed to be [0, 0, 1].
-    - The transverse component is computed as the cross product of the vertical and radial directions.
+       zrt = rotate_to_zrt(data, source=source, receiver=receiver)
+
     """
     # Determine the radial unit vector
     if direction is not None:
@@ -1480,6 +1720,7 @@ def rotate_to_zrt(data, source=None, receiver=None, direction=None):
             radial_unit = np.array([1.0, 0.0, 0.0])
         else:
             radial_unit = radial_h / norm_radial_h
+    
     elif source is not None and receiver is not None:
         source = np.asarray(source, dtype=float)
         receiver = np.asarray(receiver, dtype=float)
@@ -1489,8 +1730,9 @@ def rotate_to_zrt(data, source=None, receiver=None, direction=None):
             # If source and receiver are nearly vertically aligned, choose an arbitrary horizontal direction.
             radial_unit = np.array([1.0, 0.0, 0.0])
         else:
-            radial_unit = np.array([horizontal_diff[0] / norm_horizontal,
-                                    horizontal_diff[1] / norm_horizontal, 0.0])
+            radial_unit = np.array(
+                [horizontal_diff[0] / norm_horizontal, horizontal_diff[1] / norm_horizontal, 0.0]
+            )
     else:
         raise ValueError("Either 'direction' or both 'source' and 'receiver' must be provided.")
     
@@ -1515,49 +1757,84 @@ def rotate_to_zrt(data, source=None, receiver=None, direction=None):
     
     return rotated_data
 
-
-def rotate_to_qlt(data, source_location, receiver_location, backazimuth = None, incidence = None):
+# ------------------------------------------------------------------------------
+def rotate_to_qlt(
+        data: NDArray[np.floating],
+        source_location: ArrayLike,
+        receiver_location: ArrayLike,
+        backazimuth: float | None = None,
+        incidence: float | None = None,
+    ) -> tuple[float, float, NDArray[np.floating]]:
     """
-    Rotate data from (x, y, z) to (L, Q, T) components.
+    Rotate 3-component data from Cartesian (x, y, z) to (L, Q, T) components.
 
-    Parameters
-    ----------
-    data : ndarray (N x 3)
-        Input data with columns [vx, vy, vz].
-    source_location : ndarray (3,)
-        Source coordinates [x, y, z].
-    receiver_location : ndarray (3,)
-        Receiver coordinates [x, y, z].
+    The input 3-component data are rotated into the longitudinal (L),
+    quasi-vertical (Q), and transverse (T) directions using geometry
+    defined by the source and receiver locations and, optionally, given
+    backazimuth and incidence angles.
 
-    Returns
-    -------
-    ba : float
-        Backazimuth angle in radians.
-    inc : float
-        Inclination angle in radians.
-    lqt : ndarray (N x 3)
-        Rotated data [L, Q, T].
-    """ 
+    :param data: Input data with shape ``(N, 3)`` and columns ``[vx, vy, vz]``.
+    :type data: numpy.typing.NDArray[numpy.floating]
+    :param source_location: Source coordinates ``[x, y, z]``.
+    :type source_location: array_like
+    :param receiver_location: Receiver coordinates ``[x, y, z]``.
+    :type receiver_location: array_like
+    :param backazimuth: Backazimuth angle in radians (clockwise from the
+                        positive y-axis). If ``None``, it is computed
+                        from the source–receiver geometry.
+    :type backazimuth: float or None
+    :param incidence: Incidence (inclination) angle in radians, positive
+                      downward from horizontal. If ``None``, it is computed
+                      from the source–receiver geometry.
+    :type incidence: float or None
+    :returns: A tuple ``(ba, inc, lqt)`` where:
+              ``ba`` is the backazimuth angle in radians,
+              ``inc`` is the inclination angle in radians,
+              ``lqt`` is the rotated data with shape ``(N, 3)`` and
+              columns ``[L, Q, T]``.
+    :rtype: tuple[float, float, numpy.typing.NDArray[numpy.floating]]
+
+    .. note::
+
+       When ``backazimuth`` or ``incidence`` is not provided, both are
+       derived from the displacement vector ``receiver_location -
+       source_location``. The inclination is taken as the arctangent of
+       the vertical offset over the horizontal distance, and the
+       backazimuth is measured clockwise from the positive y-axis.
+        
+       The rotation matrix is constructed so that the L direction is
+       aligned with the propagation direction, Q lies in the vertical
+       plane containing the propagation direction, and T is the
+       horizontal transverse (SH) direction.
+
+    .. code-block:: python
     
+       # Example: rotate from vx, vy, vz to L, Q, T using geometry
+       data = np.random.randn(1000, 3)  # [vx, vy, vz]
+       src = np.array([0.0, 0.0, 0.0])
+       rcv = np.array([10.0, 5.0, -2.0])
+        
+       ba, inc, lqt = rotate_to_qlt(data, src, rcv)
+        
+    """
     # Compute displacement vector (receiver - source)
     d = receiver_location - source_location
     dx, dy, dz = d
     
-    # Horizontal distance
+    # Horizontal distance and inclination
     if incidence is None:
         H = np.sqrt(dx**2 + dy**2)
-        
         # Inclination angle (positive downward)
         inc = np.arctan2(dz, H)
     else:
-        inc = incidence 
+        inc = incidence
     
     # Backazimuth angle (clockwise from +y)
     if backazimuth is None:
         ba = np.arctan2(dx, dy)
         if ba < 0:
             ba += 2 * np.pi
-    else: 
+    else:
         ba = backazimuth
     
     # Trigonometric components
@@ -1566,11 +1843,13 @@ def rotate_to_qlt(data, source_location, receiver_location, backazimuth = None, 
     
     # Rotation matrix from XYZ to LQT
     # L aligned along propagation direction
-    R = np.array([
-        [sin_inc * sin_ba,  sin_inc * cos_ba, cos_inc],     # L-direction (along propagation)
-        [cos_inc * sin_ba,  cos_inc * cos_ba, -sin_inc],    # Q-direction (SV-plane, perpendicular to propagation)
-        [cos_ba,           -sin_ba,           0.0]          # T-direction (SH, perpendicular horizontally)
-    ])
+    R = np.array(
+        [
+            [sin_inc * sin_ba, sin_inc * cos_ba, cos_inc],      # L-direction
+            [cos_inc * sin_ba, cos_inc * cos_ba, -sin_inc],     # Q-direction
+            [cos_ba, -sin_ba, 0.0],                             # T-direction
+        ]
+    )
     
     # Apply rotation
     lqt = data @ R.T
@@ -1578,25 +1857,86 @@ def rotate_to_qlt(data, source_location, receiver_location, backazimuth = None, 
     return ba, inc, lqt
 
 # ------------------------------------------------------------------------------
-def rotate_sdr(strike, dip, rake, is_degree: bool = True):
+def rotate_sdr(
+        strike: float,
+        dip: float,
+        rake: float,
+        is_degree: bool = True,
+    ) -> NDArray[np.floating]:
     """
-    Create a rotation matrix from the strike, dip, and rake. These are the 
-    rotation angles in the x-y, x-z, and the y-z directions, respectively. 
+    Create a 3D rotation matrix from strike, dip, and rake angles.
+    
+    The rotation matrix is constructed from three sequential rotations
+    about the global axes corresponding to strike, dip, and rake angles.
+    This is commonly used to transform between fault-plane and global
+    coordinate systems in seismological applications.
+
+    :param strike: Strike angle. Interpreted as degrees if
+                   ``is_degree`` is ``True``, otherwise radians.
+    :type strike: float
+    :param dip: Dip angle. Interpreted as degrees if ``is_degree`` is
+                ``True``, otherwise radians.
+    :type dip: float
+    :param rake: Rake (slip) angle. Interpreted as degrees if
+                 ``is_degree`` is ``True``, otherwise radians.
+    :type rake: float
+    :param is_degree: If ``True``, input angles are treated as degrees
+                      and converted to radians internally. If
+                      ``False``, angles are assumed to be in radians.
+    :type is_degree: bool
+    :returns: Rotation matrix of shape ``(3, 3)`` formed as
+              ``Rz(strike) @ Ry(dip) @ Rx(rake)``.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    
+    .. note::
+
+       The rotation is applied as a product of three basic rotations:
+       about the z-axis by ``strike``, about the y-axis by ``dip``, and
+       about the x-axis by ``rake``. The precise physical interpretation
+       depends on your coordinate and fault-plane conventions.
+
+       When using this matrix to rotate vectors ``v`` in the original
+       coordinate system, the transformed vectors can be obtained as
+       ``v_rot = R @ v``.
+    
+    .. code-block:: python
+    
+       # Example: build a rotation matrix for a given focal mechanism
+       strike, dip, rake = 210.0, 30.0, 90.0  # degrees
+       R = rotate_sdr(strike, dip, rake)
+    
+       v = np.array([1.0, 0.0, 0.0])
+       v_rot = R @ v  # rotated vector
+    
     """
     if is_degree:
         s, d, r = np.deg2rad([strike, dip, rake])
+    else:
+        s, d, r = strike, dip, rake
     
-    Rz = np.array([[ np.cos(s), -np.sin(s), 0],
-                   [ np.sin(s),  np.cos(s), 0],
-                   [ 0,          0,         1]])
+    Rz = np.array(
+        [
+            [np.cos(s), -np.sin(s), 0.0],
+            [np.sin(s), np.cos(s), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
     
-    Ry = np.array([[ np.cos(d), 0, np.sin(d)],
-                   [ 0,         1, 0],
-                   [-np.sin(d), 0, np.cos(d)]])
+    Ry = np.array(
+        [
+            [np.cos(d), 0.0, np.sin(d)],
+            [0.0, 1.0, 0.0],
+            [-np.sin(d), 0.0, np.cos(d)],
+        ]
+    )
     
-    Rx = np.array([[1, 0, 0],
-                   [0, np.cos(r), -np.sin(r)],
-                   [0, np.sin(r),  np.cos(r)]])
+    Rx = np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.0, np.cos(r), -np.sin(r)],
+            [0.0, np.sin(r), np.cos(r)],
+        ]
+    )
     
     return Rz @ Ry @ Rx
 
@@ -1738,7 +2078,7 @@ def exponential_gain(time_series: np.ndarray, dt: float, alpha: float) -> np.nda
 
 # ------------------------------------------------------------------------------
 def compute_fk_spectrum(
-        data: np.ndarray,
+        data: NDArray[np.floating],
         dt: float,
         dx: float,
         taper: bool = True,
@@ -1748,16 +2088,92 @@ def compute_fk_spectrum(
         fmax: Optional[float] = None,
         kmin: Optional[float] = None,
         kmax: Optional[float] = None,
-        wavenumber_units: str = 'cycles'  # 'cycles' or 'radians'
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        wavenumber_units: str = "cycles",
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """
     Compute the slant-stack f–k power spectrum of a 2D shot gather.
+
+    The input gather is assumed to have time along the first axis and
+    space (offset) along the second axis. A 2D FFT is computed, and the
+    power spectrum is returned as a function of frequency and spatial
+    wavenumber with optional band-limiting in both dimensions.
+
+    :param data: Input shot gather with shape ``(nt, nx)`` where ``nt`` is
+                 the number of time samples and ``nx`` is the number of
+                 spatial traces.
+    :type data: numpy.typing.NDArray[numpy.floating]
+    :param dt: Time sampling interval in seconds.
+    :type dt: float
+    :param dx: Spatial sampling interval in meters.
+    :type dx: float
+    :param taper: If ``True``, apply a separable Hann taper in time and
+                  space to reduce spectral leakage. Default is ``True``.
+    :type taper: bool
+    :param ntfft: Number of time samples for the FFT. If ``None``, use
+                  ``nt`` (no zero-padding).
+    :type ntfft: int or None
+    :param nxfft: Number of spatial samples for the FFT. If ``None``, use
+                  ``nx`` (no zero-padding).
+    :type nxfft: int or None
+    :param fmin: Minimum frequency in Hz to include in the output.
+    :type fmin: float
+    :param fmax: Maximum frequency in Hz to include in the output. If
+                 ``None``, include up to the Nyquist frequency.
+    :type fmax: float or None
+    :param kmin: Minimum absolute wavenumber to include in the output,
+                 expressed in the units specified by ``wavenumber_units``.
+                 If ``None``, defaults to ``0.0``.
+    :type kmin: float or None
+    :param kmax: Maximum absolute wavenumber to include in the output,
+                 expressed in the units specified by ``wavenumber_units``.
+                 If ``None``, defaults to the maximum available wavenumber.
+    :type kmax: float or None
+    :param wavenumber_units: Units of the output wavenumber axis:
+                             ``"cycles"`` for cycles per meter (default)
+                             or ``"radians"`` for radians per meter.
+    :type wavenumber_units: str
+    :returns: A tuple ``(freqs, ks, P)`` where:
+              ``freqs`` is a 1D array of frequencies in Hz,
+              ``ks`` is a 1D array of spatial wavenumbers in the requested
+              units, and
+              ``P`` is a 2D power spectrum array with shape
+              ``(len(freqs), len(ks))``.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
     
-    Returns
-    -------
-    freqs : 1D array of frequencies (Hz)
-    ks     : 1D array of wavenumbers in either cycles/m or rad/m
-    P      : 2D power spectrum array shape (len(freqs), len(ks))
+    .. note::
+    
+       The temporal frequency axis is constructed using
+       ``numpy.fft.rfftfreq`` and restricted to the range
+       ``[fmin, fmax]``. The spatial wavenumber axis is built from
+       ``numpy.fft.fftfreq`` and ``fftshift``, and optionally converted
+       to radians per meter.
+
+       Only wavenumbers whose absolute value lies within
+       ``[kmin, kmax]`` are retained, and the corresponding columns are
+       selected from the shifted power spectrum.
+    
+    .. code-block:: python
+    
+       # Example: compute an f–k spectrum from synthetic data
+       nt, nx = 1024, 64
+       dt, dx = 0.004, 10.0  # 4 ms, 10 m
+       data = np.random.randn(nt, nx)
+    
+       freqs, ks, P = compute_fk_spectrum(
+           data,
+           dt=dt,
+           dx=dx,
+           fmin=2.0,
+           fmax=60.0,
+           kmin=0.0,
+           kmax=0.2,
+           wavenumber_units="cycles",
+       )
+    
     """
     nt, nx = data.shape
     ntfft = ntfft or nt
@@ -1770,7 +2186,7 @@ def compute_fk_spectrum(
     
     # 2D FFT and power
     F2 = np.fft.fft2(dat, s=(ntfft, nxfft))
-    Pfull = np.abs(F2)**2
+    Pfull = np.abs(F2) ** 2
     
     # frequency axis
     freqs_full = np.fft.rfftfreq(ntfft, dt)
@@ -1783,12 +2199,14 @@ def compute_fk_spectrum(
     # wavenumber axis (cycles/m)
     ks_full = np.fft.fftshift(np.fft.fftfreq(nxfft, dx))
     # convert to rad/m if requested
-    if wavenumber_units == 'radians':
+    if wavenumber_units == "radians":
         ks_full = ks_full * 2 * np.pi
     
     # apply k bounds
-    if kmin is None: kmin = 0.0
-    if kmax is None: kmax = np.abs(ks_full).max()
+    if kmin is None:
+        kmin = 0.0
+    if kmax is None:
+        kmax = np.abs(ks_full).max()
     kmask = (np.abs(ks_full) >= kmin) & (np.abs(ks_full) <= kmax)
     ks = ks_full[kmask]
     
@@ -1801,11 +2219,10 @@ def compute_fk_spectrum(
     return freqs, ks, P
 
 # -----------------------------------------------------------------------------
-
 def plot_fk_spectrum(
-        freqs: np.ndarray,
-        ks: np.ndarray,
-        P: np.ndarray,
+        freqs: NDArray[np.floating],
+        ks: NDArray[np.floating],
+        P: NDArray[np.floating],
         fig: Optional[Figure] = None,
         ax: Optional[Axes] = None,
         vmin: Optional[float] = None,
@@ -1813,12 +2230,89 @@ def plot_fk_spectrum(
         log_scale: bool = False,
         smooth: bool = False,
         smooth_sigma: Tuple[float, float] = (1.0, 1.0),
-        mode_lines: Optional[Dict[str, Union[float, Tuple[float,str]]]] = None,
-        wavenumber_units: str = 'cycles'  # match compute_fk_spectrum
+        mode_lines: Optional[Dict[str, Union[float, Tuple[float, str]]]] = None,
+        wavenumber_units: str = "cycles",
     ) -> Tuple[Figure, Axes]:
     """
-    Display an f–k power spectrum, with optional log-scale, smoothing,
-    and overlaid theoretical mode-velocity lines in either cycles/m or rad/m.
+    Display an f–k power spectrum.
+    
+    The f–k power spectrum is shown as a 2D color mesh of power versus
+    frequency and wavenumber, with options for logarithmic scaling,
+    Gaussian smoothing, and overlaying theoretical mode-velocity lines
+    in either cycles/m or rad/m.
+    
+    :param freqs: 1D array of frequencies in Hz, typically the output
+                  from :func:`compute_fk_spectrum`.
+    :type freqs: numpy.typing.NDArray[numpy.floating]
+    :param ks: 1D array of spatial wavenumbers in either cycles/m or
+               rad/m, matching the ``wavenumber_units`` setting.
+    :type ks: numpy.typing.NDArray[numpy.floating]
+    :param P: 2D power spectrum array with shape
+              ``(len(freqs), len(ks))``.
+    :type P: numpy.typing.NDArray[numpy.floating]
+    :param fig: Existing Matplotlib :class:`matplotlib.figure.Figure`
+                to draw into. If ``None``, a new figure is created.
+    :type fig: matplotlib.figure.Figure or None
+    :param ax: Existing Matplotlib :class:`matplotlib.axes.Axes` to draw
+               into. If ``None``, a new axes is created.
+    :type ax: matplotlib.axes.Axes or None
+    :param vmin: Minimum value for the color scale. If ``None``, it is
+                 determined automatically by Matplotlib.
+    :type vmin: float or None
+    :param vmax: Maximum value for the color scale. If ``None``, it is
+                 determined automatically by Matplotlib.
+    :type vmax: float or None
+    :param log_scale: If ``True``, display power in decibels using
+                      ``10 * log10(P)``. Default is ``False``.
+    :type log_scale: bool
+    :param smooth: If ``True``, apply a Gaussian filter to ``P`` before
+                   plotting. Default is ``False``.
+    :type smooth: bool
+    :param smooth_sigma: Standard deviations of the Gaussian smoothing
+                         kernel in the (frequency, wavenumber) directions.
+    :type smooth_sigma: tuple[float, float]
+    :param mode_lines: Optional dictionary defining theoretical mode
+                       lines to overlay. Keys are labels; values are
+                       either velocities (float) or ``(velocity, color)``
+                       tuples. Velocities are in m/s.
+    :type mode_lines: dict[str, float or tuple[float, str]] or None
+    :param wavenumber_units: Units of ``ks`` and the horizontal axis:
+                             ``"cycles"`` for cycles/m (default) or
+                             ``"radians"`` for rad/m.
+    :type wavenumber_units: str
+    :returns: The figure and axes used for the plot.
+    :rtype: tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+    
+    .. note::
+    
+       When ``log_scale`` is ``True``, a small epsilon is added to the
+       power spectrum before converting to dB to avoid taking the
+       logarithm of zero. Smoothing can help visualize coherent
+       energy trends but may blur fine spectral features.
+    
+       Mode-velocity lines are drawn as pairs of symmetric curves
+       :math:`\\pm k(f)` for each velocity, computed using
+       :math:`k = 2 \\pi f / v` for wavenumbers in radians/m or
+       :math:`k = f / v` for cycles/m, depending on
+       ``wavenumber_units``.
+    
+    .. code-block:: python
+    
+       # Example: plot an f–k spectrum with a fundamental mode line
+       freqs, ks, P = compute_fk_spectrum(data, dt=0.004, dx=10.0)
+    
+       fig, ax = plot_fk_spectrum(
+           freqs,
+           ks,
+           P,
+           log_scale=True,
+           smooth=True,
+           smooth_sigma=(1.0, 2.0),
+           mode_lines={"fundamental": 300.0},  # velocity in m/s
+       )
+    
+       plt.show()
+    
     """
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -1831,11 +2325,11 @@ def plot_fk_spectrum(
     eps = np.finfo(float).eps
     if log_scale:
         Pplot = 10 * np.log10(Pplot + eps)
-        cbar_label = 'Power (dB)'
+        cbar_label = "Power (dB)"
     else:
-        cbar_label = 'Power'
+        cbar_label = "Power"
     
-    pcm = ax.pcolormesh(ks, freqs, Pplot, shading='auto', vmin=vmin, vmax=vmax)
+    pcm = ax.pcolormesh(ks, freqs, Pplot, shading="auto", vmin=vmin, vmax=vmax)
     fig.colorbar(pcm, ax=ax, label=cbar_label)
     
     # overlay mode lines
@@ -1844,71 +2338,217 @@ def plot_fk_spectrum(
             if isinstance(spec, (tuple, list)):
                 v, col = spec
             else:
-                v, col = spec, 'white'
+                v, col = spec, "white"
             # compute k_line in correct units
-            if wavenumber_units == 'radians':
+            if wavenumber_units == "radians":
                 kline = 2 * np.pi * freqs / v
             else:
                 kline = freqs / v
-            ax.plot(kline, freqs, '--', color=col, lw=1, label=label)
-            ax.plot(-kline, freqs, '--', color=col, lw=1)
+            ax.plot(kline, freqs, "--", color=col, lw=1, label=label)
+            ax.plot(-kline, freqs, "--", color=col, lw=1)
         # ax.legend(loc='upper right')
     
-    xlabel = 'Wavenumber (rad/m)' if wavenumber_units=='radians' else 'Wavenumber (1/m)'
+    xlabel = "Wavenumber (rad/m)" if wavenumber_units == "radians" else "Wavenumber (1/m)"
     ax.set_xlabel(xlabel)
-    ax.set_ylabel('Frequency (Hz)')
-    ax.set_title('f–k Spectrum')
+    ax.set_ylabel("Frequency (Hz)")
+    ax.set_title("f–k Spectrum")
+    
     return fig, ax
 
 # ------------------------------------------------------------------------------
 # SURFACE WAVES
 def compute_dispersion(
-        seismograms: np.ndarray, 
-        dx: float, 
+        seismograms: NDArray[np.floating],
+        dx: float,
         dt: float,
-        fmin: float, 
-        fmax: float, 
-        nfreq: int=50
-    ) -> Tuple[np.ndarray,np.ndarray]:
-    """Linear-phase fit with 2π-branch correction and physical clamp."""
+        fmin: float,
+        fmax: float,
+        nfreq: int = 50,
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
+    """
+    Estimate phase-velocity dispersion from a 2D seismogram gather.
+    
+    A linear phase-vs-distance trend is fitted for each selected frequency
+    bin, with :math:`2\\pi` branch correction applied to unwrap the overall
+    phase slope. The resulting wavenumber is converted to phase velocity,
+    which is then clamped to a physically plausible range.
+
+    :param seismograms: Input seismogram gather with shape ``(nt, nx)``,
+                        where ``nt`` is the number of time samples and
+                        ``nx`` is the number of spatial traces.
+    :type seismograms: numpy.typing.NDArray[numpy.floating]
+    :param dx: Spatial sampling interval in meters.
+    :type dx: float
+    :param dt: Time sampling interval in seconds.
+    :type dt: float
+    :param fmin: Minimum frequency in Hz for dispersion estimation.
+    :type fmin: float
+    :param fmax: Maximum frequency in Hz for dispersion estimation.
+    :type fmax: float
+    :param nfreq: Number of frequency samples between ``fmin`` and
+                  ``fmax`` to evaluate. Default is ``50``.
+    :type nfreq: int
+    :returns: A tuple ``(freqs, vs)`` where:
+              ``freqs`` is a 1D array of frequencies in Hz, and
+              ``vs`` is a 1D array of phase velocities in m/s for each
+              frequency, with invalid or out-of-range estimates set to
+              ``NaN``.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
+    
+    .. note::
+
+       For each target frequency, the complex spectrum is extracted
+       across all traces, the phase is unwrapped, and a linear fit
+       of phase versus distance is computed. A :math:`2\\pi` branch
+       correction ensures that the fitted slope is consistent over
+       the aperture.
+    
+       The maximum physically resolvable velocity is taken as
+       ``dx / dt`` based on the spatial and temporal sampling.
+       Phase-velocity estimates outside ``(0, max_vel]`` are rejected
+       and stored as ``NaN`` in the output.
+    
+    .. code-block:: python
+
+       # Example: compute a dispersion curve from a synthetic gather
+       nt, nx = 2048, 48
+       dt, dx = 0.004, 5.0
+       seismograms = np.random.randn(nt, nx)
+    
+       freqs, vs = compute_dispersion(
+           seismograms,
+           dx=dx,
+           dt=dt,
+           fmin=2.0,
+           fmax=40.0,
+           nfreq=60,
+       )
+
+    """
     nt, nx = seismograms.shape
     spec = np.fft.rfft(seismograms, axis=0)
     freq_axis = np.fft.rfftfreq(nt, dt)
     freqs = np.linspace(fmin, fmax, nfreq)
     vs = np.full(nfreq, np.nan)
-    x = np.arange(nx)*dx
-    L = x[-1]-x[0]
+    
+    x = np.arange(nx) * dx
+    L = x[-1] - x[0]
     # max physically resolvable velocity (Nyquist spatial): dx/dt
     max_vel = dx / dt
-    for i,f in enumerate(freqs):
-        idx = np.argmin(np.abs(freq_axis-f))
-        ph = np.unwrap(np.angle(spec[idx,:]))
-        raw = np.polyfit(x,ph,1)[0]
-        impl = raw*L
-        branch = np.round(impl/(2*np.pi))
-        slope = raw - branch*(2*np.pi/L)
+    
+    for i, f in enumerate(freqs):
+        idx = np.argmin(np.abs(freq_axis - f))
+        ph = np.unwrap(np.angle(spec[idx, :]))
+        raw = np.polyfit(x, ph, 1)[0]
+        impl = raw * L
+        branch = np.round(impl / (2 * np.pi))
+        slope = raw - branch * (2 * np.pi / L)
         k = -slope
-        v = 2*np.pi*f/ k
+        v = 2 * np.pi * f / k
         # clamp to positive and below max_vel
         if v > 0 and v <= max_vel:
             vs[i] = v
         else:
             vs[i] = np.nan
+    
     return freqs, vs
 
 # ============= Slant-stack energy image and smooth picks =============
 def compute_dispersion_image(
-        seismograms: np.ndarray,
+        seismograms: NDArray[np.floating],
         dx: float,
         dt: float,
         fmin: float,
         fmax: float,
         nv: int = 100,
         nfreq: int = 100,
-        vmin: float = None,
-        vmax: float = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """MASW slant-stack with taper, smoothing, and sub-bin peak picking."""
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
+    """
+    Compute a MASW-style dispersion image and phase-velocity picks.
+    
+    A multi-channel analysis of surface waves (MASW) slant-stack is
+    formed over a range of trial phase velocities and frequencies. The
+    resulting f–v image is normalized, smoothed, and used to perform
+    sub-bin parabolic peak picking of the dominant dispersion curve.
+
+    :param seismograms: Input seismogram gather with shape ``(nt, nx)``,
+                        where ``nt`` is the number of time samples and
+                        ``nx`` is the number of spatial traces.
+    :type seismograms: numpy.typing.NDArray[numpy.floating]
+    :param dx: Spatial sampling interval in meters.
+    :type dx: float
+    :param dt: Time sampling interval in seconds.
+    :type dt: float
+    :param fmin: Minimum frequency in Hz for the dispersion image.
+    :type fmin: float
+    :param fmax: Maximum frequency in Hz for the dispersion image.
+    :type fmax: float
+    :param nv: Number of phase-velocity samples between ``vmin`` and
+               ``vmax``. Default is ``100``.
+    :type nv: int
+    :param nfreq: Number of frequency samples between ``fmin`` and
+                  ``fmax`` for the image and picks. Default is ``100``.
+    :type nfreq: int
+    :param vmin: Minimum phase velocity in m/s for the image. If
+                 ``None``, it is estimated from initial phase picks.
+    :type vmin: float or None
+    :param vmax: Maximum phase velocity in m/s for the image. If
+                 ``None``, it is estimated from initial phase picks.
+    :type vmax: float or None
+    :returns: A tuple ``(freqs, vs, image, picks)`` where:
+              ``freqs`` is a 1D array of frequencies in Hz,
+              ``vs`` is a 1D array of trial phase velocities in m/s,
+              ``image`` is a 2D normalized dispersion image with shape
+              ``(len(freqs), len(vs))``, and
+              ``picks`` is a 1D array of sub-bin phase-velocity picks
+              (m/s) at each frequency, with out-of-bounds values set
+              to ``NaN``.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
+    :raises ValueError: If the automatically or manually determined
+                        velocity bounds satisfy ``vmin >= vmax``.
+    
+    .. note::
+    
+       Initial phase-velocity estimates are obtained via
+       :func:`compute_dispersion` and used to set automatic bounds when
+       ``vmin`` and ``vmax`` are not provided. If these picks are
+       unavailable, fallback bounds are based on the sampling ratio
+       ``dx / dt``.
+    
+       For each frequency, complex amplitudes are slant-stacked over
+       trial velocities using an exponential steering term. The image
+       is normalized per frequency, smoothed with a Gaussian filter,
+       and a parabolic fit around the maximum value in each row is used
+       to obtain sub-bin phase-velocity picks.
+    
+    .. code-block:: python
+    
+       # Example: build a dispersion image and picks from a gather
+       nt, nx = 2048, 48
+       dt, dx = 0.004, 5.0
+       seismograms = np.random.randn(nt, nx)
+    
+       freqs, vs, image, picks = compute_dispersion_image(
+           seismograms,
+           dx=dx,
+           dt=dt,
+           fmin=2.0,
+           fmax=40.0,
+           nv=120,
+           nfreq=80,
+       )
+    
+    """
     # taper in time to reduce spectral leakage
     nt, nx = seismograms.shape
     win = np.hanning(nt)
@@ -1928,8 +2568,8 @@ def compute_dispersion_image(
             vmin = pos.min() * 0.8
             vmax = pos.max() * 1.2
         else:
-            vmin = dx/dt * 0.1
-            vmax = dx/dt * 2.0
+            vmin = dx / dt * 0.1
+            vmax = dx / dt * 2.0
     if vmin >= vmax:
         raise ValueError(f"Invalid velocity bounds: vmin={vmin}, vmax={vmax}")
     
@@ -1943,12 +2583,11 @@ def compute_dispersion_image(
         A = spec[idx, :]
         omega = 2 * np.pi * f
         for j, v in enumerate(vs):
-            image[i, j] = np.abs(np.sum(A * np.exp(1j * omega * x / v)))**2
+            image[i, j] = np.abs(np.sum(A * np.exp(1j * omega * x / v))) ** 2
     
     # normalize per-frequency
-    image /= (image.max(axis=1, keepdims=True) + np.finfo(float).eps)
+    image /= image.max(axis=1, keepdims=True) + np.finfo(float).eps
     # smooth image to reduce striping
-    from scipy.ndimage import gaussian_filter
     image = gaussian_filter(image, sigma=(1, 2))
     
     # sub-bin (parabolic) peak picking
@@ -1958,8 +2597,8 @@ def compute_dispersion_image(
         row = image[i]
         imax = np.nanargmax(row)
         if 0 < imax < len(vs) - 1:
-            y0, y1, y2 = row[imax-1], row[imax], row[imax+1]
-            dp = 0.5 * (y0 - y2) / (y0 - 2*y1 + y2)
+            y0, y1, y2 = row[imax - 1], row[imax], row[imax + 1]
+            dp = 0.5 * (y0 - y2) / (y0 - 2 * y1 + y2)
             picks[i] = vs[imax] + dp * dv
         else:
             picks[i] = vs[imax]
@@ -1969,83 +2608,199 @@ def compute_dispersion_image(
     return freqs, vs, image, picks
 
 # ----------------------------------------------------------------------------
-
-def plot_dispersion(freqs: np.ndarray, velocities: np.ndarray) -> None:
+def plot_dispersion(
+        freqs: NDArray[np.floating], velocities: NDArray[np.floating]
+    ) -> None:
     """
-    Plot the dispersion curve freq vs phase velocity.
+    Plot a dispersion curve of frequency versus phase velocity.
+    
+    A simple line plot is created showing phase velocity as a function
+    of frequency, suitable for visualizing dispersion picks or curves.
+
+    :param freqs: 1D array of frequencies in Hz.
+    :type freqs: numpy.typing.NDArray[numpy.floating]
+    :param velocities: 1D array of phase velocities in m/s, with the
+                       same shape as ``freqs``.
+    :type velocities: numpy.typing.NDArray[numpy.floating]
+    :returns: This function does not return anything; it creates a
+              Matplotlib figure and displays it.
+    :rtype: None
+    
+    .. note::
+    
+       This function calls :func:`matplotlib.pyplot.show`, which will
+       block execution in some environments. If you need more control
+       over the figure (e.g., saving to file or embedding in a GUI),
+       consider modifying the code to return the figure and axes
+       instead of calling ``plt.show()`` directly.
+    
+    .. code-block:: python
+    
+       # Example: plot dispersion picks
+       freqs = np.linspace(2.0, 40.0, 50)
+       velocities = 300.0 + 5.0 * freqs  # synthetic trend
+    
+       plot_dispersion(freqs, velocities)
+    
     """
     plt.figure()
-    plt.plot(freqs, velocities, '-o')
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Phase velocity (m/s)')
-    plt.title('Dispersion curve')
+    plt.plot(freqs, velocities, "-o")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Phase velocity (m/s)")
+    plt.title("Dispersion curve")
     plt.grid(True)
     plt.show()
 
-
+# ----------------------------------------------------------------------------
 def plot_dispersion_image(
-        freqs: np.ndarray,
-        vs: np.ndarray,
-        image: np.ndarray,
-        picks_freqs: Optional[np.ndarray] = None,
-        picks_vs: Optional[np.ndarray] = None,
-        colormap = 'inferno'
+        freqs: NDArray[np.floating],
+        vs: NDArray[np.floating],
+        image: NDArray[np.floating],
+        picks_freqs: Optional[NDArray[np.floating]] = None,
+        picks_vs: Optional[NDArray[np.floating]] = None,
+        colormap: str = "inferno",
     ) -> Tuple[Figure, Axes]:
     """
-    Plot a MASW-style dispersion image and optional picked dispersion curve.
+    Plot a MASW-style dispersion image with an optional picked curve.
     
-    Parameters
-    ----------
-    freqs : (Nf,) array
-        Frequencies (Hz).
-    vs : (Nv,) array
-        Phase velocities (m/s).
-    image : (Nf, Nv) array
-        Normalized energy map (frequency × velocity).
-    picks_freqs : (Np,) array, optional
-        Frequencies of picked dispersion curve.
-    picks_vs : (Np,) array, optional
-        Phase velocities of picked dispersion curve.
+    The function displays a frequency–velocity (f–v) image of normalized
+    energy and, if provided, overlays a picked dispersion curve on top
+    of the image.
     
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
-    ax : matplotlib.axes.Axes
+    :param freqs: 1D array of frequencies in Hz with shape ``(Nf,)``.
+    :type freqs: numpy.typing.NDArray[numpy.floating]
+    :param vs: 1D array of phase velocities in m/s with shape ``(Nv,)``.
+    :type vs: numpy.typing.NDArray[numpy.floating]
+    :param image: 2D normalized energy map with shape ``(Nf, Nv)``,
+                  typically the output of :func:`compute_dispersion_image`.
+    :type image: numpy.typing.NDArray[numpy.floating]
+    :param picks_freqs: Optional 1D array of frequencies in Hz for a
+                        picked dispersion curve.
+    :type picks_freqs: numpy.typing.NDArray[numpy.floating] or None
+    :param picks_vs: Optional 1D array of phase velocities in m/s for a
+                     picked dispersion curve, matching ``picks_freqs``.
+    :type picks_vs: numpy.typing.NDArray[numpy.floating] or None
+    :param colormap: Matplotlib colormap name used for the image
+                     (default ``"inferno"``).
+    :type colormap: str
+    :returns: The figure and axes containing the dispersion image plot.
+    :rtype: tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+    
+    .. note::
+    
+       The energy map is plotted using
+       :func:`matplotlib.axes.Axes.pcolormesh` with transposed data
+       so that frequency appears on the horizontal axis and phase
+       velocity on the vertical axis.
+    
+       When both ``picks_freqs`` and ``picks_vs`` are provided, the
+       picked curve is overlaid as red scatter points and a legend is
+       added in the upper-right corner.
+    
+    .. code-block:: python
+    
+       # Example: visualize a dispersion image and picked curve
+       freqs, vs, image, picks = compute_dispersion_image(
+           seismograms,
+           dx=5.0,
+           dt=0.004,
+           fmin=2.0,
+           fmax=40.0,
+       )
+    
+       fig, ax = plot_dispersion_image(
+           freqs,
+           vs,
+           image,
+           picks_freqs=freqs,
+           picks_vs=picks,
+           colormap="inferno",
+       )
+        
+       plt.show()
+    
     """
     fig, ax = plt.subplots(figsize=(8, 6))
     
     # plot the energy map
-    pcm = ax.pcolormesh(freqs, vs, image.T, shading='auto', cmap = colormap)
-    cbar = fig.colorbar(pcm, ax=ax, label='Normalized Energy')
+    pcm = ax.pcolormesh(freqs, vs, image.T, shading="auto", cmap=colormap)
+    fig.colorbar(pcm, ax=ax, label="Normalized Energy")
     
     # labels and title
-    ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel('Phase Velocity (m/s)')
-    ax.set_title('Dispersion Image')
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("Phase Velocity (m/s)")
+    ax.set_title("Dispersion Image")
     
     # overlay picks if provided
     if picks_freqs is not None and picks_vs is not None:
         ax.scatter(
-            picks_freqs, picks_vs,
-            c='r', marker='.', s=10,
-            label='Picked Curve'
+            picks_freqs,
+            picks_vs,
+            c="r",
+            marker=".",
+            s=10,
+            label="Picked Curve",
         )
-        ax.legend(loc='upper right')
+        ax.legend(loc="upper right")
     
     return fig, ax
 
 # ----------------------------------------------------------------------------
-def apply_time_taper(data, dt, t0=0.18, t1=0.25):
+def apply_time_taper(
+        data: NDArray[np.floating],
+        dt: float,
+        t0: float = 0.18,
+        t1: float = 0.25,
+    ) -> NDArray[np.floating]:
     """
-    Apply a cosine taper to suppress data after t0–t1 (in seconds).
+    Apply a cosine taper to suppress data after a given time window.
+    
+    A one-sided cosine taper is applied between ``t0`` and ``t1`` (in
+    seconds), smoothly reducing the amplitudes to zero. All samples
+    after ``t1`` are fully muted.
+    
+    :param data: Input data array with shape ``(nt, nx)``, where ``nt``
+                 is the number of time samples and ``nx`` the number of
+                 traces or components.
+    :type data: numpy.typing.NDArray[numpy.floating]
+    :param dt: Time sampling interval in seconds.
+    :type dt: float
+    :param t0: Start time of the taper in seconds. Default is ``0.18``.
+    :type t0: float
+    :param t1: End time of the taper in seconds. Default is ``0.25``.
+               Samples after ``t1`` are set to zero.
+    :type t1: float
+    :returns: Tapered data array with the same shape as the input.
+    :rtype: numpy.typing.NDArray[numpy.floating]
+    :raises ValueError: If ``t1`` is less than or equal to ``t0``.
+    
+    .. note::
+    
+       The taper is equal to 1.0 before ``t0``, follows a cosine shape
+       between ``t0`` and ``t1``, and is 0.0 after ``t1``. This is
+       useful for suppressing late-arriving noise or boundary
+       reflections without introducing sharp truncation artifacts.
+    
+    .. code-block:: python
+    
+       # Example: mute late-time energy in a gather
+       nt, nx = 2000, 24
+       dt = 0.004  # 4 ms
+       data = np.random.randn(nt, nx)
+    
+       tapered = apply_time_taper(data, dt, t0=0.5, t1=0.8)
+    
     """
+    if t1 <= t0:
+        raise ValueError(f"t1 must be greater than t0 (got t0={t0}, t1={t1})")
+    
     nt, nx = data.shape
     time = np.arange(nt) * dt
     taper = np.ones_like(time)
-
+    
     # Apply taper between t0 and t1
     mask = (time >= t0) & (time <= t1)
     taper[mask] = 0.5 * (1 + np.cos(np.pi * (time[mask] - t0) / (t1 - t0)))
     taper[time > t1] = 0.0
-
+    
     return data * taper[:, None]
