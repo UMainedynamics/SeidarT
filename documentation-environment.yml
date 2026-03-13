@@ -13,6 +13,7 @@ dependencies:
   - pandas
   - pip
   - python=3.11
+  - pytz
   - readline
   - recommonmark
   - ruamel.yaml

@@ -11,8 +11,9 @@ SeidarT
 
 SeidarT: Seismic and Radar Toolbox for full-waveform modeling in snow, ice, and other complex materials.
 
-Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_
-..  ======================================================================
+Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_  
+
+-------------------------------------------------------------------------------------
 
 Introduction
 ------------
@@ -52,7 +53,7 @@ Installation
 
 will create the SeidarT folder in the current working folder. Change directories into the root folder (SeidarT) and you will find the environment YAML file for creating the Miniconda/Anaconda environment and install all dependencies. Create the environment from the Bash terminal with the following commands::
 
-    conda create -f seidart-environment.yml 
+    conda env create -f seidart-environment.yml 
     conda activate seidart
 
 To finish installing run::
@@ -78,6 +79,12 @@ This will create the *seidart* executable and put them in the binaries folder as
     ls $CONDA_PREFIX/bin/seidartfdtd*
 
 If you see multiple *seidartfdtd* files, delete them and recompile again with the *build.sh* script seen above. 
+
+*SeidarT-Recipes* does not need to be installed but it contains examples to help get started. You can simply pull it from Github in your preferred location::
+    
+    git clone https://github.com/UMainedynamics/SeidarT-Recipes.git 
+
+It was built with the intent of being installable via pip so it has a src directory layout. You will find examples in the src/seidart-recipes folder
 
 
 .. =============================================================================

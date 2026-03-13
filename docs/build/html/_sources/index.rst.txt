@@ -34,17 +34,6 @@ Welcome to SeidarT's documentation!
    :caption: Recipes
    
    RECIPES
-
-.. _commandline:
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Command Line Interface
-   
-   CLI.md
-   prjbuild
-   arraybuild
-   im2anim
    
 .. _modules:
 
@@ -54,6 +43,7 @@ Welcome to SeidarT's documentation!
    
    ROUTINES
    seidart.routines.definitions
+   seidart.routines.classes
    seidart.routines.materials
    seidart.routines.prjbuild
    seidart.routines.arraybuild
@@ -61,9 +51,6 @@ Welcome to SeidarT's documentation!
    VISUALIZATION.md
    seidart.visualization.imgen
    seidart.visualization.im2anim
-   SIMULATIONS.md
-   seidart.simulations.common_offset
-
 
 .. toctree::
     :maxdepth: 2

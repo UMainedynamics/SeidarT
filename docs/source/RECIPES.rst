@@ -16,7 +16,8 @@ Electromagnetic
  
  - Synthetic Fabric Generation (`docs <https://umainedynamics.github.io/SeidarT-Recipes/docs/build/html/synthetic-fabric-readme.html>`_ and `source code <https://github.com/UMainedynamics/SeidarT-Recipes/tree/main/src/seidart-recipes/fabric>`_) to simulate and generate single to multi-pole c-axes distributions.
  
- - Absorbing boundary performance analysis (`docs <https://umainedynamics.github.io/SeidarT-Recipes/docs/build/html/boundary-performance-readme.html>`_ and `source <https://github.com/UMainedynamics/SeidarT-Recipes/tree/main/src/seidart-recipes/boundary_performance>`_) for 2D electromagnetic wave propagation. 
+.. - Absorbing boundary performance analysis (`docs <https://umainedynamics.github.io/SeidarT-Recipes/docs/build/html/boundary-performance-readme.html>`_ and `source <https://github.com/UMainedynamics/SeidarT-Recipes/tree/main/src/seidart-recipes/boundary_performance>`_) for 2D electromagnetic wave propagation. 
+
 .. - Isotropic/Anisotropic travel times (`docs <>`_ and `source <>`_)
 
 Seismic

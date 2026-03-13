@@ -62,6 +62,18 @@ The Domain object describes the computational domain and image parameters.
     * - nmats
       - Number of distinct material types.
       - integer (autofilled)
+    * - alpha_max_scalar
+      - Scalar value to adjust the alpha_max value to help tune the CPML.
+      - float (default is 1.0)
+    * - kappa_max
+      - The maximum kappa value for the CPML. Typical values range from 2-5, but can be adjusted beyond that range given the nature of the model. 
+      - float (default is 3.0)
+    * - NP 
+      - Exponent for scaling the CPML parameters except for alpha 
+      - integer (default is 2.0) 
+    * - NPA
+      - Exponent for scaling the alpha parameter 
+      - integer (default is 2.0) 
     * - image_file
       - Name of an image file used as a reference or mask.
       - string (autofilled)
@@ -121,7 +133,7 @@ There are 9 fields for each material. These are:
       - File path containing the z-x-z angles in radians (null if isotropic).
       - string
 
-A dictionary of materials can be found in the *materials.py* program. Additional materials can easily be implemented given their range of shear and pressure wave velocities and the range of relative permittivity and electrical conductivity. The 
+A dictionary of materials can be found in the *materials.py* program. Additional materials can easily be implemented given their range of shear and pressure wave velocities and the range of relative permittivity and electrical conductivity. Granite, gneiss, and basalt bulk moduli can be estimated from the function *moduli_rock* for a given pressure (confining) and temperature. Sand-silt-clay mixtures can also be computed in the *moduli_sand_silt_clay* for a given pressure, temperature, percent water content, porosity, and fractional compositions of sand, silt, and clay. 
 
 .. list-table:: List of Isotropic Materials 
     :widths: 25 25 25 25 50
@@ -239,13 +251,16 @@ Both seismic and electromagnetic sections of the JSON file contain a Source sect
     * - source_frequency
       - Dominant frequency of the source wavelet (Hz).
       - float
-    * - x-z_rotation, x-y_rotation
-      - Rotation angles of the source in degrees around the respective axes.
+    * - x-z_rotation, x-y_rotation, y-z_rotation
+      - Rotation angles of the source in degrees around the respective axes. y-z rotation is only used in 2.5/3D models. 
       - float
     * - amplitude
       - Scalar amplitude of the source wavelet.
       - float
-    * - source_type
+    * - source_type (seismic only)
+      - The type of source - accelerated weight drop (ac), double couple (dc), explosive (tnt), CLVD (clvd)
+      - string
+    * - source_wavelet
       - Wavelet type - gaus0, gaus1, gaus2.
       - string
 
