@@ -2469,77 +2469,266 @@ def fabric_tensor(euler_angles: NDArray[np.floating]) -> NDArray[np.floating]:
     return F
 
 # -----------------------------------------------------------------------------
-def permeability(porosity, grain_size, euler_angles):
+def permeability(
+        porosity: float,
+        grain_size: float,
+        euler_angles: NDArray[np.floating],
+    ) -> Tuple[float, NDArray[np.floating]]:
     """
-    porosity - value is 0,1 with 1 being air/undefined 
-    grain_size - the characteristic grain size 
+    Estimate scalar and tensorial permeability from porosity, grain size, and fabric.
+    
+    A scalar (isotropic) permeability is first computed using a
+    Kozeny–Carman–type relation. A second-order fabric tensor is then
+    used to distribute this permeability anisotropically in 3D, yielding
+    a full permeability tensor.
+    
+    :param porosity: Porosity as a fraction in the range ``0``–``1``,
+                     where values near 1 represent highly porous or
+                     air-like material.
+    :type porosity: float
+    :param grain_size: Characteristic grain size (same length units as
+                       desired for the permeability scaling, typically
+                       meters).
+    :type grain_size: float
+    :param euler_angles: Array of Euler angle triplets with shape
+                         ``(M, 3)`` defining the orientation
+                         distribution used in :func:`fabric_tensor`.
+    :type euler_angles: numpy.typing.NDArray[numpy.floating]
+    :returns: A tuple ``(k_iso, k_global)`` where:
+              ``k_iso`` is the scalar (isotropic) permeability estimate,
+              and ``k_global`` is the 3x3 permeability tensor in global
+              coordinates.
+    :rtype: tuple[float, numpy.typing.NDArray[numpy.floating]]
+    :raises ValueError: If ``porosity`` is not in ``(0, 1)`` or if
+                        ``euler_angles`` has an invalid shape.
+    
+    .. note::
+    
+       The scalar permeability is computed as
+    
+       .. math::
+    
+          k = \\frac{\\phi^3 \\, d^2}{(1 - \\phi)^2},
+    
+       where :math:`\\phi` is porosity and :math:`d` is grain size.
+       The fabric tensor eigenvalues define a directional weighting of
+       this scalar permeability to form a principal permeability tensor,
+       which is then rotated back to the global frame.
+    
+       If the fabric tensor is degenerate (sum of eigenvalues
+       non-positive), an isotropic permeability tensor
+       :math:`k I_3` is returned.
+    
+    .. code-block:: python
+    
+       # Example: permeability tensor from porosity, grain size, and fabric
+       porosity = 0.4
+       grain_size = 1e-3  # m
+       eulers = np.random.rand(100, 3)
+       k_iso, k_tensor = permeability(porosity, grain_size, eulers)
+    
     """
-    k = (porosity**3 * grain_size**2) / (( 1.0 - porosity)**2)
+    if not (0.0 < porosity < 1.0):
+        raise ValueError("porosity must lie between 0 and 1 (exclusive)")
+    
+    # Scalar Kozeny–Carman-type permeability
+    k = (porosity**3 * grain_size**2) / ((1.0 - porosity) ** 2)
+    
     F = fabric_tensor(euler_angles)
-    eigval, eigvec = np.linalg.eig(F) 
-	
+    eigval, eigvec = np.linalg.eig(F)
+    
     if np.sum(eigval) <= 0.0:
         # Degenerate: fallback isotropic
         k_global = k * np.eye(3)
         return k, k_global
     
-    eigval_norm =  eigval / np.sum(eigval) 
+    eigval_norm = eigval / np.sum(eigval)
     
     k_principal = np.diag(3.0 * k * eigval_norm)
     k_global = eigvec @ k_principal @ eigvec.T
     
-    return(k, k_global)
+    return k, k_global
 
-def viscosity_water(temperature, method = "andrade-vogel", units = "mPas"):
+# -----------------------------------------------------------------------------
+def viscosity_water(
+        temperature: float,
+        method: str = "andrade-vogel",
+        units: str = "mPas",
+    ) -> float:
     """
-    temperature in degrees C 
-    method: options are "andrade-vogel" (default), "patek"
+    Compute the dynamic viscosity of water as a function of temperature.
     
-    returns the dyanmic viscosity, mu, with units mPa*s
+    The viscosity is evaluated using either an Andrade–Vogel-type
+    correlation or the Patek et al. reference correlation, and returned
+    in either millipascal-seconds or pascal-seconds.
+
+    :param temperature: Temperature in degrees Celsius.
+    :type temperature: float
+    :param method: Correlation method to use. Supported options are
+                   ``"andrade-vogel"`` (default) and ``"patek"``.
+    :type method: str
+    :param units: Desired output units. Use ``"mPas"`` for
+                  millipascal-seconds (default) or ``"PaS"`` for
+                  pascal-seconds.
+    :type units: str
+    :returns: Dynamic viscosity of water at the given temperature in the
+              requested units.
+    :rtype: float
+    :raises ValueError: If ``method`` or ``units`` is not recognized.
+    
+    .. note::
+    
+       The Patek correlation is recommended for a wide temperature range
+       including supercooled water, while the Andrade–Vogel form
+       provides a simpler empirical fit. For temperatures below about
+       ``-5`` °C, the Patek method is generally more appropriate.
+    
+    .. code-block:: python
+    
+       # Example: viscosity at 20 °C in mPa·s
+       mu_mpas = viscosity_water(20.0)
+
+       # Example: viscosity at 20 °C in Pa·s using Patek
+       mu_pas = viscosity_water(20.0, method="patek", units="PaS")
+    
     """
     tempK = temperature + 273.15
     method = method.lower()
+    units = units.lower()
     
-    if temperature < -5 and method == "andrade-vogel":
-        print('For super cooled water consider using method="platek"')
+    if temperature < -5.0 and method == "andrade-vogel":
+        # Warn the user that Patek may be more appropriate in this regime.
+        print('For super cooled water consider using method="patek"')
     
     if method == "patek":
         if tempK >= 253.15:
             a = np.array([280.68, 511.45, 61.13, 0.4590])
-            b = np.array([-1.9, -7.7,-19.6, -40.0])
+            b = np.array([-1.9, -7.7, -19.6, -40.0])
         else:
             a = np.array([749.95, 56.39, 55.70, 5.77e-4])
             b = np.array([-4.6, -13.2, -22.0, -71.7])
-    
-        tempK = tempK / 300.0
-        mu = np.sum(a*tempK**b)
-    else: # Default method "andrade-vogel"
+        
+        tempK_scaled = tempK / 300.0
+        mu = np.sum(a * tempK_scaled**b)
+    elif method == "andrade-vogel":
         A, B, C = -3.7188, 578.919, -137.546
-        mu = exp( A + B / ( C + tempK ) )
-    
-    if units.lower() == "pas":
-        return mu*1.0e-3
+        mu = exp(A + B / (C + tempK))
     else:
+        raise ValueError(
+            f'Unsupported method "{method}". Use "andrade-vogel" or "patek".'
+        )
+    
+    if units == "pas":
+        return mu * 1.0e-3
+    elif units == "mpas":
         return mu
+    else:
+        raise ValueError('Unsupported units "{units}". Use "mPas" or "PaS".')
 
-def biot_stress(K_dry, K_mineral, K_fluid, porosity, euler_angles = None):
+# -----------------------------------------------------------------------------
+def biot_stress(
+        K_dry: float,
+        K_mineral: float,
+        K_fluid: float,
+        porosity: float,
+        euler_angles: NDArray[np.floating] | None = None,
+    ) -> Tuple[float, NDArray[np.floating], float]:
     """
-    K_?? - effective bulk moduli
-    porosity - [0,1) 
-    F - fabric tensor
+    Compute Biot's effective stress coefficient and its anisotropic tensor form.
+
+    The scalar Biot coefficient is computed from dry-frame and mineral
+    bulk moduli, then distributed anisotropically using a fabric tensor
+    built from Euler angles. An effective inverse Biot modulus is also
+    evaluated.
+
+    :param K_dry: Dry-frame bulk modulus in pascals.
+    :type K_dry: float
+    :param K_mineral: Mineral (solid grain) bulk modulus in pascals.
+    :type K_mineral: float
+    :param K_fluid: Pore fluid bulk modulus in pascals.
+    :type K_fluid: float
+    :param porosity: Porosity as a fraction in the range ``[0, 1)``.
+    :type porosity: float
+    :param euler_angles: Optional array of Euler angle triplets with
+                         shape ``(M, 3)`` used to construct the fabric
+                         tensor via :func:`fabric_tensor`. If ``None``,
+                         no anisotropic weighting is applied and the
+                         coefficient remains isotropic.
+    :type euler_angles: numpy.typing.NDArray[numpy.floating] or None
+    :returns: A tuple ``(alpha, alpha_global, Minv)`` where:
+              ``alpha`` is the scalar Biot coefficient,
+              ``alpha_global`` is the 3x3 Biot coefficient tensor in the
+              global frame, and
+              ``Minv`` is the inverse Biot modulus (1/Pa).
+    :rtype: tuple[float, numpy.typing.NDArray[numpy.floating], float]
+    :raises ValueError: If ``porosity`` is not in ``[0, 1)``, or required
+                        moduli are non-positive.
+    
+    .. note::
+    
+       The scalar Biot coefficient is defined as
+    
+       .. math::
+    
+          \\alpha = 1 - \\frac{K_\\mathrm{dry}}{K_\\mathrm{mineral}}.
+    
+       The inverse Biot modulus is computed as
+    
+       .. math::
+    
+          M^{-1} = \\frac{\\alpha - \\phi}{K_\\mathrm{mineral}} +
+                   \\frac{\\phi}{K_\\mathrm{fluid}},
+    
+       where :math:`\\phi` is porosity. When a fabric tensor is
+       available, eigenvalues of the fabric are used to weight ``alpha``
+       directionally, forming a principal tensor which is then rotated
+       back to the global coordinates.
+    
+       If the fabric tensor is degenerate (sum of eigenvalues
+       non-positive), an isotropic tensor :math:`\\alpha I_3` is used.
+    
+    .. code-block:: python
+    
+       # Example: Biot coefficient tensor from moduli and fabric
+       K_dry = 2.0e9
+       K_min = 8.0e9
+       K_fluid = 2.2e9
+       phi = 0.3
+       eulers = np.random.rand(100, 3)
+    
+       alpha, alpha_tensor, Minv = biot_stress(
+           K_dry,
+           K_min,
+           K_fluid,
+           porosity=phi,
+           euler_angles=eulers,
+       )
+    
     """
-    alpha = 1 - K_dry / K_mineral 
+    if not (0.0 <= porosity < 1.0):
+        raise ValueError("porosity must lie in [0, 1)")
+    if K_dry <= 0 or K_mineral <= 0 or K_fluid <= 0:
+        raise ValueError("K_dry, K_mineral, and K_fluid must be positive")
+    
+    # Scalar Biot coefficient
+    alpha = 1.0 - K_dry / K_mineral
+    
+    # If no fabric is provided, just return isotropic tensor and Minv
+    if euler_angles is None:
+        alpha_global = alpha * np.eye(3)
+        Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
+        return alpha, alpha_global, Minv
     
     F = fabric_tensor(euler_angles)
-    eigval, eigvec = np.linalg.eig(F) 
+    eigval, eigvec = np.linalg.eig(F)
     
     if np.sum(eigval) <= 0.0:
         # Degenerate: fallback isotropic
         alpha_global = alpha * np.eye(3)
         Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
-        return alpha, alpha_global 
+        return alpha, alpha_global, Minv
     
-    eigval_norm =  eigval / np.sum(eigval) 
+    eigval_norm = eigval / np.sum(eigval)
     
     alpha_principal = np.diag(3.0 * alpha * eigval_norm)
     alpha_global = eigvec @ alpha_principal @ eigvec.T
@@ -2547,24 +2736,81 @@ def biot_stress(K_dry, K_mineral, K_fluid, porosity, euler_angles = None):
     
     return alpha, alpha_global, Minv
 
-def mass_matrix_tensor(rho_s, rho_f, porosity, tau = None):
+# -----------------------------------------------------------------------------
+def mass_matrix_tensor(
+        rho_s: float,
+        rho_f: float,
+        porosity: float,
+        tau: NDArray[np.floating] | None = None,
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """
-    rho_s - effective density of the solid matrix
-    rho_f - effective density of the fluid 
-    porosity - [0,1)
-    tau - tortuosity tensor (optional)
+    Compute Biot-type mass (inertial) coupling tensors for a porous medium.
+    
+    The solid, fluid, and coupling mass tensors are formed from the
+    solid and fluid densities, porosity, and an optional tortuosity
+    tensor.
+    
+    :param rho_s: Effective density of the solid matrix in kg/m³.
+    :type rho_s: float
+    :param rho_f: Effective density of the pore fluid in kg/m³.
+    :type rho_f: float
+    :param porosity: Porosity as a fraction in the range ``[0, 1)``.
+    :type porosity: float
+    :param tau: Optional 3x3 tortuosity tensor. If ``None``, the
+                identity tensor is used (isotropic tortuosity).
+    :type tau: numpy.typing.NDArray[numpy.floating] or None
+    :returns: A tuple ``(rho11, rho12, rho22)`` of 3x3 tensors where:
+              ``rho11`` is the effective solid-phase mass tensor,
+              ``rho12`` is the solid–fluid coupling mass tensor, and
+              ``rho22`` is the effective fluid-phase mass tensor.
+    :rtype: tuple[
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating],
+        numpy.typing.NDArray[numpy.floating]
+    ]
+    :raises ValueError: If ``porosity`` is not in ``[0, 1)`` or if ``tau``
+                        is provided but not 3x3.
+    
+    .. note::
+    
+       When ``tau`` is the identity tensor, the expressions reduce to
+    
+       .. math::
+    
+          \\rho_{11} &= (1-\\phi)\\,\\rho_s I + \\phi\\,\\rho_f I,\\\\
+          \\rho_{12} &= 0,\\\\
+          \\rho_{22} &= \\phi\\,\\rho_f I,
+    
+       where :math:`\\phi` is porosity, :math:`I` is the identity
+       tensor, and :math:`\\rho_s`, :math:`\\rho_f` are solid and fluid
+       densities.
+    
+    .. code-block:: python
+    
+       # Example: mass tensors for a simple porous medium
+       rho_s = 2600.0  # kg/m^3
+       rho_f = 1000.0  # kg/m^3
+       phi = 0.3
+    
+       rho11, rho12, rho22 = mass_matrix_tensor(rho_s, rho_f, phi)
+    
     """
-    I = np.eye(3)
+    if not (0.0 <= porosity < 1.0):
+        raise ValueError("porosity must lie in [0, 1)")
+    I = np.eye(3, dtype=float)
     
     if tau is None:
         tau = I.copy()
-        
-    rho11 = (1 - porosity) * rho_s * I + porosity * rho_f * tau
-    rho12 = porosity * rho_f * (tau - I ) 
+    else:
+        tau = np.asarray(tau, dtype=float)
+        if tau.shape != (3, 3):
+            raise ValueError("tau must be a 3x3 tensor if provided")
+    
+    rho11 = (1.0 - porosity) * rho_s * I + porosity * rho_f * tau
+    rho12 = porosity * rho_f * (tau - I)
     rho22 = porosity * rho_f * tau
     
     return rho11, rho12, rho22
-
 
 # ==============================================================================
 #                                Permittivity
