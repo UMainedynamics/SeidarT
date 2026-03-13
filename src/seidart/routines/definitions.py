@@ -268,33 +268,66 @@ def loadproject(
     data = readwrite_json(project_file)
     
     # ----------------------------- Domain Values ------------------------------
-    (
-        domain.dim, domain.nx, domain.ny, domain.nz, 
-        domain.dx, domain.dy, domain.dz, domain.cpml, 
-        domain.nmats, 
-        domain.alpha_max_scalar, domain.kappa_max,
-        domain.NP, domain.NPA, domain.Rcoef,
-        domain.imfile 
-    ) = list(data['Domain'].values())
+    domain.dim = data['Domain']['dim']
+    domain.nx = data['Domain']['nx']
+    domain.ny = data['Domain']['ny']
+    domain.nz = data['Domain']['nz']
+    domain.dx = data['Domain']['dx']
+    domain.dy = data['Domain']['dy']
+    domain.dz = data['Domain']['dz']
+    domain.cpml = data['Domain']['cpml']
+    domain.nmats = data['Domain']['nmats']
+    domain.alpha_max_scalar = data['Domain']['alpha_max_scalar']
+    domain.kappa_max = data['Domain']['kappa_max']
+    domain.NP = data['Domain']['NP']
+    domain.NPA = data['Domain']['NPA']
+    domain.Rcoef = data['Domain']['Rcoef']
+    domain.imfile = data['Domain']['image_file']
+    # (
+    #     domain.dim, domain.nx, domain.ny, domain.nz, 
+    #     domain.dx, domain.dy, domain.dz, domain.cpml, 
+    #     domain.nmats, 
+    #     domain.alpha_max_scalar, domain.kappa_max,
+    #     domain.NP, domain.NPA, domain.Rcoef,
+    #     domain.imfile 
+    # ) = list(data['Domain'].values())
     im,__ = image2int(data['Domain']['image_file'])
     domain.geometry = im.transpose().astype(int)
     
     # ---------------------------- Seismic Values ------------------------------
-    (
-        seismic.dt, seismic.time_steps,
-        seismic.x, seismic.y, seismic.z, 
-        seismic.xind, seismic.yind, seismic.zind,
-        seismic.f0, seismic.theta, seismic.phi, seismic.psi,
-        seismic.source_amplitude, seismic.source_wavelet, seismic.source_type    
-    ) = list(data['Seismic']['Source'].values())
     
-    (
-        electromag.dt, electromag.time_steps,
-        electromag.x, electromag.y, electromag.z,
-        electromag.xind, electromag.yind, electromag.zind,
-        electromag.f0, electromag.theta, electromag.phi, electromag.psi,
-        electromag.source_amplitude, electromag.source_wavelet    
-    ) = list(data['Electromagnetic']['Source'].values())
+    seismic.dt = data['Seismic']['Source']['dt']
+    seismic.time_steps = data['Seismic']['Source']['time_steps'] 
+    seismic.x = data['Seismic']['Source']['x']
+    seismic.y = data['Seismic']['Source']['y']
+    seismic.z = data['Seismic']['Source']['z']
+    seismic.f0 = data['Seismic']['Source']['source_frequency']
+    seismic.theta = data['Seismic']['Source']['x-z_rotation']
+    seismic.phi = data['Seismic']['Source']['x-y_rotation']
+    seismic.psi = data['Seismic']['Source']['y-z_rotation']
+    seismic.source_amplitude = data['Seismic']['Source']['amplitude']
+    seismic.source_wavelet = data['Seismic']['Source']['source_wavelet']
+    seismic.source_type = data['Seismic']['Source']['source_type']
+    
+    electromag.dt = data['Electromagnetic']['Source']['dt']
+    electromag.time_steps = data['Electromagnetic']['Source']['time_steps'] 
+    electromag.x = data['Electromagnetic']['Source']['x']
+    electromag.y = data['Electromagnetic']['Source']['y']
+    electromag.z = data['Electromagnetic']['Source']['z']
+    electromag.f0 = data['Electromagnetic']['Source']['source_frequency']
+    electromag.theta = data['Electromagnetic']['Source']['x-z_rotation']
+    electromag.phi = data['Electromagnetic']['Source']['x-y_rotation']
+    electromag.psi = data['Electromagnetic']['Source']['y-z_rotation']
+    electromag.source_amplitude = data['Electromagnetic']['Source']['amplitude']
+    electromag.source_wavelet = data['Electromagnetic']['Source']['source_wavelet']
+    
+    # (
+    #     electromag.dt, electromag.time_steps,
+    #     electromag.x, electromag.y, electromag.z,
+    #     electromag.xind, electromag.yind, electromag.zind,
+    #     electromag.f0, electromag.theta, electromag.phi, electromag.psi,
+    #     electromag.source_amplitude, electromag.source_wavelet    
+    # ) = list(data['Electromagnetic']['Source'].values())
 
     # --------------------------- Indexed Values -------------------------------    
     # preallocate

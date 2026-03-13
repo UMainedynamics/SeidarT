@@ -11,8 +11,9 @@ SeidarT
 
 SeidarT: Seismic and Radar Toolbox for full-waveform modeling in snow, ice, and other complex materials.
 
-Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_
-..  ======================================================================
+Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_  
+
+-------------------------------------------------------------------------------------
 
 Introduction
 ------------
