@@ -947,10 +947,22 @@ class Model:
         for mat_id in material_ids:
             local_max = 0.0
             for direction in directions:
-                _, _, _, velocities = self.get_christoffel_matrix(mat_id, direction)
+                if self.is_seismic:
+                    coefs = self.stiffness_coefficients.loc[mat_id]
+                    _, _, _, velocities = mf.get_christoffel_matrix(coefs, self.f0, direction)
+                else:
+                    coefs = pd.concat(
+                        [
+                            self.permittivity_coefficients.loc[mat_id],
+                            self.conductivity_coefficients.loc[mat_id]
+                        ]
+                    )
+                    __, __, refr = mf.get_complex_refractive_index(coefs, self.f0, direction)
+                    velocities = clight / refr.real
+                
                 local_max = max(local_max, np.max(velocities))
             max_velocity_per_material[mat_id] = local_max
-            
+                    
         if not self.is_seismic:
             for key, value in max_velocity_per_material.items():
                 max_velocity_per_material[key] = 1/value
@@ -959,8 +971,7 @@ class Model:
             self.vmax_x = max_velocity_per_material 
         elif direction == 'z': 
             self.vmax_z = max_velocity_per_material 
-        else:
-            self.max_velocity_per_material = max_velocity_per_material
+        self.max_velocity_per_material = max_velocity_per_material
     
     # --------------------------------------------------------------------------
     def plot_lower_hemisphere_polarizations(self):

@@ -363,7 +363,7 @@ def pointsource(
         writesrc("seismicsourcezz.dat", sigma_zz)
         
     else:
-        R = rotator_sdr(modelclass.phi. modelclass.theta, modelclass.psi)       
+        R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
         forcez = R[0,2] * srcfn
         forcey = R[1,2] * srcfn
         forcex = R[2,2] * srcfn  
