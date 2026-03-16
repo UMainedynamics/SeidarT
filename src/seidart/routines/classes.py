@@ -947,7 +947,7 @@ class Model:
         for mat_id in material_ids:
             local_max = 0.0
             for direction in directions:
-                _, _, _, velocities = self.get_christoffel_matrix(mat_id, direction)
+                *_, _, _, velocities = self.get_christoffel_matrix(mat_id, direction)
                 local_max = max(local_max, np.max(velocities))
             max_velocity_per_material[mat_id] = local_max
             
