@@ -182,6 +182,8 @@ class CommonOffset(Array):
             self.domain.ny = self.domain.ny + 2 * int(self.domain.cpml)
         
         self.receiver_xyz = self.receiver_xyz.reshape(1,3)
+        
+        self.receiver_indices = self.receiver_xyz.astype(int)
         self.getrcx()
 
         # Put a bandaid on the domain values
@@ -268,7 +270,7 @@ class CommonOffset(Array):
             # Single-threaded execution
             for i in range(n):
                 timeseries = self.process_source(i)
-                self.co_image[:, i] = timeseries
+                self.co_image[:, i] = timeseries.flatten()
 
         # Update self.timeseries and save results
         self.timeseries = self.co_image
