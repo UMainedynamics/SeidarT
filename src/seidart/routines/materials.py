@@ -1624,7 +1624,7 @@ def moduli_rock(
     :param rock_type: Name of the rock type. Supported values include
                       ``"basalt"``, ``"granite"``, and ``"gneiss"``.
                       The comparison is case-insensitive.
-    :type rock_type: str
+    :type rock_type: st
     :param T: Temperature in degrees Celsius.
     :type T: float
     :param P: Confining pressure in megapascals (MPa).
