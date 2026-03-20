@@ -149,8 +149,6 @@ class Material:
         self.lwc = None
         self.is_anisotropic = None
         self.angfile = None
-        # self.permittivity_coefficients = None 
-        # self.conductivity_coefficients = None
 
         # The processing functions
         self.functions = mf

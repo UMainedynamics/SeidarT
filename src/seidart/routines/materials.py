@@ -3069,7 +3069,7 @@ def ice_permittivity(
         
     permittivity = np.eye(3,3) * perm_ast 
     if method == 'fujita':
-        permittivity[2,2] = complex(perm + dP, complex_perm) 
+        permittivity[2,2] = complex(perm + dP, -complex_perm) 
 
     return(permittivity)
 
@@ -3155,7 +3155,10 @@ def water_permittivity(temperature):
 def snow_conductivity(
         lwc: float = None, 
         permittivity: np.ndarray = None, 
-        frequency: float = None
+        frequency: float = None,
+        density: float = None,
+        temperature: float = None,
+        porosity: float = None
     ) -> np.ndarray:
     """
     Computes the electrical conductivity of snow given its liquid water content 
@@ -3174,7 +3177,8 @@ def snow_conductivity(
     """
 
     if np.iscomplexobj(permittivity):
-        sigma = permittivity.imag * frequency * eps0
+        eps_pp = -permittivity.imag # The negative accounts for the issue of python pulling the negative from the complex permittivity
+        sigma = eps_pp * frequency * eps0
     else:
         # granlund et al. (2010)
         _,_,grams_water = porewater_correction(
