@@ -3069,7 +3069,7 @@ def ice_permittivity(
         
     permittivity = np.eye(3,3) * perm_ast 
     if method == 'fujita':
-        permittivity[2,2] = complex(perm + dP, -complex_perm) 
+        permittivity[2,2] = complex(perm + dP, complex_perm) 
 
     return(permittivity)
 

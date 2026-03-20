@@ -125,7 +125,7 @@ def generate_template(nmats, **kwargs):
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
-                "x-z_rotation": 0,
+                "y-z_rotation": 0,
                 "amplitude": 1.0,
                 "source_wavelet": "gaus1"
             },
