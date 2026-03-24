@@ -3059,18 +3059,25 @@ def ice_permittivity(
     # The following is for 2-10 GHz. The details can be found in 
     if method == "kovacs":
         perm = (1 + 0.845 * density)**2
+        perm_perp = complex(perm, 0.0)
+        perm_par = complex(perm, 0.0)
     else: # Fujita et al. (2000)
         perm = 3.1884 + 9.1e-4 * temperature
         dP = 0.0256 + 3.57e-5 * (6.0e-6) * temperature
         complex_perm = fujita_complex_permittivity(
             temperature, center_frequency
         )
-        perm_ast = complex(perm, -complex_perm / 1.2)
         
-    permittivity = np.eye(3,3) * perm_ast 
-    if method == 'fujita':
-        permittivity[2,2] = complex(perm + dP, -complex_perm) 
-
+        perm_perp = complex(perm, -complex_perm)
+        perm_par = complex(perm + dP, -complex_perm*1.2)
+        
+    # permittivity = np.eye(3,3) * perm_ast 
+    # if method == 'fujita':
+    #     permittivity[2,2] = complex(perm + dP, -complex_perm) 
+    
+    permittivity = np.eye(3, dtype = complex) * perm_perp
+    permittivity[2,2] = perm_par
+    
     return(permittivity)
 
 # ------------------------------------------------------------------------------
@@ -3236,3 +3243,6 @@ def fujita_complex_permittivity(temperature: float, frequency: float) -> float:
     C_val = C_interp(temperature)
     epsilon_val = A_val/frequency + B_val*(frequency**C_val)
     return epsilon_val
+
+# -----------------------------------------------------------------------------
+def acidic_
