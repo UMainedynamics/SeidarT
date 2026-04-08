@@ -50,6 +50,8 @@ __all__ = [
 eps0 = 8.85418782e-12 # used for em only
 mu0 = 4.0*np.pi*1.0e-7 # used for em only
 c_light = 299792458
+R_gas = 8.314462618 
+
 """
 Seismic values can be found in: 
       Acoustics of Porous Media (1992), Bourbie, Coussy, and Zinszner
@@ -3232,11 +3234,11 @@ def fujita_complex_permittivity(temperature: float, frequency: float) -> float:
     :param frequency: The frequency at which to calculate permittivity, in Hz.
     :type temperature: float
     :type frequency: float
-    :return: The complex permittivity value.
+    :return: The complex permittivity value for pure ice.
     :rtype: float
     """
     # frequency = 1 is equivalent to 1 GHz or 1e9 Hz. The input is in Hz.
-    temperature = temperature + 273 # Convert to Kelvins
+    temperature = temperature + 273.15 # Convert to Kelvins
     frequency = frequency / 1e9
     A_val = A_interp(temperature)
     B_val = B_interp(temperature)
@@ -3245,4 +3247,183 @@ def fujita_complex_permittivity(temperature: float, frequency: float) -> float:
     return epsilon_val
 
 # -----------------------------------------------------------------------------
-def acidic_
+Ta = np.array([-10.0, -20.0, -30.0, -40.0]) # Celsius
+Aa = np.array([4.283, 4.875, 5.279, 4.996])
+Ba = np.array([-0.3337, -0.423, -0.480, -0.456])
+Aa_interp = interp1d(Ta, Aa, kind = 'cubic', fill_value = 'extrapolate')
+Ba_interp = interp1d(Ta, Ba, kind = 'cubic', fill_value = 'extrapolate')
+
+def ice_acidity_correction(
+        temperature: float,
+        frequency: float,
+        concentration: float,
+    ) -> np.ndarray:
+    """
+    Compute the real-permittivity correction tensor due to acidity in ice.
+    
+    The scalar acidity increment Δε'_iso(T, f, C) from Fujita et al. (2000)
+    is distributed isotropically and, optionally, anisotropically according
+    to a fabric/structure tensor A and a scalar weighting beta:
+    
+    
+    :param temperature:
+        Ice temperature in degrees Celsius (≈ -40 to -10 °C for the fits).
+    :type temperature: float
+    :param frequency:
+        Radar frequency in Hz at which to evaluate the correction.
+    :type frequency: float
+    :param concentration:
+        Acid concentration C in molar units consistent with Fujita's
+        definition (mol acid per liter of ice, or equivalent).
+    :type concentration: float
+    :type beta: float
+    
+    :return:
+        scalar Δε' to be added to the pure-ice real permittivity.
+    :rtype: numpy.ndarray
+    """
+    A_val = Aa_interp(temperature)
+    B_val = Ba_interp(temperature)
+    de_dC = (10.0 ** A_val) * (frequency ** B_val)
+    # Scalar increment from acidity
+    delta_eps = de_dC * concentration
+    return delta_eps
+
+def scalar2tensor(
+        scalar, 
+        A: np.ndarray = np.eye(3),
+        beta: float = 0.0
+    ) -> np.ndarray:
+    """
+    Lift a scalar into an anisotropic 3x3 tensor:
+
+        T = scalar * [ I + beta (A - I/3) ].
+
+    :param scalar: Isotropic magnitude.
+    :param A: 3x3 fabric/structure tensor (trace ≈ 1).
+    :param beta: Anisotropy weighting.
+    :return: 3x3 tensor.
+    """
+    I = np.eye(3)
+    deviator = A - I / 3.0
+    factor = I + beta * deviator 
+    tensor = scalar * factor 
+    return tensor 
+
+# ------------------------------------------------------------------------------
+def molar_coeff_T(
+        a_ref, 
+        E_a, 
+        temperature_K, 
+        temperature_ref: float = 258.15
+    ):
+    """
+    Wolff Eq. 3: temperature dependence of a molar conductivity coefficient estimated using the Arrhenius factor.
+
+    a(T) = a_ref * exp[ -E_a/R * (1/T - 1/T_ref) ]
+
+    where:
+      - a_ref is the coefficient at T_ref = 258.15 K (-15 °C),
+      - E_a_J_per_mol is activation energy in J/mol,
+      - temperature_K is T in Kelvin.
+    """
+    return a_ref * np.exp( - (E_a / R_gas) * ( 1 / temperature_K - 1/ temperature_ref) )
+ 
+def wolff_conductivity(
+        temperature_C: float,
+        concentrations: dict,
+        activation_energies: dict = {'a0': 21.0e3, 'aH': 21.0e3, 'aNH4': 21.0e3, 'aCl': 21.0e3},
+        a_ref: dict = {'a0': 9.0, 'aH': 4.0, 'aNH4': 1.0, 'aCl': 0.55},
+        A: np.ndarray = np.eye(3)
+    ):
+    """
+    Wolff-style scalar conductivity σ(T, C) from ions H+, NH4+, Cl-.
+
+    concentrations:
+        dict with keys 'H', 'NH4', 'Cl' giving concentrations in µeq/L.
+    activation_energies:
+        dict with keys 'a0', 'aH', 'aNH4', 'aCl' giving Ea in J/mol.
+        If None, a shared Ea = 21 kJ/mol is used for all coefficients.
+
+    Returns:
+        σ in S/m (SI units).
+    """
+    temperature = temperature_C + 273.15
+    a0 = molar_coeff_T(
+        a_ref['a0'], activation_energies['a0'], temperature
+    )
+    aH = molar_coeff_T(
+        a_ref['aH'], activation_energies['aH'], temperature
+    )
+    aNH4 = molar_coeff_T(
+        a_ref['aNH4'], activation_energies['aNH4'], temperature
+    )
+    aCl = molar_coeff_T(
+        a_ref['aCl'], activation_energies['aCl'], temperature
+    )
+    
+    sigma = a0 + aH*concentrations['H'] + aNH4*concentrations['NH4'] + aCl*concentrations['Cl']
+    # The above is output in microSiemens/m. We want to01[[]] output in Siemens/m
+    sigma *= 1e-6
+    return sigma
+
+# ------------------------------------------------------------------------------
+def wolff_fujita_complex_permittivity(
+        temperature_C,
+        frequency, 
+        density,
+        acidity_M: float,
+        concentrations,
+        A: np.ndarray = np.eye(3),
+        beta: float = 1.0,
+        a_ref: dict = None, 
+        activation_energies: dict = None,
+        T_ref: float = 263.15
+    ):
+    
+    # Do the real permittivity first
+    eps_real = ice_permittivity(
+        temperature_C, 
+        density, 
+        center_frequency = frequency
+    )
+    delta_eps = ice_acidity_correction(
+        temperature_C, 
+        frequency, 
+        acidity_M
+    )
+    sigma_acids = wolff_conductivity(
+        temperature_C, 
+        concentrations, 
+        activation_energies, 
+        a_ref
+    )
+    
+    # Turn those scalars into tensors
+    delta_eps_tensor = scalar2tensor(delta_eps, A, beta)
+    sigma_tensor = scalar2tensor(sigma_acids, A, beta)
+    
+    omega = 2.0 * np.pi * frequency 
+    eps_imag_tensor = sigma_tensor / (omega * eps0)
+    eps_real_tensor = eps_real + delta_eps_tensor
+    complex_permittivity = complex(eps_real + delta_eps_tensor, eps_imag)
+    return eps_real_tensor, eps_imag_tensor 
+
+# ------------------------------------------------------------------------------
+def jaccard_sigma(
+        n0: float, mu0: float, e_i: float, 
+        activation_energy: float, 
+        temperature_C: float,
+        T_ref: float = 258.15
+    ) -> float:
+    """
+    """
+    temperature = temperature_C + 273.15 
+    n_T = molar_coeff_T(
+        n0, activation_energy, temperature, T_ref
+    )
+    mu_T = molar_coeff_T(
+        mu0, activation_energy, temperature, T_ref
+    )
+    return n_T * mu_T * e_i
+
