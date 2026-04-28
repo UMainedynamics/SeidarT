@@ -320,6 +320,7 @@ def loadproject(
     electromag.psi = data['Electromagnetic']['Source']['y-z_rotation']
     electromag.source_amplitude = data['Electromagnetic']['Source']['amplitude']
     electromag.source_wavelet = data['Electromagnetic']['Source']['source_wavelet']
+    electromag.source_type = data['Electromagnetic']['Source']['source_type']
     
     # (
     #     electromag.dt, electromag.time_steps,

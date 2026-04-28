@@ -125,7 +125,7 @@ def generate_template(nmats, **kwargs):
                 "source_frequency": 1.0,
                 "x-z_rotation": 0,
                 "x-y_rotation": 0,
-                "x-z_rotation": 0,
+                "y-z_rotation": 0,
                 "amplitude": 1.0,
                 "source_wavelet": "gaus1"
             },
@@ -328,7 +328,17 @@ def readwrite_json(jsonfile: str, data: dict = None):
     """
     if data:
         with open(jsonfile, 'w') as file:
-            json.dump(data, file, indent = 4)
+            class NumpyEncoder(json.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+                    if isinstance(obj, np.floating):
+                        return float(obj)
+                    if isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return super(NumpyEncoder, self).default(obj)
+
+            json.dump(data, file, indent=4, cls=NumpyEncoder)
     else:
         with open(jsonfile, 'r') as file:
             data = json.load(file)

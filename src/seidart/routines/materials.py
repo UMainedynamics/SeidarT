@@ -4,6 +4,7 @@ from typing import Union, Tuple
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
+
 __all__ = [
     'vrh2',
     'vrh4',
@@ -38,12 +39,17 @@ __all__ = [
     'read_ang',
     'rotator',
     'rotator_euler',
+    'fabric_tensor',
     'trend_plunge_to_rotation_matrix',
     'rotation_matrix_to_trend_plunge_orientation',
     'rotation_matrix_to_euler_angles',
     'bond',
     'highfreq_stability_conditions',
-    'fujita_complex_permittivity'
+    'fujita_complex_permittivity',
+    'scalar2tensor',
+    'wolff_fujita_complex_permittivity',
+    'ice_acidity_correction',
+    'wolff_conductivity'
 ]
 
 # Global constants
@@ -1530,10 +1536,6 @@ def astiffness2moduli(
     return K_iso, mu_iso, C_isotropic
 
 # -----------------------------------------------------------------------------
-import numpy as np
-from numpy.typing import NDArray
-from typing import Tuple
-
 
 def bulk_modulus_water(T: float) -> Tuple[float, NDArray[np.floating]]:
     """
@@ -3334,7 +3336,6 @@ def wolff_conductivity(
         concentrations: dict,
         activation_energies: dict = {'a0': 21.0e3, 'aH': 21.0e3, 'aNH4': 21.0e3, 'aCl': 21.0e3},
         a_ref: dict = {'a0': 9.0, 'aH': 4.0, 'aNH4': 1.0, 'aCl': 0.55},
-        A: np.ndarray = np.eye(3)
     ):
     """
     Wolff-style scalar conductivity σ(T, C) from ions H+, NH4+, Cl-.
@@ -3400,13 +3401,17 @@ def wolff_fujita_complex_permittivity(
     )
     
     # Turn those scalars into tensors
+    eps_real_ave = np.trace(eps_real)/3
+    eps_real_fabric = scalar2tensor(eps_real_ave, A, beta) 
     delta_eps_tensor = scalar2tensor(delta_eps, A, beta)
     sigma_tensor = scalar2tensor(sigma_acids, A, beta)
     
     omega = 2.0 * np.pi * frequency 
+    eps_imag = sigma_acids / (omega * eps0)
+
     eps_imag_tensor = sigma_tensor / (omega * eps0)
-    eps_real_tensor = eps_real + delta_eps_tensor
-    complex_permittivity = complex(eps_real + delta_eps_tensor, eps_imag)
+    eps_real_tensor = eps_real_fabric + delta_eps_tensor
+    # complex_permittivity = complex(eps_real + delta_eps, eps_imag)
     return eps_real_tensor, eps_imag_tensor 
 
 # ------------------------------------------------------------------------------

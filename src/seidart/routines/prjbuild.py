@@ -127,7 +127,8 @@ def generate_template(nmats, **kwargs):
                 "x-y_rotation": 0,
                 "y-z_rotation": 0,
                 "amplitude": 1.0,
-                "source_wavelet": "gaus1"
+                "source_wavelet": "gaus1",
+                "source_type": "ps"
             },
             "Permittivity_Coefficients": [
                 {
