@@ -16,5 +16,5 @@ Module contents
 
 .. automodule:: seidart
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

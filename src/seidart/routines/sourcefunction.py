@@ -446,6 +446,21 @@ def pointsource(
 # ----------------------------------------------------------------------------
 
 def find_zero_crossing(timevec, wavelet_vals, noise_region=slice(0, 100), k=3):
+    """
+    Estimate the first zero crossing of a wavelet after thresholding noise.
+
+    :param timevec: Time vector associated with ``wavelet_vals``.
+    :type timevec: numpy.ndarray
+    :param wavelet_vals: Wavelet amplitude samples.
+    :type wavelet_vals: numpy.ndarray
+    :param noise_region: Slice used to estimate background noise.
+    :type noise_region: slice
+    :param k: Noise multiplier used as the zeroing threshold.
+    :type k: float
+    :return: Approximate zero-crossing time, or ``None`` if no crossing is
+        found.
+    :rtype: float or None
+    """
     sigma = np.std(wavelet_vals[noise_region])
     tol = k * sigma
     filtered_vals = np.where(np.abs(wavelet_vals) < tol, 0, wavelet_vals)
@@ -460,6 +475,26 @@ def find_zero_crossing(timevec, wavelet_vals, noise_region=slice(0, 100), k=3):
 
 # ----------------------------------------------------------------------------
 def main(prjfile: str, source_wavelet: str, factor: float, multimodal: bool, make_plot: bool) -> None:
+    """
+    Command-line entry point for source-time-function generation.
+
+    Parsed options are used to create seismic or electromagnetic source
+    functions and write them in the Fortran ``.dat`` format expected by the
+    SeidarT solvers.
+
+    :param prjfile: Project file path. Parsed from the command line.
+    :type prjfile: str
+    :param source_wavelet: Source wavelet type.
+    :type source_wavelet: str
+    :param factor: Source amplitude factor.
+    :type factor: float
+    :param multimodal: If ``True``, create multimodal source components.
+    :type multimodal: bool
+    :param make_plot: If ``True``, plot the generated source function.
+    :type make_plot: bool
+    :return: None
+    :rtype: None
+    """
     parser = argparse.ArgumentParser(
         description="""Generate source time functions in Fortran .dat format."""
     )

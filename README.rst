@@ -99,6 +99,7 @@ The software has been exercised on a limited number of operating systems in prac
 For animations or interactive visualization of large models, GPU and display limitations may become the bottleneck rather than CPU or memory; in those cases, subsampling output in space or time and exporting pre-rendered animations can improve usability. 
 
 .. =============================================================================
+
 Operating System requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

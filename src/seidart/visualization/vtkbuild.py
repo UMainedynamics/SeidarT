@@ -13,6 +13,13 @@ from pyevtk.hl import imageToVTK
 
 # ------------------------------ Run the program ------------------------------
 def build():
+    """
+    Convert SeidarT 3D field output files to VTK image data.
+
+    The function reads the global command-line configuration set by
+    :func:`main`, loads the project, constructs the spatial grid, and writes VTK
+    files for visualization tools that support image data.
+    """
     domain, material, seismic, electromag = loadproject(
         project_file,
         Domain(),

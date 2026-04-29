@@ -56,7 +56,7 @@ autodoc_mock_imports = [
     "trimesh",
 ]
 
-suppress_warnings = ["docutils", "myst.header"]
+suppress_warnings = ["myst.header"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

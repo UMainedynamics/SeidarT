@@ -14,6 +14,13 @@ from scipy.optimize import minimize
 
 # =============================================================================
 class MultiOffset(CommonOffset):
+    """
+    Common-offset extension for multi-offset survey workflows.
+
+    The class is intended to coordinate multiple source-receiver offsets and
+    normal-moveout style processing built on top of :class:`CommonOffset`.
+    """
+
     def multioffset_run(self):
         '''
         Simulate a multi-offset radar survey. The outputs for each source location are saved in a m-by-n-by-p where m is the length of the time series, n is the number of source locations, and p is the number of receivers. 
@@ -105,6 +112,13 @@ class MultiOffset(CommonOffset):
         plt.show()
 
 class LandStreamer(CommonOffset):
+    """
+    Processing helpers for land-streamer surface-wave workflows.
+
+    Methods in this class estimate dispersion curves, cluster candidate picks,
+    and invert simplified dispersion information into velocity models.
+    """
+
     def masw(self, data, sampling_rate):
         """
         Perform Multichannel Analysis of Surface Waves (MASW) on the given data.

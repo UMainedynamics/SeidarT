@@ -11,6 +11,14 @@ import copy
 import seidart.routines.materials as mf
 
 class Fabric:
+    """
+    Generate synthetic crystallographic fabric orientations.
+
+    ``Fabric`` builds trend, plunge, orientation, and Euler-angle populations
+    from distribution parameters and can optionally plot the resulting fabric on
+    a stereonet-style density projection.
+    """
+
     def __init__(self, params, output_filename = 'euler_angles.txt', plot = False):
         """
         Initialize the object. 

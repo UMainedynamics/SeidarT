@@ -492,9 +492,9 @@ class Array:
         :param figure_size: Specify the figure dimensions in inches. Default is
             (8,5) width and height, respectively.
         :type figure_size: Tuple[float, float]
-        :param **kwargs: Additional plotting parameters as defined in 
+        :param kwargs: Additional plotting parameters as defined in 
             matplotlib.pyplot.plot. 
-        :type **kwargs: dict
+        :type kwargs: dict
         
         """
         

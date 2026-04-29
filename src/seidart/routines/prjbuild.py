@@ -196,6 +196,20 @@ def parse_kwargs_to_path(kwarg_key):
 # ------------------------------------------------------------------------------
 # Helper function to set a value in a nested dictionary using dot notation
 def set_value_in_dict(data, path, value):
+    """
+    Set a value in a nested dictionary using a dotted path.
+
+    List indices can be specified with bracket notation, for example
+    ``"Materials[0].rgb"``.
+
+    :param data: Dictionary to update in place.
+    :type data: dict
+    :param path: Dotted path to the target field.
+    :type path: str
+    :param value: New value to assign.
+    :return: None
+    :rtype: None
+    """
     keys = path.split('.')
     d = data
     for key in keys[:-1]:
@@ -240,30 +254,26 @@ def set_value_by_id(data, section, id_value, field, value):
 # ------------------------------------------------------------------------------
 def update_json(template, updates):
     """
-    Updates the template JSON based on a dictionary of updates where the keys are a mixture of:
-    - dot notation paths
-    - underscore notation paths
-    - tuple notation, where the index or `id` can appear at different positions in the tuple.
-    
-    Parameters:
-    - template (dict): The JSON template to update.
-    - updates (dict): A dictionary where keys are paths (dot/underscore notation) or tuples, 
-                      and values are the new values to set.
-                      
-    # Example updates with tuple, dot, and underscore notation
-    updates = {
-        # Tuple with id at second index
-        ("Materials", 0, "rgb"): "255/0/0",   
-        # Tuple with id at third index
-        ("Seismic", "Attenuation", 1, "gamma_x"): 0.1,  
-        # Dot notation
-        "Domain.nx": 800,  
-        # Underscore notation
-        "Electromagnetic_0_Conductivity_0_s11": 0.002
-    }
-    
-    # Apply the updates
-    updated_template = update_json(template, updates)
+    Apply field updates to a generated project template.
+
+    Update keys may use dotted paths, underscore-separated paths, or tuple
+    paths that identify a section, material/model id, and field name.
+
+    :param template: Project-template dictionary to update in place.
+    :type template: dict
+    :param updates: Mapping from update paths to replacement values.
+    :type updates: dict
+    :return: Updated project-template dictionary.
+    :rtype: dict
+
+    .. code-block:: python
+
+       updates = {
+           ("Materials", 0, "rgb"): "255/0/0",
+           "Domain.nx": 800,
+           "Electromagnetic_0_Conductivity_0_s11": 0.002,
+       }
+       updated_template = update_json(template, updates)
     """
     for key, value in updates.items():
         if isinstance(key, tuple):
@@ -396,9 +406,23 @@ def prjbuild(
     
 
 def buildwizard(jsonfile):
+    """
+    Placeholder for an interactive project-file build workflow.
+
+    :param jsonfile: Path to the project JSON file to create or modify.
+    :type jsonfile: str
+    :return: None
+    :rtype: None
+    """
     pass 
 
 def main():
+    """
+    Command-line entry point for creating a SeidarT project file.
+
+    The command parses an input image path and output project-file path, then
+    calls :func:`prjbuild`.
+    """
     # -------------------------- Command Line Arguments ------------------------
     parser = argparse.ArgumentParser(description="""The SeidarT software 
         requires a .PNG image that is used to construct the model domain for 

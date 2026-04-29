@@ -245,10 +245,7 @@ def vrh2(
               tensor of shape ``(3, 3)``, and
               ``sigma_vrh`` is the corresponding averaged conductivity
               tensor of shape ``(3, 3)``.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating]
-    ]
+    :rtype: tuple
     :raises ValueError: If the input tensors are not 3x3 or if
                         ``eulerangles`` does not have shape ``(P, 3)``.
     
@@ -798,15 +795,12 @@ def tensor2velocities(
     velocities (``vpv, vph, vsv, vsh``) or EM phase velocities
     (``vx, vy, vz``).
     
-    :param T: Tensor representation. Accepted forms are:
-              - 1D array of length 6 (upper-triangular 2nd-order tensor),
-              - 1D array of length 21 (upper-triangular 4th-order tensor
-                in 6x6 Voigt notation),
-              - 3x3 or 6x6 full NumPy array, or
-              - :class:`pandas.DataFrame` with appropriate column names
-                (e.g. ``'e11'``, ``'e22'``, ``'e33'`` for EM, or
-                ``'c11'``, ``'c12'``, ``'c33'``, ``'c44'``, ``'rho'`` for
-                seismic).
+    :param T: Tensor representation. Accepted forms include a 1D array of
+              length 6, a 1D array of length 21, a 3x3 or 6x6 full NumPy
+              array, or a :class:`pandas.DataFrame` with appropriate column
+              names such as ``'e11'``, ``'e22'``, and ``'e33'`` for EM data or
+              ``'c11'``, ``'c12'``, ``'c33'``, ``'c44'``, and ``'rho'`` for
+              seismic data.
     :type T: numpy.typing.NDArray[numpy.floating] or pandas.DataFrame
     :param rho: Density in kg/m^3 used for seismic velocity calculation.
                 Ignored when a DataFrame with its own ``'rho'`` column
@@ -1048,12 +1042,7 @@ def get_christoffel_matrix(
               ``velocities`` are the (sorted) phase velocities obtained
               as the square roots of the eigenvalues (with negative
               values clipped to zero).
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating]
-    ]
+    :rtype: tuple
     :raises ValueError: If ``direction`` is an invalid string key, if the
                         propagation vector is zero, or if required
                         stiffness/density fields are missing.
@@ -1219,11 +1208,7 @@ def get_complex_refractive_index(
               ``vecs`` is the corresponding 2x2 matrix of eigenvectors,
               and ``complex_index`` is a 1D array of complex refractive
               indices for the two transverse modes.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.complexfloating],
-        numpy.typing.NDArray[numpy.complexfloating]
-    ]
+    :rtype: tuple
     :raises ValueError: If an invalid direction key is given, the
                         propagation vector is zero, or required fields
                         are missing.
@@ -3160,6 +3145,14 @@ def snow_permittivity(
 
 # -----------------------------------------------------------------------------
 def water_permittivity(temperature):
+    """
+    Placeholder for liquid-water permittivity as a function of temperature.
+
+    :param temperature: Water temperature in degrees Celsius.
+    :type temperature: float
+    :return: Currently returns ``None`` until the implementation is added.
+    :rtype: None
+    """
     pass
 
 # -----------------------------------------------------------------------------
@@ -3381,6 +3374,40 @@ def wolff_fujita_complex_permittivity(
         activation_energies: dict = None,
         T_ref: float = 263.15
     ):
+    """
+    Combine Wolff conductivity and Fujita permittivity corrections for ice.
+
+    The function computes a fabric-aware real-permittivity tensor, an acidity
+    correction tensor, and an imaginary-permittivity tensor derived from ionic
+    conductivity.
+
+    :param temperature_C: Ice temperature in degrees Celsius.
+    :type temperature_C: float
+    :param frequency: Radar frequency in Hz.
+    :type frequency: float
+    :param density: Ice density in kg/m^3.
+    :type density: float
+    :param acidity_M: Acid concentration used by
+        :func:`ice_acidity_correction`.
+    :type acidity_M: float
+    :param concentrations: Ion concentrations for
+        :func:`wolff_conductivity`, typically with keys ``"H"``, ``"NH4"``,
+        and ``"Cl"``.
+    :type concentrations: dict
+    :param A: Fabric tensor used to distribute scalar corrections.
+    :type A: numpy.ndarray
+    :param beta: Fabric anisotropy weighting.
+    :type beta: float
+    :param a_ref: Reference molar conductivity coefficients.
+    :type a_ref: dict, optional
+    :param activation_energies: Activation energies for each conductivity
+        coefficient.
+    :type activation_energies: dict, optional
+    :param T_ref: Reference temperature in Kelvin.
+    :type T_ref: float
+    :return: Tuple ``(eps_real_tensor, eps_imag_tensor)``.
+    :rtype: tuple[numpy.ndarray, numpy.ndarray]
+    """
     
     # Do the real permittivity first
     eps_real = ice_permittivity(
@@ -3925,4 +3952,3 @@ def em_backus_average(df, t1, t2, tensor_prefix="e", thickness_col="h"):
     E_eff_global = Q @ E_eff_local @ Q.T
 
     return E_eff_global, E_eff_local
-

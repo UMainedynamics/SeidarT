@@ -227,7 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">seidart</a><input aria-label="Toggle navigation of seidart" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
@@ -607,23 +607,16 @@ as the square roots of the eigenvalues (with negative
 values clipped to zero).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating]</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
-</dl>
-<p>]
-:raises ValueError: If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is an invalid string key, if the</p>
-<blockquote>
-<div><p>propagation vector is zero, or if required
-stiffness/density fields are missing.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is neither a recognized string
-nor a 3-element NumPy array.</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is an invalid string key, if the
+propagation vector is zero, or if required
+stiffness/density fields are missing.</p></li>
+<li><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is neither a recognized string
+nor a 3-element NumPy array.</p></li>
+</ul>
 </dd>
 </dl>
 <div class="admonition note">
@@ -685,22 +678,16 @@ and <code class="docutils literal notranslate"><span class="pre">complex_index</
 indices for the two transverse modes.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.complexfloating],
-numpy.typing.NDArray[numpy.complexfloating]</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
-</dl>
-<p>]
-:raises ValueError: If an invalid direction key is given, the</p>
-<blockquote>
-<div><p>propagation vector is zero, or required fields
-are missing.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is neither a recognized string
-nor a 3-element NumPy array.</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If an invalid direction key is given, the
+propagation vector is zero, or required fields
+are missing.</p></li>
+<li><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">direction</span></code> is neither a recognized string
+nor a 3-element NumPy array.</p></li>
+</ul>
 </dd>
 </dl>
 <div class="admonition note">
@@ -1433,20 +1420,12 @@ velocities (<code class="docutils literal notranslate"><span class="pre">vpv,</s
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>T</strong> (<em>numpy.typing.NDArray</em><em>[</em><em>numpy.floating</em><em>] or </em><em>pandas.DataFrame</em>) – <p>Tensor representation. Accepted forms are:
-- 1D array of length 6 (upper-triangular 2nd-order tensor),
-- 1D array of length 21 (upper-triangular 4th-order tensor</p>
-<blockquote>
-<div><p>in 6x6 Voigt notation),</p>
-</div></blockquote>
-<ul>
-<li><p>3x3 or 6x6 full NumPy array, or</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> with appropriate column names
-(e.g. <code class="docutils literal notranslate"><span class="pre">'e11'</span></code>, <code class="docutils literal notranslate"><span class="pre">'e22'</span></code>, <code class="docutils literal notranslate"><span class="pre">'e33'</span></code> for EM, or
-<code class="docutils literal notranslate"><span class="pre">'c11'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c12'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c33'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c44'</span></code>, <code class="docutils literal notranslate"><span class="pre">'rho'</span></code> for
-seismic).</p></li>
-</ul>
-</p></li>
+<li><p><strong>T</strong> (<em>numpy.typing.NDArray</em><em>[</em><em>numpy.floating</em><em>] or </em><em>pandas.DataFrame</em>) – Tensor representation. Accepted forms include a 1D array of
+length 6, a 1D array of length 21, a 3x3 or 6x6 full NumPy
+array, or a <code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> with appropriate column
+names such as <code class="docutils literal notranslate"><span class="pre">'e11'</span></code>, <code class="docutils literal notranslate"><span class="pre">'e22'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'e33'</span></code> for EM data or
+<code class="docutils literal notranslate"><span class="pre">'c11'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c12'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c33'</span></code>, <code class="docutils literal notranslate"><span class="pre">'c44'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'rho'</span></code> for
+seismic data.</p></li>
 <li><p><strong>rho</strong> (<em>float</em>) – Density in kg/m^3 used for seismic velocity calculation.
 Ignored when a DataFrame with its own <code class="docutils literal notranslate"><span class="pre">'rho'</span></code> column
 is provided. Default is <code class="docutils literal notranslate"><span class="pre">910.0</span></code>.</p></li>
@@ -1592,16 +1571,13 @@ tensor of shape <code class="docutils literal notranslate"><span class="pre">(3,
 tensor of shape <code class="docutils literal notranslate"><span class="pre">(3,</span> <span class="pre">3)</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating]</p>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input tensors are not 3x3 or if
+<code class="docutils literal notranslate"><span class="pre">eulerangles</span></code> does not have shape <code class="docutils literal notranslate"><span class="pre">(P,</span> <span class="pre">3)</span></code>.</p>
 </dd>
 </dl>
-<p>]
-:raises ValueError: If the input tensors are not 3x3 or if</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">eulerangles</span></code> does not have shape <code class="docutils literal notranslate"><span class="pre">(P,</span> <span class="pre">3)</span></code>.</p>
-</div></blockquote>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Voigt averages are formed by rotating the tensors into the
@@ -1703,7 +1679,37 @@ If None, a shared Ea = 21 kJ/mol is used for all coefficients.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.materials.wolff_fujita_complex_permittivity">
 <span class="sig-prename descclassname"><span class="pre">seidart.routines.materials.</span></span><span class="sig-name descname"><span class="pre">wolff_fujita_complex_permittivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature_C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acidity_M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concentrations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([[1.,</span> <span class="pre">0.,</span> <span class="pre">0.],</span> <span class="pre">[0.,</span> <span class="pre">1.,</span> <span class="pre">0.],</span> <span class="pre">[0.,</span> <span class="pre">0.,</span> <span class="pre">1.]])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_energies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">263.15</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.materials.wolff_fujita_complex_permittivity" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Combine Wolff conductivity and Fujita permittivity corrections for ice.</p>
+<p>The function computes a fabric-aware real-permittivity tensor, an acidity
+correction tensor, and an imaginary-permittivity tensor derived from ionic
+conductivity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature_C</strong> (<em>float</em>) – Ice temperature in degrees Celsius.</p></li>
+<li><p><strong>frequency</strong> (<em>float</em>) – Radar frequency in Hz.</p></li>
+<li><p><strong>density</strong> (<em>float</em>) – Ice density in kg/m^3.</p></li>
+<li><p><strong>acidity_M</strong> (<em>float</em>) – Acid concentration used by
+<a class="reference internal" href="#seidart.routines.materials.ice_acidity_correction" title="seidart.routines.materials.ice_acidity_correction"><code class="xref py py-func docutils literal notranslate"><span class="pre">ice_acidity_correction()</span></code></a>.</p></li>
+<li><p><strong>concentrations</strong> (<em>dict</em>) – Ion concentrations for
+<a class="reference internal" href="#seidart.routines.materials.wolff_conductivity" title="seidart.routines.materials.wolff_conductivity"><code class="xref py py-func docutils literal notranslate"><span class="pre">wolff_conductivity()</span></code></a>, typically with keys <code class="docutils literal notranslate"><span class="pre">&quot;H&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;NH4&quot;</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">&quot;Cl&quot;</span></code>.</p></li>
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – Fabric tensor used to distribute scalar corrections.</p></li>
+<li><p><strong>beta</strong> (<em>float</em>) – Fabric anisotropy weighting.</p></li>
+<li><p><strong>a_ref</strong> (<em>dict</em><em>, </em><em>optional</em>) – Reference molar conductivity coefficients.</p></li>
+<li><p><strong>activation_energies</strong> (<em>dict</em><em>, </em><em>optional</em>) – Activation energies for each conductivity
+coefficient.</p></li>
+<li><p><strong>T_ref</strong> (<em>float</em>) – Reference temperature in Kelvin.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(eps_real_tensor,</span> <span class="pre">eps_imag_tensor)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[numpy.ndarray, numpy.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 

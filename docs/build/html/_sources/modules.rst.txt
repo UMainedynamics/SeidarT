@@ -1,5 +1,5 @@
-src
-===
+seidart
+=======
 
 .. toctree::
    :maxdepth: 4

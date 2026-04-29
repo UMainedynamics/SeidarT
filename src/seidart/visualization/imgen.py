@@ -386,5 +386,11 @@ class FDTDImage:
         )
 
     def addrcx(self):
+        """
+        Placeholder for adding receiver markers to the current plot.
+
+        :return: None
+        :rtype: None
+        """
         pass 
     

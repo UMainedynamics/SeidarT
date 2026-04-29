@@ -227,7 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">seidart</a><input aria-label="Toggle navigation of seidart" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
@@ -490,12 +490,9 @@ frequency, with invalid or out-of-range estimates set to
 <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating]</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
-<p>]</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>For each target frequency, the complex spectrum is extracted
@@ -564,18 +561,13 @@ where <code class="docutils literal notranslate"><span class="pre">nt</span></co
 to <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating]</p>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the automatically or manually determined
+velocity bounds satisfy <code class="docutils literal notranslate"><span class="pre">vmin</span> <span class="pre">&gt;=</span> <span class="pre">vmax</span></code>.</p>
 </dd>
 </dl>
-<p>]
-:raises ValueError: If the automatically or manually determined</p>
-<blockquote>
-<div><p>velocity bounds satisfy <code class="docutils literal notranslate"><span class="pre">vmin</span> <span class="pre">&gt;=</span> <span class="pre">vmax</span></code>.</p>
-</div></blockquote>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Initial phase-velocity estimates are obtained via
@@ -689,13 +681,9 @@ units, and
 <code class="docutils literal notranslate"><span class="pre">(len(freqs),</span> <span class="pre">len(ks))</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating]</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
-<p>]</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The temporal frequency axis is constructed using
@@ -1267,15 +1255,9 @@ vertical,
 full-length window is used.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[numpy.floating],
-numpy.typing.NDArray[<a href="#id1"><span class="problematic" id="id2">numpy.bool_</span></a>]</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
-<p>]</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The polarization attributes are computed from the eigenvectors and
@@ -1334,11 +1316,9 @@ coordinates, defaults to ‘receivers.xyz’.</p></li>
 <dd><p>Read data from an unformatted Fortran binary file and return it as a numpy
 array. This function supports reading data in single or double precision,
 and can handle complex data.</p>
-<dl class="simple">
-<dt>The domain parameter is expected to be an object with attributes</dt><dd><p><cite>dim</cite>, <cite>nx</cite>, <cite>ny</cite>, and <cite>nz</cite>.</p>
-</dd>
-</dl>
-<p>These are used to determine the shape of the returned numpy array.</p>
+<p>The domain parameter is expected to be an object with <code class="docutils literal notranslate"><span class="pre">dim</span></code>, <code class="docutils literal notranslate"><span class="pre">nx</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ny</span></code>, and <code class="docutils literal notranslate"><span class="pre">nz</span></code> attributes. These values determine the shape of the
+returned array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

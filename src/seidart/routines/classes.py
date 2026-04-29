@@ -26,11 +26,25 @@ __all__ = [
 
 # ------------------------------------------------------------------------------
 class Domain:
+    """
+    Simulation-domain parameters loaded from a SeidarT project file.
+
+    A ``Domain`` stores grid dimensions, grid spacing, CPML settings, geometry
+    labels, and flags indicating whether seismic or electromagnetic models are
+    enabled.
+    """
+
     def __init__(self):
         super().__init__()
         self.build()
 
     def build(self):
+        """
+        Initialize domain attributes to default empty values.
+
+        This method is called during construction and can be reused to reset a
+        ``Domain`` object before loading a project file.
+        """
         # Initialize variables
         self.geometry = None
         self.dim = None
@@ -60,6 +74,13 @@ class Domain:
         self.electromag_model = False
 
     def parameter_check(self):
+        """
+        Validate required domain settings and update ``exit_status``.
+
+        The method checks for geometry, grid spacing, CPML thickness, and 2.5D
+        y-direction defaults. A nonzero ``exit_status`` indicates missing or
+        inconsistent domain parameters.
+        """
         self.exit_status = 0
         # make sure there's a geometry. This implies whether nx, and nz exist
         if self.geometry is None:
@@ -760,6 +781,15 @@ class Model:
     
     # --------------------------------------------------------------------------
     def save_to_json(self, jsonfile = None):
+        """
+        Write model coefficient tables back into a project JSON file.
+
+        :param jsonfile: Project file to update. If omitted, ``self.project_file``
+            is used.
+        :type jsonfile: str, optional
+        :return: None
+        :rtype: None
+        """
         # First we can append the tensor_coefficients
         if self.is_seismic:
             section = "Seismic"
@@ -963,6 +993,23 @@ class Model:
     # --------------------------------------------------------------------------
     # Need to finish the EM version of this.
     def get_christoffel_matrix(self, material_indice, direction):
+        """
+        Compute direction-dependent wave properties for one material.
+
+        For seismic models this delegates to
+        :func:`seidart.routines.materials.get_christoffel_matrix`. For
+        electromagnetic models it delegates to
+        :func:`seidart.routines.materials.get_complex_refractive_index`.
+
+        :param material_indice: Row index of the material coefficient table.
+        :type material_indice: int
+        :param direction: Propagation direction, such as ``"x"``, ``"y"``,
+            ``"z"``, or a supported direction vector.
+        :type direction: str or numpy.ndarray
+        :return: Direction-dependent matrix/eigenvalue information returned by
+            the underlying materials helper.
+        :rtype: tuple
+        """
         if self.is_seismic:
             row = self.stiffness_coefficients.loc[material_indice]
             return mf.get_christoffel_matrix(row, self.f0, direction)
@@ -1115,21 +1162,26 @@ class Model:
             indice: int, parameter: str = 'velocity', direction = 'z'
         ):
         """
-        Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
-        directions with respect to z). The available options are:
-            'velocity', 'temperature', 'density', 'lwc', 'conductivity' (em only)
+        Extract a one-dimensional parameter profile from the model.
 
-        Defaults to 'velocity' which returns 4 m-by-1 arrays. All other options will 
-        return 2 m-by-1 arrays. 
+        The profile is sampled along the z-direction at a fixed x-index. The
+        ``parameter`` argument selects velocity or a material property such as
+        temperature, density, liquid-water content, porosity, or conductivity.
 
-        :param domain: The domain object of the model
+        :param domain: Domain object containing geometry and grid spacing.
         :type domain: Domain
-        :param material: The material object of the model
-        type material: Material
-        :param indice: Specify the x-indice to pull the 1D profile
+        :param material: Material object containing material-property tables.
+        :type material: Material
+        :param indice: X-index where the vertical profile is extracted.
         :type indice: int
-        :param parameter: Specify which parameter to use
+        :param parameter: Parameter to extract. Common values are
+            ``"velocity"``, ``"temperature"``, ``"density"``, ``"lwc"``,
+            ``"porosity"``, and ``"conductivity"``.
         :type parameter: str
+        :param direction: Propagation direction used when computing velocity.
+        :type direction: str
+        :return: Profile values for the requested parameter.
+        :rtype: numpy.ndarray
         """
 
         profile = domain.geometry[indice,:]

@@ -227,7 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">seidart</a><input aria-label="Toggle navigation of seidart" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
@@ -318,8 +318,8 @@ series of images and then use imagemagick to create a gif.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>project_file</strong> (<em>str</em>) – str: The project file path</p></li>
 <li><p><strong>channel</strong> (<em>str</em>) – str: The channel to query</p></li>
-<li><p><strong>indslice</strong> (<em>int</em>) – int: The index along the plane that we are slicing. <a href="#id1"><span class="problematic" id="id2">*</span></a>This
-isn’t corrected for the boundary layer.</p></li>
+<li><p><strong>indslice</strong> (<em>int</em>) – The index along the plane being sliced. This is not
+corrected for the boundary layer.</p></li>
 <li><p><strong>num_steps</strong> (<em>int</em>) – int: The number of time steps between frames</p></li>
 <li><p><strong>plane</strong> (<em>str</em>) – str: Specify what plane to slice (default = ‘xz’). The slice is the
 along the 3rd plane (i.e. y-ind for a ‘xz’ plane). Options are ‘xy’, ‘yz’, and ‘xz’.</p></li>

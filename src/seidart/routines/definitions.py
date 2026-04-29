@@ -82,9 +82,9 @@ def read_dat(
     array. This function supports reading data in single or double precision, 
     and can handle complex data.
     
-    The domain parameter is expected to be an object with attributes 
-        `dim`, `nx`, `ny`, and `nz`.
-    These are used to determine the shape of the returned numpy array.
+    The domain parameter is expected to be an object with ``dim``, ``nx``,
+    ``ny``, and ``nz`` attributes. These values determine the shape of the
+    returned array.
     
     :param fn: The filename of the data file to read.
     :type fn: str
@@ -1588,13 +1588,7 @@ def polarization_analysis(
               vertical,
               ``cone_mask`` is a boolean array that is ``True`` where a
               full-length window is used.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.bool_]
-    ]
+    :rtype: tuple
 
     .. note::
 
@@ -2302,11 +2296,7 @@ def compute_fk_spectrum(
               units, and
               ``P`` is a 2D power spectrum array with shape
               ``(len(freqs), len(ks))``.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating]
-    ]
+    :rtype: tuple
     
     .. note::
     
@@ -2557,10 +2547,7 @@ def compute_dispersion(
               ``vs`` is a 1D array of phase velocities in m/s for each
               frequency, with invalid or out-of-range estimates set to
               ``NaN``.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating]
-    ]
+    :rtype: tuple
     
     .. note::
 
@@ -2672,12 +2659,7 @@ def compute_dispersion_image(
               ``picks`` is a 1D array of sub-bin phase-velocity picks
               (m/s) at each frequency, with out-of-bounds values set
               to ``NaN``.
-    :rtype: tuple[
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating],
-        numpy.typing.NDArray[numpy.floating]
-    ]
+    :rtype: tuple
     :raises ValueError: If the automatically or manually determined
                         velocity bounds satisfy ``vmin >= vmax``.
     

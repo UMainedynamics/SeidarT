@@ -30,8 +30,8 @@ def slicer(
     :type project_file: str
     :param channel: str: The channel to query
     :type channel: str
-    :param indslice: int: The index along the plane that we are slicing. *This 
-        isn't corrected for the boundary layer. 
+    :param indslice: The index along the plane being sliced. This is not
+        corrected for the boundary layer.
     :type indslice: int
     :param num_steps: int: The number of time steps between frames
     :type num_steps: int

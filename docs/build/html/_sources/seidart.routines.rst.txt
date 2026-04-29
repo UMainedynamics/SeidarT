@@ -21,5 +21,5 @@ Module contents
 
 .. automodule:: seidart.routines
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

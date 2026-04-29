@@ -227,7 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">seidart</a><input aria-label="Toggle navigation of seidart" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
@@ -360,31 +360,31 @@ seismic parameters, and electromagnetic parameters derived from the image.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.prjbuild.update_json">
 <span class="sig-prename descclassname"><span class="pre">seidart.routines.prjbuild.</span></span><span class="sig-name descname"><span class="pre">update_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.prjbuild.update_json" title="Link to this definition">¶</a></dt>
-<dd><p>Updates the template JSON based on a dictionary of updates where the keys are a mixture of:
-- dot notation paths
-- underscore notation paths
-- tuple notation, where the index or <cite>id</cite> can appear at different positions in the tuple.</p>
-<p>Parameters:
-- template (dict): The JSON template to update.
-- updates (dict): A dictionary where keys are paths (dot/underscore notation) or tuples,</p>
-<blockquote>
-<div><p>and values are the new values to set.</p>
-</div></blockquote>
-<p># Example updates with tuple, dot, and underscore notation
-updates = {</p>
-<blockquote>
-<div><p># Tuple with id at second index
-(“Materials”, 0, “rgb”): “255/0/0”,
-# Tuple with id at third index
-(“Seismic”, “Attenuation”, 1, “gamma_x”): 0.1,
-# Dot notation
-“Domain.nx”: 800,
-# Underscore notation
-“Electromagnetic_0_Conductivity_0_s11”: 0.002</p>
-</div></blockquote>
-<p>}</p>
-<p># Apply the updates
-updated_template = update_json(template, updates)</p>
+<dd><p>Apply field updates to a generated project template.</p>
+<p>Update keys may use dotted paths, underscore-separated paths, or tuple
+paths that identify a section, material/model id, and field name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template</strong> (<em>dict</em>) – Project-template dictionary to update in place.</p></li>
+<li><p><strong>updates</strong> (<em>dict</em>) – Mapping from update paths to replacement values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated project-template dictionary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">updates</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;Materials&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;rgb&quot;</span><span class="p">):</span> <span class="s2">&quot;255/0/0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Domain.nx&quot;</span><span class="p">:</span> <span class="mi">800</span><span class="p">,</span>
+    <span class="s2">&quot;Electromagnetic_0_Conductivity_0_s11&quot;</span><span class="p">:</span> <span class="mf">0.002</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">updated_template</span> <span class="o">=</span> <span class="n">update_json</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

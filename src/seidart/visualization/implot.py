@@ -13,6 +13,13 @@ from seidart.visualization.imgen import *
 
 
 def main():
+    """
+    Command-line entry point for plotting a 2D wavefield snapshot.
+
+    The command loads a project file and one velocity component file, computes
+    the wavefield magnitude, overlays labels, and writes a PNG beside the input
+    velocity file.
+    """
     parser = argparse.ArgumentParser(
         description="""Plot a snapshop of the vector wavefield in 2D"""
     )
