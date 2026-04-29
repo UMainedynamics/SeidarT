@@ -28,7 +28,7 @@ Files to generate or edit
     there. From the command line, change directories to the project folder
     then run::
 
-        prjbuild -i /path/to/geometry/image.png -p project_filename.prj
+        prjbuild -i /path/to/geometry/image.png -o project_filename.json
 
     Below, we describe the project-file structure and how to edit it.
 
