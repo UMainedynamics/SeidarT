@@ -309,24 +309,17 @@
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
 <section id="general-workflow">
 <h2>General workflow<a class="headerlink" href="#general-workflow" title="Link to this heading">¶</a></h2>
-<p>Using SeidarT follows a relatively simple workflow.</p>
+<p>SeidarT uses a small number of input files and a repeatable workflow.</p>
 <ol class="arabic simple">
-<li><p>You need two or three files to start:</p></li>
+<li><p>Prepare a PNG model image. Each unique RGB color maps to one material.</p></li>
+<li><p>Create a receiver file as a CSV or XYZ-style text file with receiver coordinates.</p></li>
+<li><p>If one or more materials are anisotropic, provide the Euler-angle file referenced by the project JSON.</p></li>
+<li><p>Generate a project file with <code class="docutils literal notranslate"><span class="pre">prjbuild</span></code>.</p></li>
+<li><p>Edit the JSON project file to set the domain, materials, source, and survey settings.</p></li>
+<li><p>Run the survey workflow that matches your experiment, such as single-shot, common-offset, common-midpoint, or multioffset processing.</p></li>
+<li><p>Post-process the results with the plotting and animation utilities such as <code class="docutils literal notranslate"><span class="pre">arraybuild</span></code>, <code class="docutils literal notranslate"><span class="pre">im2anim</span></code>, <code class="docutils literal notranslate"><span class="pre">implot</span></code>, and <code class="docutils literal notranslate"><span class="pre">vtkbuild</span></code>.</p></li>
 </ol>
-<blockquote>
-<div><ul class="simple">
-<li><p>A 2D image saved in <em>png</em> format.</p></li>
-<li><p>A <em>csv</em> file listing the X,Y,Z coordinates of receivers for your survey</p></li>
-<li><p>If your material is anisotropic, you need a file in the format delimited file specifying the Euler angles for a number of crystals, with one triplet per line. See an example orientation file and/or generate one using the <code class="docutils literal notranslate"><span class="pre">orientation_tensor</span></code> function.</p></li>
-</ul>
-</div></blockquote>
-<ol class="arabic simple">
-<li><p>Generate a project file (using <code class="docutils literal notranslate"><span class="pre">prjbuild</span></code>) and edit that text file to set up your survey.</p></li>
-<li><p>Choose the style of survey you want to do [single shot, common offset, common midpoint, or (in development) polarimetric] and run the calculations.</p></li>
-<li><p>For single shot, you can create an animation of the wave propagation (<code class="docutils literal notranslate"><span class="pre">im2anim</span></code> for 2D or <code class="docutils literal notranslate"><span class="pre">vtkbuild</span></code> for 2.5D).</p></li>
-<li><p>Display your results as radar- or seismograms, or wiggle plots. You can also save the timeseries-receiver data in a <em>csv</em> file for further processing in different software.</p></li>
-</ol>
-<p>Output from the seismic model is m/s and from the radar model is V/m</p>
+<p>Seismic outputs are written as wavefield and receiver data in units of m/s. Electromagnetic outputs use V/m for the field components.</p>
 </section>
 <section id="files-to-generate-or-edit">
 <h2>Files to generate or edit<a class="headerlink" href="#files-to-generate-or-edit" title="Link to this heading">¶</a></h2>
@@ -337,26 +330,32 @@
 50 to 500 pixels for each direction. Each RGB color represents a different
 material, so <strong>the file must be saved with no antialiasing</strong>. Typically each pixel represents the same distance in x and z (in meters).
 To get started on a new project create a new folder and save the image
-to the folder. From the command line, change directories to the
-project folder then enter the following:</p>
+there. From the command line, change directories to the project folder
+then run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prjbuild</span> <span class="o">-</span><span class="n">i</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">geometry</span><span class="o">/</span><span class="n">image</span><span class="o">.</span><span class="n">png</span> <span class="o">-</span><span class="n">p</span> <span class="n">project_filename</span><span class="o">.</span><span class="n">prj</span>
 </pre></div>
 </div>
-<p>Below, we describe the <em>prj</em> file structure and how to edit it.</p>
+<p>Below, we describe the project-file structure and how to edit it.</p>
 </div></blockquote>
 </li>
 <li><p><em>receiver locations (text file, commonly receivers.xyz)</em></p>
 <blockquote>
-<div><p>A comma separated list of X,Y,Z coordinates (one set per line,
-with X,Y,Z as the first line) for receiver locations. Can use pixels, but
-more typically meters as the units.</p>
+<div><p>A comma-separated list of X,Y,Z coordinates, one receiver per line. The
+coordinates can be given in pixels or physical units, depending on how the
+project file is configured.</p>
+</div></blockquote>
+</li>
+<li><p><em>Euler-angle file</em> if using anisotropic materials</p>
+<blockquote>
+<div><p>A plain-text file with one Euler-angle triplet per line. The project file
+points to this file for materials marked as anisotropic.</p>
 </div></blockquote>
 </li>
 <li><p><em>project file (.json)</em></p>
 <blockquote>
-<div><p>This file is the heart of the software. It defines domain values, material properties, and survey conditions for
-electromagnetic and seismic runs. Here, we identify what each line means and which to edit.
-All lines with # are comments. Bold text indicates a line the user should edit.</p>
+<div><p>This file defines the domain, materials, source parameters, and survey
+settings for both seismic and electromagnetic runs. It is the main file you
+edit after running <code class="docutils literal notranslate"><span class="pre">prjbuild</span></code>.</p>
 </div></blockquote>
 </li>
 </ul>

@@ -9,82 +9,78 @@ SeidarT
 .. [Hardware Requirements](#hardware-requirements)  
 .. [Operating System Requirements](#operating-system-requirements)   -->
 
-SeidarT: Seismic and Radar Toolbox for full-waveform modeling in snow, ice, and other complex materials.
+SeidarT is a Python and Fortran toolbox for full-waveform seismic and electromagnetic modeling in snow, ice, and other heterogeneous materials.
 
-Full documentation appears in the docs folder, but can also be accessed in `Github Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_.  We have also created a separate GitHub repo for examples called `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_  
+It uses a PNG-plus-JSON project workflow to define geometry, materials, sources, receivers, and boundary conditions. The repository also includes command-line tools and Python modules for building project files, running simulations, extracting receiver data, and generating plots or animations.
+
+Full documentation is in the `docs <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_ folder and published on `GitHub Pages <https://umainedynamics.github.io/SeidarT/docs/build/html/index.html>`_. Example workflows live in the separate `SeidarT-Recipes <https://github.com/UMainedynamics/SeidarT-Recipes>`_ repository.
 
 -------------------------------------------------------------------------------------
 
 Introduction
 ------------
 
-Introduction
-------------
+SeidarT is an open-source wave-physics toolkit for finite-difference time-domain modeling of elastic and electromagnetic propagation on a Cartesian grid. It is aimed at snow, ice, and similar heterogeneous media, but the workflow is general enough for other geological and engineered materials.
 
-The Seismic and Radar Toolbox (SeidarT) is an open-source, community-driven software package for full-waveform finite-difference time-domain (FDTD) modeling of elastic and electromagnetic wave propagation in heterogeneous, anisotropic, and attenuating media.  SeidarT targets applications in snow and ice but is general enough for other geological and engineered materials, including porous and partially saturated media.
-
-SeidarT natively supports full-tensor anisotropy (all 21 stiffness coefficients), frequency-independent attenuation via a generalized Q formulation, and unified treatment of both seismic and electromagnetic wave physics on a simple Cartesian grid.  The computational core is implemented in Fortran for performance, while a Python interface provides an accessible command-line and scripting environment for model construction, workflow automation, and post-processing.
-
-Models are defined using an intuitive image-plus-JSON workflow: users draw the model geometry as a PNG image (e.g., in Gimp or Inkscape), where pixel colors map to material IDs, and configure the simulation through a human-readable JSON project file specifying domain size, material properties (stiffness or permittivity tensors, density, conductivity), sources, and boundary conditions.  This approach eliminates complex meshing and makes it easy to implement isotropic and anisotropic complex geometries and velocity structures for building priors, performing parameter studies, and generating synthetic data.
-
-Although the manuscript focuses on cryospheric use cases (e.g., glacier internal structure, temperate layers, and englacial aquifers), SeidarT is designed as a general wave-physics toolbox.  It can be used for problems such as environmental monitoring, subsurface and infrastructure characterization, and other scenarios where fully coupled elastic or electromagnetic wavefields are needed.
+The core solvers are implemented in Fortran, while the Python package provides project-file generation, simulation setup, receiver extraction, plotting, animation, and VTK export. The package supports anisotropic materials, frequency-independent attenuation, and both 2D and 2.5D-style workflows through the project file and companion command-line tools.
 
 
 Dependencies
 ^^^^^^^^^^^^
 
+SeidarT is designed to keep the computing and documentation environments separate. For simulation work, use the `seidart-environment.yml` file. For docs generation, use `documentation-environment.yml`.
 
-SeidarT was built with the goal of having minimal system dependencies to avoid system updates causing deprecations and incompatibility. First, ensure that the GCC (gfortran) compiler is up to date with version 14 or greater. Second, install Miniconda (recommended) or Anaconda by following the directions posted on their `install page <https://docs.anaconda.com/miniconda/install/>`_.
+First, ensure that the GCC `gfortran` compiler is installed. Then install Miniconda or Anaconda using the directions on their `install page <https://docs.anaconda.com/miniconda/install/>`_.
 
 .. note::
 
     Documentation for managing conda environments with Miniconda or Anaconda can be found `here <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. The full Anaconda release has a GUI called Navigator for managing environments. This can be found on the `webpage <https://docs.anaconda.com/free/navigator/tutorials/manage-environments/>`_.
 
-SeidarT uses Python 3 as the high-level interface and Fortran for the time-critical finite-difference solvers.  Runtime dependencies include NumPy and standard scientific Python tools for I/O and visualization; see the environment YAML file in the repository for the exact dependency list. 
+SeidarT uses Python 3 as the high-level interface and Fortran for the time-critical finite-difference solvers. Runtime dependencies include NumPy and the scientific Python stack used for project setup, plotting, and post-processing; see the environment YAML files for the exact dependency lists.
 
 Installation
 ^^^^^^^^^^^^
 
-*SeidarT* was built to be installed on 64bit Arm and Intel architectures for Linux and Mac operating systems. For Windows users , `Windows Subsystem for Linux <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_ is recommended. Windows Subsystem for Linux (WSL) allows users to run a Linux environment without the need for a separate virtual machine or dual boot. `Setup and Install <https://learn.microsoft.com/en-us/windows/wsl/install>`_ of WSL is relatively easy, and file systems, desktop environments, and clipboards are shared.  *SeidarT* has been tested on Fedora, Solus 2, and Debian which covers a variety of flavors of Linux. The dynamical programming language of **Python3** is used as a command line interface to run the more computationally extensive modeling schemes in **Fortran**. There are a number of ways to install this software depending on your desired level of control over the process.
+*SeidarT* is intended for Linux and macOS systems on 64-bit Intel or ARM hardware. On Windows, `Windows Subsystem for Linux <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_ is the supported path. The Python layer drives the command-line workflows, and the Fortran backend does the heavy numerical work.
 
-`Source code <https://github.com/UMainedynamics/SeidarT>`_ can be found on GitHub. To get started, clone or download and extract the Github repo. The dropdown in the green "<> Code" will provide the option to download the ZIP file. If cloning via command line you will need to use the HTTPS link. From the command line::
+`Source code <https://github.com/UMainedynamics/SeidarT>`_ is available on GitHub. To get started, clone the repository and move into the root directory::
 
     git clone https://github.com/UMainedynamics/SeidarT.git 
 
 will create the SeidarT folder in the current working folder. Change directories into the root folder (SeidarT) and you will find the environment YAML file for creating the Miniconda/Anaconda environment and install all dependencies. Create the environment from the Bash terminal with the following commands::
 
-    conda env create -f seidart-environment.yml 
+    conda env create -f seidart-environment.yml
     conda activate seidart
 
-To finish installing run::
+Then install the package from source::
 
     pip install . 
 
-This will install the SeidarT package via source code in the *src* folder. To be sure that the installation was successful enter:: 
-    
+This installs the SeidarT package from the `src` layout. To confirm the install, run::
+
     conda list | grep seidart 
 
-If there are any issues on install please submit a ticket on the repository `issue tracker <https://github.com/UMainedynamics/SeidarT/issues>`_ This will help accommodate more system architectures and operating systems. 
+If there are any issues on install please submit a ticket on the repository `issue tracker <https://github.com/UMainedynamics/SeidarT/issues>`_.
 
-Fortran binaries are built locally to avoid operating system incompatibilities. To do so, you will need to clone the *SeidarT-Backend* repo::
+Fortran binaries are built locally to avoid operating-system incompatibilities. To do so, clone the *SeidarT-Backend* repo::
 
     git clone https://github.com/UMainedynamics/SeidarT-Backend.git
 
-Change directories into the SeidarT-Backend folder and activate the *seidart* environment if it is inactive. You can run the build script via Bash terminal::
+Change directories into the SeidarT-Backend folder and activate the *seidart* environment if it is inactive. Then run::
 
     bash build.sh 
 
-This will create the *seidart* executable and put them in the binaries folder associated to the environment. You can check to make sure there is only one *seidartfdtd* executable::
+This creates the `seidartfdtd` executable in the environment `bin` directory. You can confirm it with::
  
     ls $CONDA_PREFIX/bin/seidartfdtd*
 
 If you see multiple *seidartfdtd* files, delete them and recompile again with the *build.sh* script seen above. 
 
-*SeidarT-Recipes* does not need to be installed but it contains examples to help get started. You can simply pull it from Github in your preferred location::
+*SeidarT-Recipes* does not need to be installed, but it contains example workflows and input files. Clone it wherever you keep examples::
     
     git clone https://github.com/UMainedynamics/SeidarT-Recipes.git 
 
-It was built with the intent of being installable via pip so it has a src directory layout. You will find examples in the src/seidart-recipes folder
+It uses a `src` layout and includes runnable examples under `src/seidart-recipes`.
 
 
 .. =============================================================================

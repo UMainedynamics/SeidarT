@@ -4,20 +4,17 @@ Getting Started
 General workflow
 ~~~~~~~~~~~~~~~~
 
-Using SeidarT follows a relatively simple workflow.
+SeidarT uses a small number of input files and a repeatable workflow.
 
-#. You need two or three files to start:
+#. Prepare a PNG model image. Each unique RGB color maps to one material.
+#. Create a receiver file as a CSV or XYZ-style text file with receiver coordinates.
+#. If one or more materials are anisotropic, provide the Euler-angle file referenced by the project JSON.
+#. Generate a project file with ``prjbuild``.
+#. Edit the JSON project file to set the domain, materials, source, and survey settings.
+#. Run the survey workflow that matches your experiment, such as single-shot, common-offset, common-midpoint, or multioffset processing.
+#. Post-process the results with the plotting and animation utilities such as ``arraybuild``, ``im2anim``, ``implot``, and ``vtkbuild``.
 
-  * A 2D image saved in *png* format.
-  * A *csv* file listing the X,Y,Z coordinates of receivers for your survey
-  * If your material is anisotropic, you need a file in the format delimited file specifying the Euler angles for a number of crystals, with one triplet per line. See an example orientation file and/or generate one using the ``orientation_tensor`` function.
-
-#. Generate a project file (using ``prjbuild``) and edit that text file to set up your survey.
-#. Choose the style of survey you want to do [single shot, common offset, common midpoint, or (in development) polarimetric] and run the calculations.
-#. For single shot, you can create an animation of the wave propagation (``im2anim`` for 2D or ``vtkbuild`` for 2.5D).
-#. Display your results as radar- or seismograms, or wiggle plots. You can also save the timeseries-receiver data in a *csv* file for further processing in different software.
-
-Output from the seismic model is m/s and from the radar model is V/m
+Seismic outputs are written as wavefield and receiver data in units of m/s. Electromagnetic outputs use V/m for the field components.
 
 Files to generate or edit
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,22 +25,27 @@ Files to generate or edit
     50 to 500 pixels for each direction. Each RGB color represents a different
     material, so **the file must be saved with no antialiasing**. Typically each pixel represents the same distance in x and z (in meters).
     To get started on a new project create a new folder and save the image
-    to the folder. From the command line, change directories to the
-    project folder then enter the following::
+    there. From the command line, change directories to the project folder
+    then run::
 
         prjbuild -i /path/to/geometry/image.png -p project_filename.prj
 
-    Below, we describe the *prj* file structure and how to edit it.
+    Below, we describe the project-file structure and how to edit it.
 
 * *receiver locations (text file, commonly receivers.xyz)*
 
-    A comma separated list of X,Y,Z coordinates (one set per line,
-    with X,Y,Z as the first line) for receiver locations. Can use pixels, but
-    more typically meters as the units.
+    A comma-separated list of X,Y,Z coordinates, one receiver per line. The
+    coordinates can be given in pixels or physical units, depending on how the
+    project file is configured.
+
+* *Euler-angle file* if using anisotropic materials
+
+    A plain-text file with one Euler-angle triplet per line. The project file
+    points to this file for materials marked as anisotropic.
 
 
 * *project file (.json)*
 
-    This file is the heart of the software. It defines domain values, material properties, and survey conditions for
-    electromagnetic and seismic runs. Here, we identify what each line means and which to edit.
-    All lines with # are comments. Bold text indicates a line the user should edit.
+    This file defines the domain, materials, source parameters, and survey
+    settings for both seismic and electromagnetic runs. It is the main file you
+    edit after running ``prjbuild``.
