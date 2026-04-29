@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.materials module" href="seidart.routines.materials.html"><link rel="prev" title="seidart.routines.definitions module" href="seidart.routines.definitions.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.definitions module" href="seidart.routines.definitions.html"><link rel="prev" title="seidart.routines.arraybuild module" href="seidart.routines.arraybuild.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.routines.classes module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -174,7 +174,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -202,23 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -261,13 +300,688 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="seidart-routines-classes-module">
-<h1>seidart.routines.classes module<a class="headerlink" href="#seidart-routines-classes-module" title="Permalink to this heading">¶</a></h1>
+          <section id="module-seidart.routines.classes">
+<span id="seidart-routines-classes-module"></span><h1>seidart.routines.classes module<a class="headerlink" href="#module-seidart.routines.classes" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.classes.</span></span><span class="sig-name descname"><span class="pre">AnimatedGif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(640,</span> <span class="pre">480)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to create an animated GIF from a series of images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The size of the animated GIF in pixels (width, height),
+defaults to (640, 480)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.fig">
+<span class="sig-name descname"><span class="pre">fig</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.fig" title="Link to this definition">¶</a></dt>
+<dd><p>The figure object for the animation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.images">
+<span class="sig-name descname"><span class="pre">images</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.images" title="Link to this definition">¶</a></dt>
+<dd><p>A list of image frames to be included in the GIF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.background">
+<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.background" title="Link to this definition">¶</a></dt>
+<dd><p>Background image data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.source_location">
+<span class="sig-name descname"><span class="pre">source_location</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.source_location" title="Link to this definition">¶</a></dt>
+<dd><p>The location of the source point in</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">the</span> <span class="pre">plot.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.nx">
+<span class="sig-name descname"><span class="pre">nx</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.nx" title="Link to this definition">¶</a></dt>
+<dd><p>Width of the plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.nz">
+<span class="sig-name descname"><span class="pre">nz</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.nz" title="Link to this definition">¶</a></dt>
+<dd><p>Height of the plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.output_format">
+<span class="sig-name descname"><span class="pre">output_format</span></span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.output_format" title="Link to this definition">¶</a></dt>
+<dd><p>Format of the output file. 0 for GIF, 1 for other</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">formats.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.add" title="Link to this definition">¶</a></dt>
+<dd><p>Adds an image to the animation sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>np.ndarray</em>) – The image data to add.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label to add to the image, defaults to ‘’.</p></li>
+<li><p><strong>extent</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The extent of the image, defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.AnimatedGif.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.AnimatedGif.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save the animated GIF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – The name of the output file.</p></li>
+<li><p><strong>frame_rate</strong> (<em>int</em><em>, </em><em>optional</em>) – The frame rate of the animation, defaults to 50.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.routines.classes.Domain">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.classes.</span></span><span class="sig-name descname"><span class="pre">Domain</span></span><a class="headerlink" href="#seidart.routines.classes.Domain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Domain.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Domain.build" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Domain.parameter_check">
+<span class="sig-name descname"><span class="pre">parameter_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Domain.parameter_check" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.classes.</span></span><span class="sig-name descname"><span class="pre">Material</span></span><a class="headerlink" href="#seidart.routines.classes.Material" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to manage materials for simulation purposes.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.material_list">
+<span class="sig-name descname"><span class="pre">material_list</span></span><a class="headerlink" href="#seidart.routines.classes.Material.material_list" title="Link to this definition">¶</a></dt>
+<dd><p>An array to store the list of materials.
+A flag indicating whether the materials were read in successfully.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.material">
+<span class="sig-name descname"><span class="pre">material</span></span><a class="headerlink" href="#seidart.routines.classes.Material.material" title="Link to this definition">¶</a></dt>
+<dd><p>Stores material information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.rgb">
+<span class="sig-name descname"><span class="pre">rgb</span></span><a class="headerlink" href="#seidart.routines.classes.Material.rgb" title="Link to this definition">¶</a></dt>
+<dd><p>Stores RGB values for materials (not used currently).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.temp">
+<span class="sig-name descname"><span class="pre">temp</span></span><a class="headerlink" href="#seidart.routines.classes.Material.temp" title="Link to this definition">¶</a></dt>
+<dd><p>Stores temperature values for materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.rho">
+<span class="sig-name descname"><span class="pre">rho</span></span><a class="headerlink" href="#seidart.routines.classes.Material.rho" title="Link to this definition">¶</a></dt>
+<dd><p>Stores density values for materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.porosity">
+<span class="sig-name descname"><span class="pre">porosity</span></span><a class="headerlink" href="#seidart.routines.classes.Material.porosity" title="Link to this definition">¶</a></dt>
+<dd><p>Stores porosity values for materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.lwc">
+<span class="sig-name descname"><span class="pre">lwc</span></span><a class="headerlink" href="#seidart.routines.classes.Material.lwc" title="Link to this definition">¶</a></dt>
+<dd><p>Stores liquid water content values for materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.is_anisotropic">
+<span class="sig-name descname"><span class="pre">is_anisotropic</span></span><a class="headerlink" href="#seidart.routines.classes.Material.is_anisotropic" title="Link to this definition">¶</a></dt>
+<dd><p>Indicates if the material is anisotropic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.angfile">
+<span class="sig-name descname"><span class="pre">angfile</span></span><a class="headerlink" href="#seidart.routines.classes.Material.angfile" title="Link to this definition">¶</a></dt>
+<dd><p>Stores ANG file paths for anisotropic materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.functions">
+<span class="sig-name descname"><span class="pre">functions</span></span><a class="headerlink" href="#seidart.routines.classes.Material.functions" title="Link to this definition">¶</a></dt>
+<dd><p>Stores material processing functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.classes.Material.build" title="Link to this definition">¶</a></dt>
+<dd><p>Initializes the material attributes with default values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.parameter_check">
+<span class="sig-name descname"><span class="pre">parameter_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.classes.Material.parameter_check" title="Link to this definition">¶</a></dt>
+<dd><p>Checks the parameters of the material list for completeness.</p>
+<p>It ensures that necessary fields are provided and checks for the
+presence of .ANG files for anisotropic materials.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Material.sort_material_list">
+<span class="sig-name descname"><span class="pre">sort_material_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.classes.Material.sort_material_list" title="Link to this definition">¶</a></dt>
+<dd><p>Sorts the material list based on the material properties.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.classes.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><a class="headerlink" href="#seidart.routines.classes.Model" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to manage the simulation model configuration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.dt">
+<span class="sig-name descname"><span class="pre">dt</span></span><a class="headerlink" href="#seidart.routines.classes.Model.dt" title="Link to this definition">¶</a></dt>
+<dd><p>The time step size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.time_steps">
+<span class="sig-name descname"><span class="pre">time_steps</span></span><a class="headerlink" href="#seidart.routines.classes.Model.time_steps" title="Link to this definition">¶</a></dt>
+<dd><p>The total number of time steps in the simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.x">
+<span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#seidart.routines.classes.Model.x" title="Link to this definition">¶</a></dt>
+<dd><p>The x-coordinate of the source location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.y">
+<span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#seidart.routines.classes.Model.y" title="Link to this definition">¶</a></dt>
+<dd><p>The y-coordinate of the source location. Optional, defaults to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.z">
+<span class="sig-name descname"><span class="pre">z</span></span><a class="headerlink" href="#seidart.routines.classes.Model.z" title="Link to this definition">¶</a></dt>
+<dd><p>The z-coordinate of the source location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.f0">
+<span class="sig-name descname"><span class="pre">f0</span></span><a class="headerlink" href="#seidart.routines.classes.Model.f0" title="Link to this definition">¶</a></dt>
+<dd><p>The source frequency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.theta">
+<span class="sig-name descname"><span class="pre">theta</span></span><a class="headerlink" href="#seidart.routines.classes.Model.theta" title="Link to this definition">¶</a></dt>
+<dd><p>The angle of incidence in the xz-plane. Optional, defaults to 0 if
+unspecified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.phi">
+<span class="sig-name descname"><span class="pre">phi</span></span><a class="headerlink" href="#seidart.routines.classes.Model.phi" title="Link to this definition">¶</a></dt>
+<dd><p>The angle of incidence in the xy-plane. Optional, defaults to 0 if <cite>y</cite>
+is specified and <cite>phi</cite> is unspecified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.src">
+<span class="sig-name descname"><span class="pre">src</span></span><a class="headerlink" href="#seidart.routines.classes.Model.src" title="Link to this definition">¶</a></dt>
+<dd><p>The source information. Type is unspecified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.tensor_coefficients">
+<span class="sig-name descname"><span class="pre">tensor_coefficients</span></span><a class="headerlink" href="#seidart.routines.classes.Model.tensor_coefficients" title="Link to this definition">¶</a></dt>
+<dd><p>The tensor coefficients for the simulation. Optional, but required for
+tensor-based simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.compute_coefficients">
+<span class="sig-name descname"><span class="pre">compute_coefficients</span></span><a class="headerlink" href="#seidart.routines.classes.Model.compute_coefficients" title="Link to this definition">¶</a></dt>
+<dd><p>A flag indicating whether to compute coefficients. Defaults to True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.attenuation_coefficients">
+<span class="sig-name descname"><span class="pre">attenuation_coefficients</span></span><a class="headerlink" href="#seidart.routines.classes.Model.attenuation_coefficients" title="Link to this definition">¶</a></dt>
+<dd><p>The attenuation coefficients for the simulation. Optional.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.fref">
+<span class="sig-name descname"><span class="pre">fref</span></span><a class="headerlink" href="#seidart.routines.classes.Model.fref" title="Link to this definition">¶</a></dt>
+<dd><p>The reference frequency for attenuation. Optional.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.attenuation_fadjust">
+<span class="sig-name descname"><span class="pre">attenuation_fadjust</span></span><a class="headerlink" href="#seidart.routines.classes.Model.attenuation_fadjust" title="Link to this definition">¶</a></dt>
+<dd><p>Flag to adjust frequency for attenuation. Optional.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.exit_status">
+<span class="sig-name descname"><span class="pre">exit_status</span></span><a class="headerlink" href="#seidart.routines.classes.Model.exit_status" title="Link to this definition">¶</a></dt>
+<dd><p>Status code to indicate the success or failure of parameter checks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.add_noise">
+<span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalar_amplitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.add_noise" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>domain</strong> (<a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><em>Domain</em></a>) – The domain instance</p></li>
+<li><p><strong>scalar_amplitude</strong> (<em>float</em>) – The scalar value to multiply the noise by. The
+range of noise values are between 0 and 1.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.append_coefficients">
+<span class="sig-name descname"><span class="pre">append_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.append_coefficients" title="Link to this definition">¶</a></dt>
+<dd><p>Appends coefficients to the JSON dictionary based on the provided tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> (<em>np.ndarray</em>) – A numpy array containing the tensor coefficients to append.</p></li>
+<li><p><strong>tensor_name</strong> – The parameter that the tensor describes. Available
+options are Stiffness, Permittivity, Conductivity</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.atten2dat">
+<span class="sig-name descname"><span class="pre">atten2dat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.atten2dat" title="Link to this definition">¶</a></dt>
+<dd><p>Write per-material attenuation (gamma) coefficients to Fortran binary
+<code class="docutils literal notranslate"><span class="pre">.dat</span></code> files, extended into the CPML ghost-cell region.</p>
+<p>The last column of <em>tensor</em> is the reference frequency and is skipped
+(it is not written as a spatial field).</p>
+<p>Supports 2 / 2.5D and true 3D domains.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seidart.routines.classes.Material" title="seidart.routines.classes.Material"><span class="pre">Material</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><span class="pre">Domain</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute_tensors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.classes.Model.build" title="Link to this definition">¶</a></dt>
+<dd><p>Checks the status of the modeling classes and appends coefficients to the
+project file if necessary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>material</strong> (<a class="reference internal" href="#seidart.routines.classes.Material" title="seidart.routines.classes.Material"><em>Material</em></a>) – The material class instance.</p></li>
+<li><p><strong>domain</strong> (<a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><em>Domain</em></a>) – The domain class instance.</p></li>
+<li><p><strong>append_to_json</strong> (<em>bool</em>) – Flag to append coefficients to the project file.
+Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.compute_christoffel_directions">
+<span class="sig-name descname"><span class="pre">compute_christoffel_directions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_phi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.compute_christoffel_directions" title="Link to this definition">¶</a></dt>
+<dd><p>Compute eigenvectors from the Christoffel matrix over a grid of directions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>material_index</strong> (<em>int</em>) – Index of the material from stiffness_coefficients.</p></li>
+<li><p><strong>n_theta</strong> (<em>int</em>) – Number of points in inclination (from 0 to pi/2, lower hemisphere).</p></li>
+<li><p><strong>n_phi</strong> (<em>int</em>) – Number of azimuthal angles (from 0 to 2*pi).</p></li>
+<li><p><strong>Stores</strong></p></li>
+<li><p><strong>------</strong></p></li>
+<li><p><strong>self.christoffel_solutions</strong> (<em>list</em><em> of </em><em>dict</em>) – Each dict contains direction vector, eigenvectors, eigenvalues, velocities.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.compute_max_velocities">
+<span class="sig-name descname"><span class="pre">compute_max_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.compute_max_velocities" title="Link to this definition">¶</a></dt>
+<dd><p>Loop over all materials in the model and compute the maximum phase velocity
+for each material using the Christoffel matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directions</strong> – List of direction keys to use. Defaults to [‘x’, ‘y’, ‘z’, ‘xy’, ‘xz’, ‘yz’].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary {material_id: max_velocity}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.get_christoffel_matrix">
+<span class="sig-name descname"><span class="pre">get_christoffel_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material_indice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.get_christoffel_matrix" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.kband_check">
+<span class="sig-name descname"><span class="pre">kband_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.kband_check" title="Link to this definition">¶</a></dt>
+<dd><p>Check to make sure the discretization values of the domain satisfy the
+wavenumber bandlimiter as described in Volvcan et al. (2024).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>material</strong> (<a class="reference internal" href="#seidart.routines.classes.Material" title="seidart.routines.classes.Material"><em>Material</em></a>)</p></li>
+<li><p><strong>domain</strong> (<a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><em>Domain</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.parameter_check">
+<span class="sig-name descname"><span class="pre">parameter_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.classes.Model.parameter_check" title="Link to this definition">¶</a></dt>
+<dd><p>Performs parameter checks for essential simulation settings and updates
+the exit status accordingly.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.parameter_profile_1d">
+<span class="sig-name descname"><span class="pre">parameter_profile_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'velocity'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'z'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.parameter_profile_1d" title="Link to this definition">¶</a></dt>
+<dd><p>Get the values of a 1D profile for a parameter (i.e. velocity in the x,y,z
+directions with respect to z). The available options are:</p>
+<blockquote>
+<div><p>‘velocity’, ‘temperature’, ‘density’, ‘lwc’, ‘conductivity’ (em only)</p>
+</div></blockquote>
+<p>Defaults to ‘velocity’ which returns 4 m-by-1 arrays. All other options will
+return 2 m-by-1 arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>domain</strong> (<a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><em>Domain</em></a>) – The domain object of the model</p></li>
+<li><p><strong>material</strong> – The material object of the model</p></li>
+</ul>
+</dd>
+</dl>
+<p>type material: Material
+:param indice: Specify the x-indice to pull the 1D profile
+:type indice: int
+:param parameter: Specify which parameter to use
+:type parameter: str</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.plot_lower_hemisphere_polarizations">
+<span class="sig-name descname"><span class="pre">plot_lower_hemisphere_polarizations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.plot_lower_hemisphere_polarizations" title="Link to this definition">¶</a></dt>
+<dd><p>Plot lower hemisphere projections of P, SV, and SH polarization directions
+using previously computed Christoffel solutions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fig, axs</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matplotlib figure and axes objects.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.plot_unit_sphere_wave_speeds">
+<span class="sig-name descname"><span class="pre">plot_unit_sphere_wave_speeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material_indice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.plot_unit_sphere_wave_speeds" title="Link to this definition">¶</a></dt>
+<dd><p>Plot wave speeds on a unit sphere for a given material.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> – The class containing material properties and methods.</p></li>
+<li><p><strong>material_indice</strong> (<em>int</em>) – Index of the material in the DataFrame.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of unit sphere sample points.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None (displays figure).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.plotsource">
+<span class="sig-name descname"><span class="pre">plotsource</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.plotsource" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.run" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.save_to_json">
+<span class="sig-name descname"><span class="pre">save_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jsonfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.save_to_json" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.tensor2dat">
+<span class="sig-name descname"><span class="pre">tensor2dat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.tensor2dat" title="Link to this definition">¶</a></dt>
+<dd><p>Write per-material tensor coefficients to individual Fortran binary
+<code class="docutils literal notranslate"><span class="pre">.dat</span></code> files, extended into the CPML ghost-cell region by repeating
+the outermost interior value on every face.</p>
+<p>Supports 2 / 2.5D (geometry shape <code class="docutils literal notranslate"><span class="pre">(nx,</span> <span class="pre">nz)</span></code>) and true 3D (geometry
+shape <code class="docutils literal notranslate"><span class="pre">(nx,</span> <span class="pre">ny,</span> <span class="pre">nz)</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.tensor_test">
+<span class="sig-name descname"><span class="pre">tensor_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.tensor_test" title="Link to this definition">¶</a></dt>
+<dd><p>Test for positive definiteness and ellipticity so that we can ensure that
+our domain is physically stable in the continuum mechanics sense</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.classes.Model.writemask">
+<span class="sig-name descname"><span class="pre">writemask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seidart.routines.classes.Material" title="seidart.routines.classes.Material"><span class="pre">Material</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seidart.routines.classes.Domain" title="seidart.routines.classes.Domain"><span class="pre">Domain</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.classes.Model.writemask" title="Link to this definition">¶</a></dt>
+<dd><p>Write a binary geometry mask to <code class="docutils literal notranslate"><span class="pre">geometry_mask.dat</span></code>. Cells that
+belong to fluid-like materials (air, water, oil) are set to 1; all
+others are 0. Supports 2 / 2.5D and true 3D domains.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -275,23 +989,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="seidart.routines.materials.html">
+          <a class="next-page" href="seidart.routines.definitions.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">seidart.routines.materials module</div>
+                <div class="title">seidart.routines.definitions module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="seidart.routines.definitions.html">
+          <a class="prev-page" href="seidart.routines.arraybuild.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">seidart.routines.definitions module</div>
+                <div class="title">seidart.routines.arraybuild module</div>
                 
               </div>
             </a>
@@ -313,17 +1027,104 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">seidart.routines.classes module</a><ul>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif"><code class="docutils literal notranslate"><span class="pre">AnimatedGif</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.fig"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.fig</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.images"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.images</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.background"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.background</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.source_location"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.source_location</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.nx"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.nx</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.nz"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.nz</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.output_format"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.output_format</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.add"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.add()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.AnimatedGif.save"><code class="docutils literal notranslate"><span class="pre">AnimatedGif.save()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#seidart.routines.classes.Domain"><code class="docutils literal notranslate"><span class="pre">Domain</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.classes.Domain.build"><code class="docutils literal notranslate"><span class="pre">Domain.build()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Domain.parameter_check"><code class="docutils literal notranslate"><span class="pre">Domain.parameter_check()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material"><code class="docutils literal notranslate"><span class="pre">Material</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.material_list"><code class="docutils literal notranslate"><span class="pre">Material.material_list</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.material"><code class="docutils literal notranslate"><span class="pre">Material.material</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.rgb"><code class="docutils literal notranslate"><span class="pre">Material.rgb</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.temp"><code class="docutils literal notranslate"><span class="pre">Material.temp</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.rho"><code class="docutils literal notranslate"><span class="pre">Material.rho</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.porosity"><code class="docutils literal notranslate"><span class="pre">Material.porosity</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.lwc"><code class="docutils literal notranslate"><span class="pre">Material.lwc</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.is_anisotropic"><code class="docutils literal notranslate"><span class="pre">Material.is_anisotropic</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.angfile"><code class="docutils literal notranslate"><span class="pre">Material.angfile</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.functions"><code class="docutils literal notranslate"><span class="pre">Material.functions</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.build"><code class="docutils literal notranslate"><span class="pre">Material.build()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.parameter_check"><code class="docutils literal notranslate"><span class="pre">Material.parameter_check()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Material.sort_material_list"><code class="docutils literal notranslate"><span class="pre">Material.sort_material_list()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.dt"><code class="docutils literal notranslate"><span class="pre">Model.dt</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.time_steps"><code class="docutils literal notranslate"><span class="pre">Model.time_steps</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.x"><code class="docutils literal notranslate"><span class="pre">Model.x</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.y"><code class="docutils literal notranslate"><span class="pre">Model.y</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.z"><code class="docutils literal notranslate"><span class="pre">Model.z</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.f0"><code class="docutils literal notranslate"><span class="pre">Model.f0</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.theta"><code class="docutils literal notranslate"><span class="pre">Model.theta</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.phi"><code class="docutils literal notranslate"><span class="pre">Model.phi</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.src"><code class="docutils literal notranslate"><span class="pre">Model.src</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.tensor_coefficients"><code class="docutils literal notranslate"><span class="pre">Model.tensor_coefficients</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.compute_coefficients"><code class="docutils literal notranslate"><span class="pre">Model.compute_coefficients</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.attenuation_coefficients"><code class="docutils literal notranslate"><span class="pre">Model.attenuation_coefficients</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.fref"><code class="docutils literal notranslate"><span class="pre">Model.fref</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.attenuation_fadjust"><code class="docutils literal notranslate"><span class="pre">Model.attenuation_fadjust</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.exit_status"><code class="docutils literal notranslate"><span class="pre">Model.exit_status</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.add_noise"><code class="docutils literal notranslate"><span class="pre">Model.add_noise()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.append_coefficients"><code class="docutils literal notranslate"><span class="pre">Model.append_coefficients()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.atten2dat"><code class="docutils literal notranslate"><span class="pre">Model.atten2dat()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.build"><code class="docutils literal notranslate"><span class="pre">Model.build()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.compute_christoffel_directions"><code class="docutils literal notranslate"><span class="pre">Model.compute_christoffel_directions()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.compute_max_velocities"><code class="docutils literal notranslate"><span class="pre">Model.compute_max_velocities()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.get_christoffel_matrix"><code class="docutils literal notranslate"><span class="pre">Model.get_christoffel_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.kband_check"><code class="docutils literal notranslate"><span class="pre">Model.kband_check()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.parameter_check"><code class="docutils literal notranslate"><span class="pre">Model.parameter_check()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.parameter_profile_1d"><code class="docutils literal notranslate"><span class="pre">Model.parameter_profile_1d()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.plot_lower_hemisphere_polarizations"><code class="docutils literal notranslate"><span class="pre">Model.plot_lower_hemisphere_polarizations()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.plot_unit_sphere_wave_speeds"><code class="docutils literal notranslate"><span class="pre">Model.plot_unit_sphere_wave_speeds()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.plotsource"><code class="docutils literal notranslate"><span class="pre">Model.plotsource()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.run"><code class="docutils literal notranslate"><span class="pre">Model.run()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.save_to_json"><code class="docutils literal notranslate"><span class="pre">Model.save_to_json()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.tensor2dat"><code class="docutils literal notranslate"><span class="pre">Model.tensor2dat()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.tensor_test"><code class="docutils literal notranslate"><span class="pre">Model.tensor_test()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.classes.Model.writemask"><code class="docutils literal notranslate"><span class="pre">Model.writemask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

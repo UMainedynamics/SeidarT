@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html"><link rel="next" title="Visualization Modules" href="VISUALIZATION.html"><link rel="prev" title="seidart.routines.arraybuild module" href="seidart.routines.arraybuild.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.materials module" href="seidart.routines.materials.html"><link rel="prev" title="seidart.routines.definitions module" href="seidart.routines.definitions.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.routines.fabricsynth module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -202,25 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.routines.fabricsynth module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -269,45 +306,14 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="module-seidart.routines.fabricsynth">
-<span id="seidart-routines-fabricsynth-module"></span><h1>seidart.routines.fabricsynth module<a class="headerlink" href="#module-seidart.routines.fabricsynth" title="Permalink to this heading">¶</a></h1>
+<span id="seidart-routines-fabricsynth-module"></span><h1>seidart.routines.fabricsynth module<a class="headerlink" href="#module-seidart.routines.fabricsynth" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.routines.fabricsynth.</span></span><span class="sig-name descname"><span class="pre">Fabric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euler_angles.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric" title="Permalink to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.fabricsynth.</span></span><span class="sig-name descname"><span class="pre">Fabric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euler_angles.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.build">
-<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.build" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build the object.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.bunge_compute">
-<span class="sig-name descname"><span class="pre">bunge_compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.bunge_compute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the euler angles for the z-x-z transform (Bunge’s notation). A
-space delimited file will be produced from the output.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.custom_cmap">
-<span class="sig-name descname"><span class="pre">custom_cmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.custom_cmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute a custom colormap for the density plot.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>n_colors</strong> (<em>int</em>) – The number of colors to be used to compute the
-colormap. Default is 100.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.generate_trends_plunges">
-<span class="sig-name descname"><span class="pre">generate_trends_plunges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.generate_trends_plunges" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a set of trends and plunges according to a distribution.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.projection_plot">
-<span class="sig-name descname"><span class="pre">projection_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">density_sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.projection_plot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">projection_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">density_sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorbar_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bottom'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.projection_plot" title="Link to this definition">¶</a></dt>
 <dd><p>Create the stereonet plot. The axes and figure inputs are useful when
 creating subplots since replacing empty axes objects with mplstereonet
 axes objects is not straightforward.</p>
@@ -320,37 +326,12 @@ Default is 3.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.rotation_matrix_to_euler_angles">
-<span class="sig-name descname"><span class="pre">rotation_matrix_to_euler_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rotation_matrix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.rotation_matrix_to_euler_angles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert rotation matrix to Euler angles</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rotation_matrix</strong> (<em>np.ndarray</em>) – The 3-by-3 orthogonal rotation matrix</p>
-</dd>
-</dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix">
-<span class="sig-name descname"><span class="pre">trend_plunge_to_rotation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plunge</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the rotation matrix from a trend and plunge pair.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>trend</strong> (<em>float</em>) – The trend value in degrees</p></li>
-<li><p><strong>plunge</strong> (<em>float</em>) – The plunge value in degrees</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>rotation_matrix</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
+<dl class="py function">
+<dt class="sig sig-object py" id="seidart.routines.fabricsynth.main">
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.fabricsynth.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.fabricsynth.main" title="Link to this definition">¶</a></dt>
+<dd><p>Main function for console entry point. See help with ‘fabricsynth -h’.</p>
 </dd></dl>
 
 </section>
@@ -360,23 +341,23 @@ Default is 3.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="VISUALIZATION.html">
+          <a class="next-page" href="seidart.routines.materials.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Visualization Modules</div>
+                <div class="title">seidart.routines.materials module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="seidart.routines.arraybuild.html">
+          <a class="prev-page" href="seidart.routines.definitions.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">seidart.routines.arraybuild module</div>
+                <div class="title">seidart.routines.definitions module</div>
                 
               </div>
             </a>
@@ -412,15 +393,10 @@ Default is 3.</p>
             <ul>
 <li><a class="reference internal" href="#">seidart.routines.fabricsynth module</a><ul>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric"><code class="docutils literal notranslate"><span class="pre">Fabric</span></code></a><ul>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.build"><code class="docutils literal notranslate"><span class="pre">Fabric.build()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.bunge_compute"><code class="docutils literal notranslate"><span class="pre">Fabric.bunge_compute()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.custom_cmap"><code class="docutils literal notranslate"><span class="pre">Fabric.custom_cmap()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.generate_trends_plunges"><code class="docutils literal notranslate"><span class="pre">Fabric.generate_trends_plunges()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.projection_plot"><code class="docutils literal notranslate"><span class="pre">Fabric.projection_plot()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.rotation_matrix_to_euler_angles"><code class="docutils literal notranslate"><span class="pre">Fabric.rotation_matrix_to_euler_angles()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.fabricsynth.Fabric.trend_plunge_to_rotation_matrix"><code class="docutils literal notranslate"><span class="pre">Fabric.trend_plunge_to_rotation_matrix()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#seidart.routines.fabricsynth.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -432,11 +408,11 @@ Default is 3.</p>
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

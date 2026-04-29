@@ -6,26 +6,21 @@ dependencies:
   - babel
   - beautifulsoup4
   - bzip2
-  - commonmark
   - docutils
+  - furo
+  - graphviz
   - libgfortran5
+  - myst-parser
   - numpy
   - pandas
   - pip
   - python=3.11
   - pytz
   - readline
-  - recommonmark
   - ruamel.yaml
   - setuptools
   - sphinx
   - sphinx-autodoc-typehints
+  - sphinx-copybutton
   - sphinx_rtd_theme
-  - sphinxcontrib-applehelp
-  - sphinxcontrib-devhelp
-  - sphinxcontrib-htmlhelp
-  - sphinxcontrib-jquery  
-  - sphinxcontrib-jsmath
-  - sphinxcontrib-qthelp
-  - sphinxcontrib-serializinghtml
   - wheel

@@ -26,6 +26,8 @@ Welcome to SeidarT's documentation!
    initialize_project 
    project_file
    anisotropic_materials
+   CLI
+   changelog
 
 .. _recipes:
 
@@ -34,6 +36,23 @@ Welcome to SeidarT's documentation!
    :caption: Recipes
    
    RECIPES
+   examples
+   common_offset
+   common_midpoint
+   multi_offset
+
+.. _commands:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Commands and workflows
+
+   prjbuild
+   prjrun
+   arraybuild
+   sourcefunction
+   im2anim
+   vtkbuild
    
 .. _modules:
 
@@ -42,15 +61,9 @@ Welcome to SeidarT's documentation!
    :caption: Module Components:
    
    ROUTINES
-   seidart.routines.definitions
-   seidart.routines.classes
-   seidart.routines.materials
-   seidart.routines.prjbuild
-   seidart.routines.arraybuild
-   seidart.routines.fabricsynth
+   SIMULATIONS
    VISUALIZATION.md
-   seidart.visualization.imgen
-   seidart.visualization.im2anim
+   modules
 
 .. toctree::
     :maxdepth: 2

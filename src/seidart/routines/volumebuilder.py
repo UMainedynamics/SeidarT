@@ -446,6 +446,6 @@ class VolumeBuilder:
         plt.tight_layout()
         plt.show()
 
-vb = VolumeBuilder(files, locs)
-vb.plot_slice(iy = 20)
-
+if __name__ == "__main__":
+    vb = VolumeBuilder(files, locs)
+    vb.plot_slice(iy=20)

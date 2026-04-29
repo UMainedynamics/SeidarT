@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.volumebuilder module" href="seidart.routines.volumebuilder.html"><link rel="prev" title="seidart.routines.prjbuild module" href="seidart.routines.prjbuild.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.routines.sourcefunction module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -202,25 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -269,127 +306,61 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="module-seidart.routines.sourcefunction">
-<span id="seidart-routines-sourcefunction-module"></span><h1>seidart.routines.sourcefunction module<a class="headerlink" href="#module-seidart.routines.sourcefunction" title="Permalink to this heading">¶</a></h1>
+<span id="seidart-routines-sourcefunction-module"></span><h1>seidart.routines.sourcefunction module<a class="headerlink" href="#module-seidart.routines.sourcefunction" title="Link to this heading">¶</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="seidart.routines.sourcefunction.main">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.main" title="Permalink to this definition">¶</a></dt>
-<dd><p>Main function to generate and optionally plot a source function based on
-input parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>prjfile</strong> (<em>str</em>) – Path to the project file.</p></li>
-<li><p><strong>source_type</strong> (<em>str</em>) – Type of the source function to generate.</p></li>
-<li><p><strong>factor</strong> (<em>float</em>) – Amplitude scaling factor for the source.</p></li>
-<li><p><strong>multimodal</strong> (<em>bool</em>) – Indicates if a multimodal source should be generated.
-Defaults to False.</p></li>
-<li><p><strong>make_plot</strong> (<em>bool</em>) – Whether to plot the generated source function. Defaults
-to False.</p></li>
-</ul>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="seidart.routines.sourcefunction.broadbandsrc">
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">broadbandsrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.broadbandsrc" title="Link to this definition">¶</a></dt>
+<dd><p>Broadband source: all frequencies in [fmin, fmax] onset simultaneously
+using a minimum-phase FIR impulse response.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="seidart.routines.sourcefunction.double_couple_tensor">
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">double_couple_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strike_deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dip_deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rake_deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.double_couple_tensor" title="Link to this definition">¶</a></dt>
+<dd><p>Return (Mxx, Myy, Mzz, Mxy, Mxz, Myz) for a unit double-couple (scaled by M0).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seidart.routines.sourcefunction.find_zero_crossing">
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">find_zero_crossing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavelet_vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_region</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">slice(0,</span> <span class="pre">100,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.sourcefunction.find_zero_crossing" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.multimodesrc">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">multimodesrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.multimodesrc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a multi-mode source by linearly combining wavelets at different
-frequencies.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>timevec</strong> (<em>np.ndarray</em>) – The time vector for the source.</p></li>
-<li><p><strong>f</strong> (<em>float</em>) – The center frequency around which the modes are generated.</p></li>
-<li><p><strong>stype</strong> (<em>str</em>) – The type of wavelet to use for each mode.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The combined multi-mode source.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">multimodesrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_octaves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.multimodesrc" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a multi-mode source by combining octave-spaced wavelets around f.
+If center=True, each wavelet is shifted to t=0 for simultaneous onset.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.plotsource">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">plotsource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.plotsource" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">plotsource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.pyplot.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.plotsource" title="Link to this definition">¶</a></dt>
 <dd><p>Plots the source function and its power spectrum.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>t</strong> (<em>np.ndarray</em>) – The time vector corresponding to the source function.</p></li>
-<li><p><strong>x</strong> (<em>np.ndarray</em>) – The source function.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple containing the matplotlib figure and axes array.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple[plt.Figure, np.ndarray]</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="seidart.routines.sourcefunction.sourcefunction">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">sourcefunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="seidart.routines.definitions.html#seidart.routines.definitions.Model" title="seidart.routines.definitions.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.sourcefunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a source function based on the provided model class and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>modelclass</strong> (<a class="reference internal" href="seidart.routines.definitions.html#seidart.routines.definitions.Model" title="seidart.routines.definitions.Model"><em>Model</em></a>) – The model class containing time steps, frequency, and
-orientation.</p></li>
-<li><p><strong>factor</strong> (<em>float</em>) – Amplitude scaling factor for the source.</p></li>
-<li><p><strong>source_type</strong> (<em>str</em>) – The type of source to generate.</p></li>
-<li><p><strong>multimodal</strong> (<em>bool</em>) – Whether to generate a multimodal source. Defaults to False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple containing the time vector and the x, y, z components of
-the force, along with the source function.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]</p>
+<dt class="sig sig-object py" id="seidart.routines.sourcefunction.pointsource">
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">pointsource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelclass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadband</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_octaves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ac'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_iso</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_dc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.pointsource" title="Link to this definition">¶</a></dt>
+<dd><p>Build and write point-source time series.</p>
+<dl class="simple">
+<dt>source can be:</dt><dd><p>“ac” - accelerated weight drop
+“dc” - double couple
+“tnt” - explosive
+“omni_ps” - omnidirectional p and s waves; 3 direction dc plus explosive source (for testing)</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.wavelet">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">wavelet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.wavelet" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">wavelet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timevec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaus1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omni</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.wavelet" title="Link to this definition">¶</a></dt>
 <dd><p>Generates a wavelet based on the specified type and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>timevec</strong> (<em>np.ndarray</em>) – The time vector for the wavelet.</p></li>
-<li><p><strong>f</strong> (<em>float</em>) – The center frequency of the wavelet.</p></li>
-<li><p><strong>stype</strong> (<em>str</em>) – The type of wavelet to generate. Options include ‘gaus0’,
-‘gaus1’, ‘gaus2’, ‘chirp’, and ‘chirplet’.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The generated wavelet.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.sourcefunction.writesrc">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">writesrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srcarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.writesrc" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.sourcefunction.</span></span><span class="sig-name descname"><span class="pre">writesrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srcarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.sourcefunction.writesrc" title="Link to this definition">¶</a></dt>
 <dd><p>Writes a source array to a Fortran-formatted binary file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fn</strong> (<em>str</em>) – The filename for the output file.</p></li>
-<li><p><strong>srcarray</strong> (<em>np.ndarray</em>) – The source array to write.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
@@ -399,8 +370,26 @@ the force, along with the source function.</p>
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="seidart.routines.volumebuilder.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">seidart.routines.volumebuilder module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="seidart.routines.prjbuild.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">seidart.routines.prjbuild module</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -432,10 +421,12 @@ the force, along with the source function.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">seidart.routines.sourcefunction module</a><ul>
-<li><a class="reference internal" href="#seidart.routines.sourcefunction.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.sourcefunction.broadbandsrc"><code class="docutils literal notranslate"><span class="pre">broadbandsrc()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.sourcefunction.double_couple_tensor"><code class="docutils literal notranslate"><span class="pre">double_couple_tensor()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.sourcefunction.find_zero_crossing"><code class="docutils literal notranslate"><span class="pre">find_zero_crossing()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.sourcefunction.multimodesrc"><code class="docutils literal notranslate"><span class="pre">multimodesrc()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.sourcefunction.plotsource"><code class="docutils literal notranslate"><span class="pre">plotsource()</span></code></a></li>
-<li><a class="reference internal" href="#seidart.routines.sourcefunction.sourcefunction"><code class="docutils literal notranslate"><span class="pre">sourcefunction()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.sourcefunction.pointsource"><code class="docutils literal notranslate"><span class="pre">pointsource()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.sourcefunction.wavelet"><code class="docutils literal notranslate"><span class="pre">wavelet()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.sourcefunction.writesrc"><code class="docutils literal notranslate"><span class="pre">writesrc()</span></code></a></li>
 </ul>
@@ -449,11 +440,11 @@ the force, along with the source function.</p>
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

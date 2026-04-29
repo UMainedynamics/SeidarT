@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.fabricsynth module" href="seidart.routines.fabricsynth.html"><link rel="prev" title="seidart.routines.prjbuild module" href="seidart.routines.prjbuild.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.routines.classes module" href="seidart.routines.classes.html"><link rel="prev" title="seidart.routines package" href="seidart.routines.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.routines.arraybuild module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -202,25 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -269,32 +306,162 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="module-seidart.routines.arraybuild">
-<span id="seidart-routines-arraybuild-module"></span><h1>seidart.routines.arraybuild module<a class="headerlink" href="#module-seidart.routines.arraybuild" title="Permalink to this heading">¶</a></h1>
+<span id="seidart-routines-arraybuild-module"></span><h1>seidart.routines.arraybuild module<a class="headerlink" href="#module-seidart.routines.arraybuild" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.routines.arraybuild.</span></span><span class="sig-name descname"><span class="pre">Array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csvfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csvfile_c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array" title="Permalink to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.arraybuild.</span></span><span class="sig-name descname"><span class="pre">Array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csvfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container and plotting helper for receiver time-series data.</p>
+<p>The class loads a project file, receiver geometry, and modeled receiver
+traces for one SeidarT output channel. It provides convenience methods for
+amplitude correction, section plots, wiggle plots, filtering, f-k analysis,
+and saving the assembled receiver gather.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.alpha_attenuation">
+<span class="sig-name descname"><span class="pre">alpha_attenuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase_velocity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'z'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material_indice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.alpha_attenuation" title="Link to this definition">¶</a></dt>
+<dd><p>Estimate exponential attenuation for a material and propagation direction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>phase_velocity</strong> (<em>float</em>) – Phase velocity in m/s.</p></li>
+<li><p><strong>direction</strong> (<em>str</em>) – Direction suffix used in the attenuation table, such
+as <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;y&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;z&quot;</span></code>.</p></li>
+<li><p><strong>material_indice</strong> (<em>int</em>) – Material index to read from the attenuation
+coefficients table.</p></li>
+<li><p><strong>fc</strong> (<em>float</em><em>, </em><em>optional</em>) – Center frequency in Hz. If omitted, the seismic source
+frequency is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Attenuation coefficient for the requested material and
+direction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.amplitude_calculation">
+<span class="sig-name descname"><span class="pre">amplitude_calculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spreading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spherical'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.amplitude_calculation" title="Link to this definition">¶</a></dt>
+<dd><p>Compute attenuated amplitude from absorption and geometric spreading.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distance</strong> (<em>float</em>) – Source-receiver distance in meters.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Exponential attenuation coefficient.</p></li>
+<li><p><strong>A0</strong> (<em>float</em>) – Initial amplitude before attenuation. Defaults to <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>spreading</strong> (<em>str</em>) – Geometric spreading model. Supported values are
+<code class="docutils literal notranslate"><span class="pre">&quot;spherical&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cylindrical&quot;</span></code>, and any other value for no
+geometric spreading correction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(At,</span> <span class="pre">dA,</span> <span class="pre">dG)</span></code> containing total amplitude,
+absorption factor, and geometric spreading factor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.amplitude_correction">
+<span class="sig-name descname"><span class="pre">amplitude_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correction_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.amplitude_correction" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>amplitude_correction_type</strong> (<em>str</em>) – Correct the amplitudes for geometric spreading (‘GS’)or
+using an auto gain control function (‘AGC’); Default is None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.build">
-<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.build" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.build" title="Link to this definition">¶</a></dt>
 <dd><p>Constructs domain and models based on project file and sets up source
 and receiver configurations.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.butterworth_filter">
+<span class="sig-name descname"><span class="pre">butterworth_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.butterworth_filter" title="Link to this definition">¶</a></dt>
+<dd><p>Unified seismic filter with tapering and padding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter_type</strong> (<em>str</em>) – ‘lowpass’, ‘highpass’, or ‘bandpass’</p></li>
+<li><p><strong>lowcut</strong> (<em>float</em><em>, </em><em>optional</em>) – Lower cutoff frequency in Hz (used for ‘highpass’ and ‘bandpass’)</p></li>
+<li><p><strong>highcut</strong> (<em>float</em><em>, </em><em>optional</em>) – Upper cutoff frequency in Hz (used for ‘lowpass’ and ‘bandpass’)</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – Butterworth filter order</p></li>
+<li><p><strong>taper_duration</strong> (<em>float</em>) – Duration in seconds for a pre-arrival taper (default = 0.0, no taper)</p></li>
+<li><p><strong>pad_samples</strong> (<em>int</em>) – Number of samples to pad symmetrically at top and bottom</p></li>
+<li><p><strong>Result</strong></p></li>
+<li><p><strong>------</strong></p></li>
+<li><p><strong>self.timeseries</strong><strong>)</strong> (<em>Sets self.timeseries_filtered</em><em> (</em><em>same shape as</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.fk_analysis">
+<span class="sig-name descname"><span class="pre">fk_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_rcx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntfft</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nxfft</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colormap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'viridis'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_levels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency_limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumber_limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumber_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cycles'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filtered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'normalized'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-40</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.fk_analysis" title="Link to this definition">¶</a></dt>
+<dd><p>Compute and plot the frequency–wavenumber (f-k) power spectrum of the time series
+for a regularly spaced seismic receiver array.</p>
+<p>Applies a 2D FFT to the array, with optional tapering, zero-padding, and
+amplitude-to-dB conversion. Overlays theoretical mode dispersion curves if provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d_rcx</strong> (<em>float</em>) – Receiver spacing in meters.</p></li>
+<li><p><strong>ntfft</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of FFT points in time. If None, defaults to the number of time samples.</p></li>
+<li><p><strong>nxfft</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of FFT points in space. If None, defaults to the number of receivers.</p></li>
+<li><p><strong>taper</strong> (<em>{'time'</em><em>, </em><em>'space'</em><em>, </em><em>'both'</em><em>, </em><em>'tukey_time'</em><em>, </em><em>'tukey_space'</em><em>, </em><em>'tukey_both'</em><em>, </em><em>False}</em><em>, </em><em>default='time'</em>) – Apply a Hanning taper in the specified direction(s) to suppress spectral leakage.</p></li>
+<li><p><strong>figure_size</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>default=</em><em>(</em><em>10</em><em>, </em><em>8</em><em>)</em>) – Size of the matplotlib figure in inches.</p></li>
+<li><p><strong>colormap</strong> (<em>str</em><em>, </em><em>default='viridis'</em>) – Colormap used for plotting the contour.</p></li>
+<li><p><strong>contour_levels</strong> (<em>int</em><em>, </em><em>default=100</em>) – Number of levels in the contour plot.</p></li>
+<li><p><strong>frequency_limits</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – y-axis limits for frequency (min, max) in Hz.</p></li>
+<li><p><strong>wavenumber_limits</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – x-axis limits for wavenumber (min, max) in cycles/m or rad/m.</p></li>
+<li><p><strong>wavenumber_units</strong> (<em>{'cycles'</em><em>, </em><em>'radians'}</em><em>, </em><em>default='cycles'</em>) – Units of the wavenumber axis. Affects velocity overlays.</p></li>
+<li><p><strong>use_filtered</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to use the filtered time series (<cite>self.timeseries_filtered</cite>) or raw (<cite>self.timeseries</cite>).</p></li>
+<li><p><strong>to_db</strong> (<em>{'normalized'</em><em>, </em><em>'raw'</em><em>, </em><em>True</em><em>, </em><em>False}</em><em>, </em><em>default='normalized'</em>) – If ‘normalized’, converts to decibel scale with 0 dB peak normalization.
+If ‘raw’, converts to decibels without normalization.
+If False, keeps the amplitude linear.</p></li>
+<li><p><strong>mode_lines</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dispersion curves to overlay. Each key is a label (e.g., “Rayleigh”),
+and each value is either a velocity or a (velocity, color) tuple.</p></li>
+<li><p><strong>Sets</strong></p></li>
+<li><p><strong>----</strong></p></li>
+<li><p><strong>self.fk_freqs</strong> (<em>ndarray</em>) – Frequency axis in Hz.</p></li>
+<li><p><strong>self.fk_wavenumbers</strong> (<em>ndarray</em>) – Wavenumber axis in cycles/m or rad/m.</p></li>
+<li><p><strong>self.fk_spectrum</strong> (<em>ndarray</em>) – The 2D FFT power spectrum (in dB or linear units depending on <cite>to_db</cite>).</p></li>
+<li><p><strong>self.fk_velocities</strong> (<em>ndarray</em>) – Phase velocity grid (freqs / wavenumbers).</p></li>
+<li><p><strong>self.fk_power_linear</strong> (<em>ndarray</em>) – Linear (non-dB) power spectrum.</p></li>
+<li><p><strong>self.fig_fk</strong> (<em>matplotlib.figure.Figure</em>) – The matplotlib figure object for the plot.</p></li>
+<li><p><strong>self.ax_fk</strong> (<em>matplotlib.axes.Axes</em>) – The matplotlib axes object for the plot.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If FFT sizes are smaller than the input array dimensions, or if cutoff frequency limits are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.getrcx">
-<span class="sig-name descname"><span class="pre">getrcx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.getrcx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Loads the time series data for all receivers and handles complex data
-conditions.</p>
+<span class="sig-name descname"><span class="pre">getrcx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.getrcx" title="Link to this definition">¶</a></dt>
+<dd><p>Loads the time series data for all receivers</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.loadxyz">
-<span class="sig-name descname"><span class="pre">loadxyz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.loadxyz" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">loadxyz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.loadxyz" title="Link to this definition">¶</a></dt>
 <dd><p>Loads and sorts receiver locations from a file and adjusts them
 according to the domain and CPML layer.  If the source_file flag is
 True, the source file is loaded instead of the receiver file and saved
-to the object under source_xyz.</p>
+to the object under source.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>source_file</strong> (<em>bool</em>) – Flag to indicate if the file is a source file.</p>
@@ -303,26 +470,106 @@ to the object under source_xyz.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.multichannel_analysis">
+<span class="sig-name descname"><span class="pre">multichannel_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">velocity_limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(100,</span> <span class="pre">2000)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency_limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_velocity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colormap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'viridis'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.75</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.multichannel_analysis" title="Link to this definition">¶</a></dt>
+<dd><p>Compute and plot the frequency–velocity (f–c) dispersion image from f–k spectrum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>velocity_limits</strong> (<em>tuple</em><em> of </em><em>float</em>) – Range of phase velocities (min, max) in m/s.</p></li>
+<li><p><strong>frequency_limits</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Frequency range (Hz) to display.</p></li>
+<li><p><strong>n_velocity</strong> (<em>int</em><em>, </em><em>default=500</em>) – Number of velocity bins.</p></li>
+<li><p><strong>figure_size</strong> (<em>tuple</em><em> of </em><em>float</em><em>, </em><em>default=</em><em>(</em><em>10</em><em>, </em><em>8</em><em>)</em>) – Size of the plot.</p></li>
+<li><p><strong>colormap</strong> (<em>str</em><em>, </em><em>default='viridis'</em>) – Matplotlib colormap.</p></li>
+<li><p><strong>mask_db</strong> (<em>float</em><em>, </em><em>default=-40</em>) – Threshold below which to mask values (in dB).</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Max value for dB color range.</p></li>
+<li><p><strong>smooth_sigma</strong> (<em>float</em><em>, </em><em>default=0.75</em>) – Gaussian smoothing factor.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_basefile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.save" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_basefile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.save" title="Link to this definition">¶</a></dt>
 <dd><p>Save the object as a pickle formatted file and the numpy array of
 receiver time series to a CSV.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.sectionplot">
-<span class="sig-name descname"><span class="pre">sectionplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.sectionplot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">sectionplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amplitude_correction_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colormap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Greys'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filtered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.sectionplot" title="Link to this definition">¶</a></dt>
 <dd><p>Creates a grayscale section plot of the time series data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>plot_complex</strong> (<em>bool</em>) – Plot the complex part of the solution if True.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>amplitude_correction_type</strong> (<em>str</em>) – Correct the amplitudes for geometric
+spreading (‘GS’) or using an auto gain control function (‘AGC’);
+Default is None.</p></li>
+<li><p><strong>colormap</strong> (<em>str</em>) – Specify the colormap to be used in the plot. Default is grey.</p></li>
+<li><p><strong>figure_size</strong> (<em>Tuple</em>) – Specify the figure size.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.sectionwiggleplot">
+<span class="sig-name descname"><span class="pre">sectionwiggleplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">receiver_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_vertical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_fill_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative_fill_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(5,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude_correction_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yaxis_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Source-Receiver</span> <span class="pre">Distance</span> <span class="pre">(m)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gridded</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filtered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.sectionwiggleplot" title="Link to this definition">¶</a></dt>
+<dd><p>Plots a seismic or electromagnetic record section using wiggle traces.
+This function generates a wiggle plot for the selected receiver traces,
+with options for vertical plotting, scaling, and amplitude corrections.
+The positive and negative amplitudes can be filled with custom colors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>receiver_indices</strong> (<em>np.ndarray</em>) – An array of indices specifying which receiver
+traces to plot.</p></li>
+<li><p><strong>scaling_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – A scaling factor for adjusting the amplitude of
+the traces (default is 1.0).</p></li>
+<li><p><strong>plot_vertical</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, plots the traces vertically rather than
+horizontally (default is False).</p></li>
+<li><p><strong>positive_fill_color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color to fill the positive amplitudes of the
+traces. Use any valid matplotlib color (default is None).</p></li>
+<li><p><strong>negative_fill_color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color to fill the negative amplitudes of the
+traces. Use any valid matplotlib color (default is None).</p></li>
+<li><p><strong>figure_size</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Size of the figure in inches (default is (5, 8)).</p></li>
+<li><p><strong>amplitude_correction_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of amplitude correction to apply
+before plotting. This should be a valid correction type recognized
+by the <cite>amplitude_correction</cite> method (default is None).</p></li>
+<li><p><strong>yaxis_label</strong> (<em>str</em>) – The label corresponding to the y-axis if not using
+source-receiver distance.</p></li>
+<li><p><strong>gridded</strong> – Specify if a gridded plot should be created. Grids will
+be drawn in vertically for a horizontally oriented graph (default)
+and drawn horizontally for a vertically oriented graph.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Notes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Vertical plotting hasn’t yet been implemented</p></li>
+<li><p>Receiver distances is generically named and is merely a time shift
+in the time series so that they are layed out as a section plot.
+The traces can be sorted and plotted according to other inputs.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.srcrcx_distance">
+<span class="sig-name descname"><span class="pre">srcrcx_distance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.srcrcx_distance" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the source and receiver(s) distance</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.Array.wiggleplot">
-<span class="sig-name descname"><span class="pre">wiggleplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">receiver_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_vertical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.wiggleplot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wiggleplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">receiver_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_vertical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_fill_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative_fill_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filtered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.arraybuild.Array.wiggleplot" title="Link to this definition">¶</a></dt>
 <dd><p>Plot an individual receiver from the list of the receiver files. Use
 indices in the Python reference frame with the first component being 0.</p>
 <dl class="field-list simple">
@@ -330,7 +577,6 @@ indices in the Python reference frame with the first component being 0.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>receiver_number</strong> (<em>int</em>) – Specify the indice of the reciever from the
 receiver file to plot.</p></li>
-<li><p><strong>plot_complex</strong> (<em>bool</em>) – Plot the complex part of the solution if True.</p></li>
 <li><p><strong>plot_background</strong> (<em>str</em>) – Specify the plot background color. Default is
 transparent.</p></li>
 <li><p><strong>figure_size</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Specify the figure dimensions in inches. Default is
@@ -347,21 +593,19 @@ matplotlib.pyplot.plot.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seidart.routines.arraybuild.main">
-<span class="sig-prename descclassname"><span class="pre">seidart.routines.arraybuild.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exaggeration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.arraybuild.main" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seidart.routines.arraybuild.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exaggeration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.routines.arraybuild.main" title="Link to this definition">¶</a></dt>
 <dd><p>The main function creating an Array object and triggering plotting or
 saving actions based on user inputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prjfile</strong> (<em>str</em>) – Path to the project file.</p></li>
+<li><p><strong>project_file</strong> (<em>str</em>) – Path to the project file.</p></li>
 <li><p><strong>receiver_file</strong> (<em>str</em>) – Path to the receiver file.</p></li>
 <li><p><strong>channel</strong> (<em>str</em>) – Data channel to be analyzed.</p></li>
 <li><p><strong>rind</strong> (<em>bool</em>) – Flag for coordinate indices.</p></li>
-<li><p><strong>is_complex</strong> (<em>bool</em>) – Flag for complex data handling.</p></li>
 <li><p><strong>single_precision</strong> (<em>bool</em>) – Flag for single precision data.</p></li>
 <li><p><strong>exaggeration</strong> (<em>float</em>) – Aspect ratio between the x and y axes for plotting.</p></li>
 <li><p><strong>gain</strong> (<em>int</em>) – Smoothing length for the data.</p></li>
-<li><p><strong>plot_complex</strong> (<em>bool</em>) – Flag to plot complex part of the solution.</p></li>
 <li><p><strong>plot</strong> (<em>bool</em>) – Flag to enable plotting.</p></li>
 </ul>
 </dd>
@@ -375,23 +619,23 @@ saving actions based on user inputs.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="seidart.routines.fabricsynth.html">
+          <a class="next-page" href="seidart.routines.classes.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">seidart.routines.fabricsynth module</div>
+                <div class="title">seidart.routines.classes module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="seidart.routines.prjbuild.html">
+          <a class="prev-page" href="seidart.routines.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">seidart.routines.prjbuild module</div>
+                <div class="title">seidart.routines package</div>
                 
               </div>
             </a>
@@ -427,11 +671,19 @@ saving actions based on user inputs.</p>
             <ul>
 <li><a class="reference internal" href="#">seidart.routines.arraybuild module</a><ul>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array"><code class="docutils literal notranslate"><span class="pre">Array</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.alpha_attenuation"><code class="docutils literal notranslate"><span class="pre">Array.alpha_attenuation()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.amplitude_calculation"><code class="docutils literal notranslate"><span class="pre">Array.amplitude_calculation()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.amplitude_correction"><code class="docutils literal notranslate"><span class="pre">Array.amplitude_correction()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.build"><code class="docutils literal notranslate"><span class="pre">Array.build()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.butterworth_filter"><code class="docutils literal notranslate"><span class="pre">Array.butterworth_filter()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.fk_analysis"><code class="docutils literal notranslate"><span class="pre">Array.fk_analysis()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.getrcx"><code class="docutils literal notranslate"><span class="pre">Array.getrcx()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.loadxyz"><code class="docutils literal notranslate"><span class="pre">Array.loadxyz()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.multichannel_analysis"><code class="docutils literal notranslate"><span class="pre">Array.multichannel_analysis()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.save"><code class="docutils literal notranslate"><span class="pre">Array.save()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.sectionplot"><code class="docutils literal notranslate"><span class="pre">Array.sectionplot()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.sectionwiggleplot"><code class="docutils literal notranslate"><span class="pre">Array.sectionwiggleplot()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.arraybuild.Array.srcrcx_distance"><code class="docutils literal notranslate"><span class="pre">Array.srcrcx_distance()</span></code></a></li>
 <li><a class="reference internal" href="#seidart.routines.arraybuild.Array.wiggleplot"><code class="docutils literal notranslate"><span class="pre">Array.wiggleplot()</span></code></a></li>
 </ul>
 </li>
@@ -447,11 +699,11 @@ saving actions based on user inputs.</p>
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

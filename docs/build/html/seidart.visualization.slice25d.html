@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.visualization.vtkbuild module" href="seidart.visualization.vtkbuild.html"><link rel="prev" title="seidart.visualization.implot module" href="seidart.visualization.implot.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.visualization.slice25d module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -202,25 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -269,28 +306,28 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="module-seidart.visualization.slice25d">
-<span id="seidart-visualization-slice25d-module"></span><h1>seidart.visualization.slice25d module<a class="headerlink" href="#module-seidart.visualization.slice25d" title="Permalink to this heading">¶</a></h1>
+<span id="seidart-visualization-slice25d-module"></span><h1>seidart.visualization.slice25d module<a class="headerlink" href="#module-seidart.visualization.slice25d" title="Link to this heading">¶</a></h1>
 <p>Create a gif for a given plane of a 2.5D model</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="seidart.visualization.slice25d.slice">
-<span class="sig-prename descclassname"><span class="pre">seidart.visualization.slice25d.</span></span><span class="sig-name descname"><span class="pre">slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indslice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plane</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.slice25d.slice" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="seidart.visualization.slice25d.slicer">
+<span class="sig-prename descclassname"><span class="pre">seidart.visualization.slice25d.</span></span><span class="sig-name descname"><span class="pre">slicer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indslice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plane</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'xz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_single</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.slice25d.slicer" title="Link to this definition">¶</a></dt>
 <dd><p>Create a gif for a given plane of a 2.5D model. The function will create a
 series of images and then use imagemagick to create a gif.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prjfile</strong> (<em>str</em>) – str: The project file path</p></li>
+<li><p><strong>project_file</strong> (<em>str</em>) – str: The project file path</p></li>
 <li><p><strong>channel</strong> (<em>str</em>) – str: The channel to query</p></li>
-<li><p><strong>indslice</strong> (<em>int</em>) – int: The index along the plane that we are slicing. This
+<li><p><strong>indslice</strong> (<em>int</em>) – int: The index along the plane that we are slicing. <a href="#id1"><span class="problematic" id="id2">*</span></a>This
 isn’t corrected for the boundary layer.</p></li>
 <li><p><strong>num_steps</strong> (<em>int</em>) – int: The number of time steps between frames</p></li>
-<li><p><strong>plane</strong> (<em>str</em>) – str: Specify what plane to slice (default = ‘xy’). The slice is the
-along the 3rd plane</p></li>
+<li><p><strong>plane</strong> (<em>str</em>) – str: Specify what plane to slice (default = ‘xz’). The slice is the
+along the 3rd plane (i.e. y-ind for a ‘xz’ plane). Options are ‘xy’, ‘yz’, and ‘xz’.</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – float: (OPTIONAL FLOAT [0,1]) Change the transparency of the model
 plotted in the background; default = 0.3. Zeros is full transparency, 1 is
 CIA transparency</p></li>
 <li><p><strong>delay</strong> (<em>int</em>) – int: The amount of delay between two frames</p></li>
-<li><p><strong>is_complex</strong> (<em>bool</em>) – bool: If the data is complex</p></li>
+<li><p><strong>is_single</strong> (<em>bool</em>) – bool: If the data is complex</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -306,8 +343,26 @@ CIA transparency</p></li>
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="seidart.visualization.vtkbuild.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">seidart.visualization.vtkbuild module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="seidart.visualization.implot.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">seidart.visualization.implot module</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -339,7 +394,7 @@ CIA transparency</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">seidart.visualization.slice25d module</a><ul>
-<li><a class="reference internal" href="#seidart.visualization.slice25d.slice"><code class="docutils literal notranslate"><span class="pre">slice()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.visualization.slice25d.slicer"><code class="docutils literal notranslate"><span class="pre">slicer()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -351,11 +406,11 @@ CIA transparency</p></li>
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

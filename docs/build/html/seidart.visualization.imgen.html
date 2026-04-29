@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.visualization.im2anim module" href="seidart.visualization.im2anim.html"><link rel="prev" title="Visualization Modules" href="VISUALIZATION.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.visualization.implot module" href="seidart.visualization.implot.html"><link rel="prev" title="seidart.visualization.im2anim module" href="seidart.visualization.im2anim.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.visualization.imgen module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -202,25 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.volumebuilder.html">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -269,20 +306,19 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="module-seidart.visualization.imgen">
-<span id="seidart-visualization-imgen-module"></span><h1>seidart.visualization.imgen module<a class="headerlink" href="#module-seidart.visualization.imgen" title="Permalink to this heading">¶</a></h1>
+<span id="seidart-visualization-imgen-module"></span><h1>seidart.visualization.imgen module<a class="headerlink" href="#module-seidart.visualization.imgen" title="Link to this heading">¶</a></h1>
 <p>Functions for plotting a 2D vector/quiver plot over the model image</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seidart.visualization.imgen.</span></span><span class="sig-name descname"><span class="pre">FDTDImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prjfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_complex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plottype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'magnitude'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage" title="Permalink to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.visualization.imgen.</span></span><span class="sig-name descname"><span class="pre">FDTDImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_single_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plottype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'magnitude'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to represent an FDTD image for visualization.</p>
 <p>This class provides methods to build and manipulate images generated from FDTD modeling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prjfile</strong> (<em>str</em>) – The full file path for the project file.</p></li>
+<li><p><strong>project_file</strong> (<em>str</em>) – The full file path for the project file.</p></li>
 <li><p><strong>inputfile</strong> (<em>str</em>) – The name of the input file containing simulation data.</p></li>
-<li><p><strong>is_complex</strong> (<em>bool</em>) – Indicates if the data is complex valued.</p></li>
 <li><p><strong>is_single_precision</strong> (<em>bool</em><em>, </em><em>optional</em>) – Indicates if the data is in single precision format.</p></li>
 <li><p><strong>plottype</strong> (<em>str</em><em>, </em><em>optional</em>) – The type of plot to generate (‘magnitude’, ‘quiver’, ‘phase’, ‘energy_density’).</p></li>
 </ul>
@@ -290,42 +326,42 @@
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.addlabels">
-<span class="sig-name descname"><span class="pre">addlabels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addlabels" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addlabels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addlabels" title="Link to this definition">¶</a></dt>
 <dd><p>Adds labels to the plot and updates the axis and figure objects.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.addrcx">
-<span class="sig-name descname"><span class="pre">addrcx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addrcx" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addrcx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addrcx" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.addsource">
-<span class="sig-name descname"><span class="pre">addsource</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addsource" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addsource</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.addsource" title="Link to this definition">¶</a></dt>
 <dd><p>Adds the source location to the plot.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.build">
-<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.build" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.build" title="Link to this definition">¶</a></dt>
 <dd><p>Builds the domain, material, seismic, and electromagnetic models from the project file.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.getprjvals">
-<span class="sig-name descname"><span class="pre">getprjvals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.getprjvals" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">getprjvals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.getprjvals" title="Link to this definition">¶</a></dt>
 <dd><p>Retrieves project values and initializes domain parameters.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.imvector">
-<span class="sig-name descname"><span class="pre">imvector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.imvector" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">imvector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.imvector" title="Link to this definition">¶</a></dt>
 <dd><p>Generates a vector image from the project values and saves it.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.magnitudeplot">
-<span class="sig-name descname"><span class="pre">magnitudeplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.magnitudeplot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">magnitudeplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.magnitudeplot" title="Link to this definition">¶</a></dt>
 <dd><p>Plots the real data as a magnitude plot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -339,7 +375,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.quiverplot">
-<span class="sig-name descname"><span class="pre">quiverplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.quiverplot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">quiverplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.quiverplot" title="Link to this definition">¶</a></dt>
 <dd><p>Generates a quiver plot for seismic outputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -350,7 +386,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.sliceplot">
-<span class="sig-name descname"><span class="pre">sliceplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axscale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sliceaxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.sliceplot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">sliceplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axscale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sliceaxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">papercolumnwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">7.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.sliceplot" title="Link to this definition">¶</a></dt>
 <dd><p>Generates a slice plot from the given data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -367,7 +403,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seidart.visualization.imgen.FDTDImage.vectoranim">
-<span class="sig-name descname"><span class="pre">vectoranim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.vectoranim" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">vectoranim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">glob2.glob</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#seidart.visualization.imgen.FDTDImage.vectoranim" title="Link to this definition">¶</a></dt>
 <dd><p>Creates an animation of vector images from a list of files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -385,23 +421,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="seidart.visualization.im2anim.html">
+          <a class="next-page" href="seidart.visualization.implot.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">seidart.visualization.im2anim module</div>
+                <div class="title">seidart.visualization.implot module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="VISUALIZATION.html">
+          <a class="prev-page" href="seidart.visualization.im2anim.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Visualization Modules</div>
+                <div class="title">seidart.visualization.im2anim module</div>
                 
               </div>
             </a>
@@ -460,11 +496,11 @@
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>

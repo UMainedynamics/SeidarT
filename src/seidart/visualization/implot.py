@@ -12,36 +12,37 @@ import matplotlib.image as mpimg
 from seidart.visualization.imgen import *
 
 
-# =============================================================================
-parser = argparse.ArgumentParser(
-    description="""Plot a snapshop of the vector wavefield in 2D"""
-)
+def main():
+    parser = argparse.ArgumentParser(
+        description="""Plot a snapshop of the vector wavefield in 2D"""
+    )
 
-parser.add_argument(
-    '-p', '--prjfile',
-    nargs = 1, type = str, required = True,
-    help = 'The full file path to the project file'
-)
+    parser.add_argument(
+        '-p', '--prjfile',
+        nargs=1, type=str, required=True,
+        help='The full file path to the project file'
+    )
 
-parser.add_argument(
-    '-v', '--velocity',
-    nargs = 1, type = str, required = True,
-    help = """The .dat file that corresponds to the velocity in either the 
-    x-direction or z-direction (e.g. Vx000400.dat). The corresponding 
-    orthogonal velocity file will be loaded as well."""
-) 
+    parser.add_argument(
+        '-v', '--velocity',
+        nargs=1, type=str, required=True,
+        help="""The .dat file that corresponds to the velocity in either the
+        x-direction or z-direction (e.g. Vx000400.dat). The corresponding
+        orthogonal velocity file will be loaded as well."""
+    )
 
-args = parser.parse_args()
-prjfile = ''.join(args.prjfile)
-velocityfile = ''.join(args.velocity)
+    args = parser.parse_args()
+    prjfile = ''.join(args.prjfile)
+    velocityfile = ''.join(args.velocity)
+
+    mag = FDTDImage(prjfile, velocityfile)
+    mag.getprjvals()
+    mag.magnitudeplot()
+    mag.addlabels()
+    mag.plotfile = velocityfile[:-3] + 'plot.png'
+    plt.savefig(mag.plotfile)
+    plt.close()
 
 
-# ============================ Create the objects =============================
-
-mag = FDTDImage(prjfile, velocityfile)
-mag.getprjvals()
-mag.magnitudeplot()
-mag.addlabels()
-mag.plotfile = velocityfile[:-3] + 'plot.png'
-plt.savefig(mag.plotfile)
-plt.close()
+if __name__ == "__main__":
+    main()

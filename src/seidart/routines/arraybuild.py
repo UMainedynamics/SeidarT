@@ -18,6 +18,15 @@ from seidart.routines.classes import Domain, Material, Model
 
 # =============================================================================
 class Array:
+    """
+    Container and plotting helper for receiver time-series data.
+
+    The class loads a project file, receiver geometry, and modeled receiver
+    traces for one SeidarT output channel. It provides convenience methods for
+    amplitude correction, section plots, wiggle plots, filtering, f-k analysis,
+    and saving the assembled receiver gather.
+    """
+
     def __init__(
             self, 
             channel: str,
@@ -318,6 +327,24 @@ class Array:
 
     # -------------------------------------------------------------------------
     def alpha_attenuation(self, phase_velocity, direction = 'z', material_indice = 0, fc = None):
+            """
+            Estimate exponential attenuation for a material and propagation direction.
+
+            :param phase_velocity: Phase velocity in m/s.
+            :type phase_velocity: float
+            :param direction: Direction suffix used in the attenuation table, such
+                as ``"x"``, ``"y"``, or ``"z"``.
+            :type direction: str
+            :param material_indice: Material index to read from the attenuation
+                coefficients table.
+            :type material_indice: int
+            :param fc: Center frequency in Hz. If omitted, the seismic source
+                frequency is used.
+            :type fc: float, optional
+            :return: Attenuation coefficient for the requested material and
+                direction.
+            :rtype: float
+            """
             # Get the attenuation coefficient 
             gamma = self.seismic.attenuation_coefficients[f'gamma_{direction}'][material_indice]
             
@@ -334,6 +361,23 @@ class Array:
 
     # -------------------------------------------------------------------------
     def amplitude_calculation(self, distance, alpha, A0 = 1, spreading = "spherical"):
+            """
+            Compute attenuated amplitude from absorption and geometric spreading.
+
+            :param distance: Source-receiver distance in meters.
+            :type distance: float
+            :param alpha: Exponential attenuation coefficient.
+            :type alpha: float
+            :param A0: Initial amplitude before attenuation. Defaults to ``1``.
+            :type A0: float
+            :param spreading: Geometric spreading model. Supported values are
+                ``"spherical"``, ``"cylindrical"``, and any other value for no
+                geometric spreading correction.
+            :type spreading: str
+            :return: Tuple ``(At, dA, dG)`` containing total amplitude,
+                absorption factor, and geometric spreading factor.
+            :rtype: tuple[float, float, float]
+            """
             dA = np.exp(-alpha * distance)
             
             if spreading == "spherical":

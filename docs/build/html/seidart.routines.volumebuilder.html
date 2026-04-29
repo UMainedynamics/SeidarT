@@ -1,17 +1,17 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="search" title="Search" href="search.html">
+<link rel="search" title="Search" href="search.html"><link rel="next" title="seidart.simulations package" href="seidart.simulations.html"><link rel="prev" title="seidart.routines.sourcefunction module" href="seidart.routines.sourcefunction.html">
 
-    <!-- Generated with Sphinx 6.1.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>seidart.routines.volumebuilder module - SeidarT documentation v3.0.1</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=8bfd17e78cc47c62ac1c32270c918bcbddd8698e" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=c2381d17322d81725993bfddb61bde80003e8cc4" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
 
@@ -174,7 +174,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -202,23 +202,62 @@
 <li class="toctree-l1"><a class="reference internal" href="initialize_project.html">Creating a project file</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project_file.html">Project File</a></li>
 <li class="toctree-l1"><a class="reference internal" href="anisotropic_materials.html">Anisotropic Materials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CLI.html">Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Recipes</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="RECIPES.html">Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_offset.html">Common Offset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_midpoint.html">Common Midpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multi_offset.html">Multi-Offset/Land Streamer (in Progress)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Commands and workflows</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="prjbuild.html">prjbuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prjrun.html">prjrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arraybuild.html">arraybuild</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sourcefunction.html">sourcefunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="im2anim.html">im2anim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vtkbuild.html">vtkbuild</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module Components:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="ROUTINES.html">Routines</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SIMULATIONS.html">Simulations Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="VISUALIZATION.html">Visualization Modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">src</a><input aria-label="Toggle navigation of src" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="seidart.html">seidart package</a><input aria-label="Toggle navigation of seidart package" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="seidart.routines.html">seidart.routines package</a><input aria-label="Toggle navigation of seidart.routines package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.arraybuild.html">seidart.routines.arraybuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.classes.html">seidart.routines.classes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.definitions.html">seidart.routines.definitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.fabricsynth.html">seidart.routines.fabricsynth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.materials.html">seidart.routines.materials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.prjbuild.html">seidart.routines.prjbuild module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.routines.sourcefunction.html">seidart.routines.sourcefunction module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">seidart.routines.volumebuilder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.simulations.html">seidart.simulations package</a><input aria-label="Toggle navigation of seidart.simulations package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.apres.html">seidart.simulations.apres module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.common_offset.html">seidart.simulations.common_offset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.simulations.multioffset.html">seidart.simulations.multioffset module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="seidart.visualization.html">seidart.visualization package</a><input aria-label="Toggle navigation of seidart.visualization package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.im2anim.html">seidart.visualization.im2anim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.imgen.html">seidart.visualization.imgen module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.implot.html">seidart.visualization.implot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.slice25d.html">seidart.visualization.slice25d module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="seidart.visualization.vtkbuild.html">seidart.visualization.vtkbuild module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Extra material</span></p>
 <ul>
@@ -261,13 +300,118 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="seidart-routines-volumebuilder-module">
-<h1>seidart.routines.volumebuilder module<a class="headerlink" href="#seidart-routines-volumebuilder-module" title="Permalink to this heading">¶</a></h1>
+          <section id="module-seidart.routines.volumebuilder">
+<span id="seidart-routines-volumebuilder-module"></span><h1>seidart.routines.volumebuilder module<a class="headerlink" href="#module-seidart.routines.volumebuilder" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="seidart.routines.volumebuilder.VolumeBuilder">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">seidart.routines.volumebuilder.</span></span><span class="sig-name descname"><span class="pre">VolumeBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plane</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'yz'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.volumebuilder.VolumeBuilder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Build a 3D labeled volume from a set of 2D images lying in a given plane
+(xy, yz, xz) and located at specific coordinates along the remaining axis.</p>
+<section id="conventions">
+<h2>Conventions<a class="headerlink" href="#conventions" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Internal 3D layout is (nx, ny, nz), corresponding to (x, y, z).</p></li>
+<li><dl class="simple">
+<dt>User provides ‘locations’ as 1-based slice indices along the orthogonal axis:</dt><dd><p>plane=’xy’ -&gt; locations are z-slices in [1..nz]
+plane=’yz’ -&gt; locations are x-slices in [1..nx]
+plane=’xz’ -&gt; locations are y-slices in [1..ny]</p>
+</dd>
+</dl>
+</li>
+<li><p>PNG images are assumed to be in (ny, nx, 3) pixel layout (row=y, col=x).</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.volumebuilder.VolumeBuilder.interpolate_distance_transform">
+<span class="sig-name descname"><span class="pre">interpolate_distance_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1.0,</span> <span class="pre">1.0)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.volumebuilder.VolumeBuilder.interpolate_distance_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Interpolate between two 2D labeled slices using signed distance transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slice_A</strong> (<em>(</em><em>H</em><em>, </em><em>W</em><em>) </em><em>int arrays</em>) – Label images at positions z=0 and z=1.</p></li>
+<li><p><strong>slice_B</strong> (<em>(</em><em>H</em><em>, </em><em>W</em><em>) </em><em>int arrays</em>) – Label images at positions z=0 and z=1.</p></li>
+<li><p><strong>t</strong> (<em>float in</em><em> [</em><em>0</em><em>, </em><em>1</em><em>]</em>) – Interpolation parameter; 0 -&gt; slice_A, 1 -&gt; slice_B.</p></li>
+<li><p><strong>spacing</strong> (<em>tuple</em><em>(</em><em>float</em><em>, </em><em>float</em><em>)</em>) – Pixel spacing (dy, dx) for anisotropic grids, passed to EDT.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – Interpolated label image at position t.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(H, W) int array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.volumebuilder.VolumeBuilder.plot_scatter">
+<span class="sig-name descname"><span class="pre">plot_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_scatter" title="Link to this definition">¶</a></dt>
+<dd><p>Plot a subset of voxels as a 3D scatter for a given label or RGB.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>int</em><em> or </em><em>None</em>) – Integer label to plot. If None, ‘rgb’ must be given.</p></li>
+<li><p><strong>rgb</strong> (<em>tuple</em><em> or </em><em>None</em>) – (R,G,B) color to plot. If None, ‘label’ must be given.</p></li>
+<li><p><strong>dx</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>dy</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>stride</strong> (<em>int</em>) – Subsampling step along each axis to reduce plotted points.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.volumebuilder.VolumeBuilder.plot_slice">
+<span class="sig-name descname"><span class="pre">plot_slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tab20'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_slice" title="Link to this definition">¶</a></dt>
+<dd><p>Plot orthogonal slices (x=const, y=const, z=const) through the 3D label volume.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>int</em><em> or </em><em>None</em>) – Integer label to highlight. If None and rgb is given, label is inferred
+from rgb. If both are None, all labels are shown.</p></li>
+<li><p><strong>rgb</strong> (<em>tuple</em><em> or </em><em>None</em>) – (R,G,B) color to map to a label. Ignored if label is provided.</p></li>
+<li><p><strong>ix</strong> (<em>int</em><em> or </em><em>None</em>) – Slice indices along x, y, z. If None, mid-plane is used.
+Indices are 0-based (Python convention).</p></li>
+<li><p><strong>iy</strong> (<em>int</em><em> or </em><em>None</em>) – Slice indices along x, y, z. If None, mid-plane is used.
+Indices are 0-based (Python convention).</p></li>
+<li><p><strong>iz</strong> (<em>int</em><em> or </em><em>None</em>) – Slice indices along x, y, z. If None, mid-plane is used.
+Indices are 0-based (Python convention).</p></li>
+<li><p><strong>dx</strong> (<em>float</em>) – Physical spacing in x, y, z directions (used only for axis ticks).</p></li>
+<li><p><strong>dy</strong> (<em>float</em>) – Physical spacing in x, y, z directions (used only for axis ticks).</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – Physical spacing in x, y, z directions (used only for axis ticks).</p></li>
+<li><p><strong>cmap</strong> (<em>str</em>) – Matplotlib colormap for imshow.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seidart.routines.volumebuilder.VolumeBuilder.plot_voxels">
+<span class="sig-name descname"><span class="pre">plot_voxels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rgb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_voxels" title="Link to this definition">¶</a></dt>
+<dd><p>Plot a 3D voxel volume for a given label or RGB, downsampled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>int</em><em> or </em><em>None</em>) – Integer label to plot. If None, ‘rgb’ must be given.</p></li>
+<li><p><strong>rgb</strong> (<em>tuple</em><em> or </em><em>None</em>) – (R,G,B) color to plot. If None, ‘label’ must be given.</p></li>
+<li><p><strong>dx</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>dy</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – Physical spacing in x, y, z directions.</p></li>
+<li><p><strong>stride</strong> (<em>int</em>) – Subsampling step; &gt;1 reduces number of voxels drawn.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
 </section>
 
         </article>
@@ -275,8 +419,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="seidart.simulations.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">seidart.simulations package</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="seidart.routines.sourcefunction.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">seidart.routines.sourcefunction module</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -295,17 +457,42 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">seidart.routines.volumebuilder module</a><ul>
+<li><a class="reference internal" href="#seidart.routines.volumebuilder.VolumeBuilder"><code class="docutils literal notranslate"><span class="pre">VolumeBuilder</span></code></a><ul>
+<li><a class="reference internal" href="#seidart.routines.volumebuilder.VolumeBuilder.interpolate_distance_transform"><code class="docutils literal notranslate"><span class="pre">VolumeBuilder.interpolate_distance_transform()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_scatter"><code class="docutils literal notranslate"><span class="pre">VolumeBuilder.plot_scatter()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_slice"><code class="docutils literal notranslate"><span class="pre">VolumeBuilder.plot_slice()</span></code></a></li>
+<li><a class="reference internal" href="#seidart.routines.volumebuilder.VolumeBuilder.plot_voxels"><code class="docutils literal notranslate"><span class="pre">VolumeBuilder.plot_voxels()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/scripts/furo.js"></script>
-    <script src="_static/clipboard.min.js"></script>
-    <script src="_static/copybutton.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
     </body>
 </html>
