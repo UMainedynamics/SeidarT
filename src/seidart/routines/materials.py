@@ -49,7 +49,9 @@ __all__ = [
     'scalar2tensor',
     'wolff_fujita_complex_permittivity',
     'ice_acidity_correction',
-    'wolff_conductivity'
+    'wolff_conductivity',
+    "elastic_backus_average",
+    "em_backus_average",
 ]
 
 # Global constants
