@@ -3432,3 +3432,497 @@ def jaccard_sigma(
     )
     return n_T * mu_T * e_i
 
+# ==============================================================================
+# ------------------------------------------------------------------------------
+def backus_elastic_tensors(df, t1, t2):
+    """
+    Compute tangential and normal stiffness blocks for a single layer.
+
+    This helper constructs the 6x6 stiffness matrix of one elastic
+    layer from a pandas Series of Voigt coefficients, rotates it into
+    a coordinate system aligned with the layer plane defined by
+    ``t1`` and ``t2``, and extracts the 3x3 block matrices needed for
+    Backus averaging of generally anisotropic layers.
+
+    The local frame is built as an orthonormal triad
+    (t1_hat, t2_hat, n_hat), where t1_hat and t2_hat span the layer
+    (tangential) plane and n_hat is the unit normal. The stiffness
+    tensor is then transformed with the Bond matrix M(Q) associated
+    with this rotation.
+
+    Parameters
+    ----------
+    df : pandas.Series
+        Single-row Series containing the 21 independent stiffness
+        components of the layer in Voigt form, with keys
+        ``c11, c12, ..., c66``. Coefficients are assumed to be given
+        in a common global coordinate system and in engineering Voigt
+        convention.
+    t1 : array_like, shape (3,)
+        Approximate tangential direction in global coordinates lying
+        in the layer plane. It does not need to be normalized; it is
+        orthonormalized internally.
+    t2 : array_like, shape (3,)
+        Second approximate tangential direction in global coordinates.
+        Must be linearly independent from ``t1``. The function
+        orthonormalizes (t1, t2) via Gram–Schmidt and constructs the
+        unit normal as their cross product.
+
+    Returns
+    -------
+    CTT : ndarray, shape (3, 3)
+        Tangential–tangential stiffness block in the layer-aligned
+        frame, corresponding to components (11, 22, 12) x (11, 22, 12)
+        in Voigt ordering.
+    CTN : ndarray, shape (3, 3)
+        Tangential–normal stiffness block in the layer-aligned frame,
+        mapping tangential strains to normal stresses.
+    CNT : ndarray, shape (3, 3)
+        Normal–tangential stiffness block in the layer-aligned frame,
+        mapping normal strains to tangential stresses.
+    CNN : ndarray, shape (3, 3)
+        Normal–normal stiffness block in the layer-aligned frame,
+        corresponding to components (33, 13, 23) x (33, 13, 23) in
+        Voigt ordering.
+    Cp : ndarray, shape (6, 6)
+        Full rotated stiffness matrix for the layer in the
+        layer-aligned frame.
+    Q : ndarray, shape (3, 3)
+        Orthonormal rotation matrix whose columns are the unit
+        tangential and normal vectors (t1_hat, t2_hat, n_hat).
+    M : ndarray, shape (6, 6)
+        Bond transformation matrix corresponding to ``Q``, used to
+        rotate fourth-order stiffness tensors represented in Voigt
+        form.
+
+    Notes
+    -----
+    This function assumes that ``bond(Q)`` returns the 6x6 Bond matrix
+    appropriate for rotating stiffness tensors in the same Voigt
+    convention as the input coefficients. The rotation is applied as
+    ``Cp = M @ C @ M.T``; if your Bond implementation uses the
+    opposite convention, this multiplication order must be adjusted
+    accordingly. [web:24][web:49]
+
+    References
+    ----------
+    Backus, G. E. (1962), Long-wave elastic anisotropy produced by
+        horizontal layering, J. Geophys. Res. [web:13]
+    Schoenberg, M., & Muir, F. (1989), A calculus for finely layered
+        anisotropic media, Geophysics.
+    Bóna, A., Bucataru, I., & Slawinski, M. A. (2016), On Backus
+        average for generally anisotropic layers. [web:24]
+    """
+    t1 /= np.linalg.norm(t1) 
+    t2 = t2 - np.dot(t2, t1) * t1 
+    if np.linalg.norm(t2) < 1e-15:
+        raise ValueError("t1 and t2 are parallel or nearly parallel")
+    
+    t2 /= np.linalg.norm(t2)
+    n = np.cross(t1, t2) 
+    n /= np.linalg.norm(n)
+    t2 = np.cross(n, t1)
+    t2 /= np.linalg.norm(t2)
+
+    # Extract stiffness coefficients from the specified row
+    C = np.array(
+        [
+            [ df["c11"], df["c12"], df["c13"], df["c14"], df["c15"], df["c16"] ],
+            [ df["c12"], df["c22"], df["c23"], df["c24"], df["c25"], df["c26"] ],
+            [ df["c13"], df["c23"], df["c33"], df["c34"], df["c35"], df["c36"] ],
+            [ df["c14"], df["c24"], df["c34"], df["c44"], df["c45"], df["c46"] ],
+            [ df["c15"], df["c25"], df["c35"], df["c45"], df["c55"], df["c56"] ],
+            [ df["c16"], df["c26"], df["c36"], df["c46"], df["c56"], df["c66"] ],
+        ], dtype = float
+    )
+    
+    Q = np.column_stack([t1, t2, n])
+    M = bond(Q)
+    Cp = M @ C @ M.T 
+    
+    T = np.array([0, 1, 5]) 
+    N = np.array([2, 4, 3])
+    CTT = Cp[np.ix_(T,T)] 
+    CTN = Cp[np.ix_(T,N)]
+    CNT = Cp[np.ix_(N,T)]
+    CNN = Cp[np.ix_(N,N)]
+
+    return CTT, CTN, CNT, CNN, Cp, Q, M 
+
+def elastic_backus_average( df, t1=None, t2=None, density_col = "rho", thickness_col="h"):
+    """
+    Perform Backus averaging of a stack of anisotropic elastic layers.
+
+    This function computes the long-wavelength (Backus) effective
+    stiffness tensor and density for a stack of thin, parallel layers
+    with arbitrary anisotropy. Each layer is described by its 6x6
+    stiffness matrix in Voigt form, density, and thickness. The stack
+    is assumed to be laterally homogeneous and composed of layers
+    parallel to the plane spanned by ``t1`` and ``t2``.
+
+    The algorithm follows the generalized Backus/Schoenberg–Muir
+    approach: for each layer, the stiffness tensor is rotated into a
+    layer-aligned frame, partitioned into tangential and normal
+    3x3 blocks, and combined via thickness-weighted averages of
+    functions of these blocks (involving CNN^{-1}) to obtain the
+    equivalent medium blocks. The resulting effective stiffness is
+    then assembled as a 6x6 matrix in the layer-aligned frame and
+    rotated back to the global coordinates.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing one row per layer. Each row must provide
+        the 21 independent stiffness coefficients in Voigt form
+        (columns ``c11, c12, ..., c66``), the layer density (column
+        given by ``density_col``), and the layer thickness (column
+        given by ``thickness_col``). All stiffnesses are assumed to be
+        expressed in the same global coordinate system.
+    t1 : array_like, shape (3,), optional
+        Approximate tangential direction in global coordinates lying
+        in the layer plane. If provided, it will be orthonormalized
+        together with ``t2`` to define the layer-aligned frame
+        (t1_hat, t2_hat, n_hat). This argument is required.
+    t2 : array_like, shape (3,), optional
+        Second approximate tangential direction in global coordinates.
+        Must be linearly independent from ``t1``. It is used together
+        with ``t1`` to construct the layer normal by cross product and
+        define the local orthonormal basis. This argument is required.
+    density_col : str, optional
+        Name of the DataFrame column containing the density of each
+        layer. Default is ``"rho"``.
+    thickness_col : str, optional
+        Name of the DataFrame column containing the thickness of each
+        layer. Default is ``"h"``.
+
+    Returns
+    -------
+    Cbar_global : ndarray, shape (6, 6)
+        Effective stiffness matrix of the Backus-averaged medium in
+        the original global coordinate system, expressed in Voigt
+        notation.
+    rho_eff : float
+        Effective density of the Backus-averaged medium, computed as
+        the thickness-weighted average of the layer densities.
+    Cbar_local : ndarray, shape (6, 6)
+        Effective stiffness matrix in the layer-aligned frame, where
+        the symmetry axis is aligned with the layer normal. This
+        matrix is assembled from the effective tangential and normal
+        blocks Cbar_TT, Cbar_TN, Cbar_NT, Cbar_NN.
+
+    Notes
+    -----
+    The Backus average is computed using the block-matrix formulas
+    for generally anisotropic layers. Denoting by CTT_i, CTN_i,
+    CNT_i, CNN_i the 3x3 block matrices of the i-th layer in the
+    layer-aligned frame, and by w_i the normalized thickness weights,
+    the following intermediate quantities are formed:
+
+    * A1 = < CNN_i^{-1} >
+    * A2 = < CTN_i CNN_i^{-1} >
+    * A3 = < CNN_i^{-1} CNT_i >
+    * A4 = < CTT_i >
+    * A5 = < CTN_i CNN_i^{-1} CNT_i >
+
+    where <·> denotes a thickness-weighted average over layers. The
+    effective blocks of the equivalent medium in the layer-aligned
+    frame are then
+
+    * Cbar_NN = A1^{-1}
+    * Cbar_TN = A2 @ Cbar_NN
+    * Cbar_NT = Cbar_NN @ A3
+    * Cbar_TT = A4 - A5 + A2 @ Cbar_NN @ A3
+
+    These blocks are inserted into the 6x6 matrix Cbar_local using
+    tangential indices (11,22,12) and normal indices (33,13,23)
+    in Voigt ordering, and Cbar_local is finally rotated back to the
+    global coordinates via the Bond matrix associated with the
+    layer-aligned frame.
+
+    References
+    ----------
+    Backus, G. E. (1962), Long-wave elastic anisotropy produced by
+        horizontal layering, J. Geophys. Res.
+    Schoenberg, M., & Muir, F. (1989), A calculus for finely layered
+        anisotropic media, Geophysics.
+    Bóna, A., Bucataru, I., & Slawinski, M. A. (2016), On Backus
+        average for generally anisotropic layers.
+    """
+    T = np.array([0, 1, 5])
+    N = np.array([2, 4, 3])
+    h = df[thickness_col].to_numpy(dtype = float)
+    w = h / h.sum() 
+
+    A1 = np.zeros([3,3])
+    A2 = A1.copy()
+    A3 = A1.copy()
+    A4 = A1.copy()
+    A5 = A1.copy()
+
+    rho_eff = 0.0 
+    for wi, (_, row) in zip(w, df.iterrows() ):
+        CTT, CTN, CNT, CNN, Cp, Q, M = backus_elastic_tensors(row, t1, t2) 
+
+        CNN_inv = np.linalg.inv(CNN) 
+
+        A1 += wi * CNN_inv 
+        A2 += wi * (CTN @ CNN_inv)
+        A3 += wi * (CNN_inv @ CNT)
+        A4 += wi * CTT 
+        A5 += wi * (CTN @ CNN_inv @ CNT) 
+
+        rho_eff += wi * float(row[density_col])
+    
+    Cbar_NN = np.linalg.inv(A1) 
+    Cbar_TN = A2 @ Cbar_NN 
+    Cbar_NT = Cbar_NN @ A3 
+    Cbar_TT = A4 - A5 + A2 @ Cbar_NN @ A3 
+    
+    Cbar_local = np.zeros([6,6]) 
+    Cbar_local[np.ix_(T,T)] = Cbar_TT
+    Cbar_local[np.ix_(T,N)] = Cbar_TN
+    Cbar_local[np.ix_(N,T)] = Cbar_NT
+    Cbar_local[np.ix_(N,N)] = Cbar_NN
+    
+    Cbar_global = M.T @ Cbar_local @ M 
+    return Cbar_global, rho_eff, Cbar_local
+
+# ------------------------------------------------------------------------------
+def em_layer_tangential_normal(df, t1, t2, col_prefix="e"):
+    """
+    Compute tangential and normal components of a 2nd-order EM tensor
+    (e.g., permittivity or conductivity) for a single layer.
+
+    This helper builds the 3x3 symmetric EM tensor of one layer from a
+    pandas Series, rotates it into a coordinate system aligned with
+    the layer plane defined by ``t1`` and ``t2``, and extracts:
+    - the 2x2 tangential block (in-plane components),
+    - the scalar normal component,
+    in the layer-aligned frame.
+
+    Parameters
+    ----------
+    df : pandas.Series
+        Single-row Series containing the 6 independent components of
+        the symmetric 3x3 EM tensor in the global frame. By default,
+        the expected keys are ``e11, e12, e13, e22, e23, e33``, where
+        ``col_prefix`` = "e". Coefficients are assumed to be given in
+        a common global coordinate system.
+    t1 : array_like, shape (3,)
+        Approximate tangential direction in global coordinates lying
+        in the layer plane. It does not need to be normalized; it is
+        orthonormalized internally.
+    t2 : array_like, shape (3,)
+        Second approximate tangential direction in global coordinates.
+        Must be linearly independent from ``t1``. The function
+        orthonormalizes (t1, t2) via Gram–Schmidt and constructs the
+        unit normal as their cross product.
+
+    col_prefix : str, optional
+        Prefix used for the tensor component column names. For
+        example, if ``col_prefix="e"``, the function looks for
+        columns ``e11, e12, e13, e22, e23, e33``.
+
+    Returns
+    -------
+    Ett : ndarray, shape (2, 2)
+        Tangential–tangential block of the rotated EM tensor in the
+        layer-aligned frame, corresponding to components along
+        (t1_hat, t2_hat) directions.
+    Enn : float
+        Normal–normal component of the rotated EM tensor in the
+        layer-aligned frame, corresponding to the n_hat direction.
+    E_local : ndarray, shape (3, 3)
+        Full EM tensor in the layer-aligned frame.
+    Q : ndarray, shape (3, 3)
+        Orthonormal rotation matrix whose columns are the unit
+        tangential and normal vectors (t1_hat, t2_hat, n_hat).
+
+    Notes
+    -----
+    The EM tensor is rotated as a proper 2nd-order tensor via
+
+        E_local = Q.T @ E_global @ Q
+
+    where Q is the 3x3 rotation matrix that maps global coordinates
+    into the layer-aligned frame. [web:3][web:98]
+    """
+    # Orthonormalize t1, t2, build n
+    t1 = np.asarray(t1, dtype=float)
+    t2 = np.asarray(t2, dtype=float)
+
+    t1 /= np.linalg.norm(t1)
+    t2 = t2 - np.dot(t2, t1) * t1
+    if np.linalg.norm(t2) < 1e-15:
+        raise ValueError("t1 and t2 are parallel or nearly parallel")
+    t2 /= np.linalg.norm(t2)
+
+    n = np.cross(t1, t2)
+    n /= np.linalg.norm(n)
+    t2 = np.cross(n, t1)
+    t2 /= np.linalg.norm(t2)
+
+    Q = np.column_stack([t1, t2, n])
+
+    # Build symmetric 3x3 EM tensor from df
+    e11 = df[f"{col_prefix}11"]
+    e12 = df[f"{col_prefix}12"]
+    e13 = df[f"{col_prefix}13"]
+    e22 = df[f"{col_prefix}22"]
+    e23 = df[f"{col_prefix}23"]
+    e33 = df[f"{col_prefix}33"]
+
+    E = np.array([
+        [e11, e12, e13],
+        [e12, e22, e23],
+        [e13, e23, e33],
+    ], dtype=float)
+
+    # Rotate to layer-aligned frame
+    E_local = Q.T @ E @ Q
+
+    # Tangential indices (0,1), normal index 2
+    Ett = E_local[0:2, 0:2]
+    Enn = E_local[2, 2]
+
+    return Ett, Enn, E_local, Q
+
+# ------------------------------------------------------------------------------
+def em_backus_average(df, t1, t2, tensor_prefix="e", thickness_col="h"):
+    """
+    Backus-type averaging of a stack of anisotropic EM layers
+    (2nd-order property tensor).
+
+    This function computes a long-wavelength effective 3x3 EM tensor
+    (e.g., permittivity or conductivity) for a stack of thin, parallel
+    layers. Each layer is described by a symmetric 3x3 tensor in the
+    global frame and a thickness. The stack is assumed to be laterally
+    homogeneous and composed of layers parallel to the plane spanned
+    by ``t1`` and ``t2``.
+
+    For each layer, the EM tensor is rotated into a layer-aligned
+    frame, partitioned into tangential (2x2) and normal (scalar)
+    components, and combined via thickness-weighted arithmetic and
+    harmonic averages along tangential and normal directions,
+    respectively. The resulting effective tensor is then rotated back
+    to the global coordinates.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing one row per layer. Each row must provide
+        the 6 independent components of a symmetric 3x3 EM tensor
+        in the global frame, with column names
+        ``f"{tensor_prefix}11"``, ``f"{tensor_prefix}12"``,
+        ``f"{tensor_prefix}13"``, ``f"{tensor_prefix}22"``,
+        ``f"{tensor_prefix}23"``, ``f"{tensor_prefix}33"``, and the
+        layer thickness (column given by ``thickness_col``).
+    t1 : array_like, shape (3,)
+        Approximate tangential direction in global coordinates lying
+        in the layer plane. It will be orthonormalized together with
+        ``t2`` to define the layer-aligned frame (t1_hat, t2_hat,
+        n_hat).
+    t2 : array_like, shape (3,)
+        Second approximate tangential direction in global coordinates.
+        Must be linearly independent from ``t1``. It is used with
+        ``t1`` to construct the layer normal by cross product and
+        define the local orthonormal basis.
+    tensor_prefix : str, optional
+        Prefix for EM tensor component columns. For example, if
+        ``tensor_prefix="e"``, the code expects columns
+        ``e11, e12, e13, e22, e23, e33``.
+    thickness_col : str, optional
+        Name of the DataFrame column containing the thickness of each
+        layer. Default is ``"h"``.
+
+    Returns
+    -------
+    E_eff_global : ndarray, shape (3, 3)
+        Effective EM property tensor of the Backus-averaged medium in
+        the original global coordinate system.
+    E_eff_local : ndarray, shape (3, 3)
+        Effective EM tensor in the layer-aligned frame, where the
+        symmetry axis is aligned with the layer normal.
+
+    Notes
+    -----
+    In the layer-aligned frame, the effective tensor is constructed as
+
+    * Ett_eff = < Ett_i >  (thickness-weighted arithmetic mean)
+    * Enn_eff = < 1 / Enn_i >^{-1}  (thickness-weighted harmonic mean)
+
+    where ``Ett_i`` is the 2x2 tangential block and ``Enn_i`` is the
+    normal scalar of the i-th layer, and <> denotes averaging with
+    respect to the normalized thickness weights. The effective tensor
+    in that frame is then
+
+        E_eff_local = [[Ett_eff(0,0), Ett_eff(0,1), 0],
+                       [Ett_eff(1,0), Ett_eff(1,1), 0],
+                       [0,             0,          Enn_eff]]
+
+    which is finally rotated back to the global coordinates via
+
+        E_eff_global = Q @ E_eff_local @ Q.T
+
+    where Q is the orthonormal basis matrix built from (t1_hat,
+    t2_hat, n_hat). [web:3][web:98]
+    """
+    # Thickness weights
+    h = df[thickness_col].to_numpy(dtype=float)
+    w = h / h.sum()
+
+    # We will reuse the same Q for all layers; compute from t1,t2 once
+    t1 = np.asarray(t1, dtype=float)
+    t2 = np.asarray(t2, dtype=float)
+
+    t1 /= np.linalg.norm(t1)
+    t2 = t2 - np.dot(t2, t1) * t1
+    if np.linalg.norm(t2) < 1e-15:
+        raise ValueError("t1 and t2 are parallel or nearly parallel")
+    t2 /= np.linalg.norm(t2)
+
+    n = np.cross(t1, t2)
+    n /= np.linalg.norm(n)
+    t2 = np.cross(n, t1)
+    t2 /= np.linalg.norm(t2)
+
+    Q = np.column_stack([t1, t2, n])
+
+    # Accumulators for Ett and 1/Enn
+    Ett_acc = np.zeros((2, 2))
+    invEnn_acc = 0.0
+
+    for wi, (_, row) in zip(w, df.iterrows()):
+        # Build E and rotate to local frame
+        e11 = row[f"{tensor_prefix}11"]
+        e12 = row[f"{tensor_prefix}12"]
+        e13 = row[f"{tensor_prefix}13"]
+        e22 = row[f"{tensor_prefix}22"]
+        e23 = row[f"{tensor_prefix}23"]
+        e33 = row[f"{tensor_prefix}33"]
+
+        E = np.array([
+            [e11, e12, e13],
+            [e12, e22, e23],
+            [e13, e23, e33],
+        ], dtype=float)
+
+        E_local = Q.T @ E @ Q
+
+        Ett = E_local[0:2, 0:2]
+        Enn = E_local[2, 2]
+
+        Ett_acc += wi * Ett
+        invEnn_acc += wi / Enn
+
+    Ett_eff = Ett_acc
+    Enn_eff = 1.0 / invEnn_acc
+
+    E_eff_local = np.zeros((3, 3), dtype=float)
+    E_eff_local[0:2, 0:2] = Ett_eff
+    E_eff_local[2, 2] = Enn_eff
+
+    E_eff_global = Q @ E_eff_local @ Q.T
+
+    return E_eff_global, E_eff_local
+

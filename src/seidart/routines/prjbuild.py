@@ -20,12 +20,20 @@ __all__ = [
 ]
 
 # ------------------------------------------------------------------------------
-def generate_template(nmats, **kwargs):
+def generate_template(nmats, dim=2, **kwargs):
     """
+    Generate a JSON-serialisable project-file template.
+
+    :param nmats: Number of unique material IDs in the domain.
+    :type nmats: int
+    :param dim: Dimensionality of the simulation (2, 2.5, or 3). Defaults to 2.
+    :type dim: float
+    :param kwargs: Optional key=value overrides applied after the template is
+        built. Keys use underscore notation (e.g. ``Domain_nx=200``).
     """
     template = {
         "Domain": {
-            "dim": 2,
+            "dim": dim,
             "nx": None,
             "ny": 1,
             "nz": None,

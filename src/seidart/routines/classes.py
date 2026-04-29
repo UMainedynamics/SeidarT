@@ -499,14 +499,15 @@ class Model:
         # Write out the tensor components to file
         if write_tensor:
             print('Writing tensor components to individual .dat files.')
-            # Compute the density gradient at boundaries with air. If the model is a
-            # a single material, this will return an error. Booooo, errors!
-            if domain.nmats > 1:
+            # Domain density array — shape depends on dimensionality.
+            # For 3D, we use a uniform ones array (no air-gradient kernel yet).
+            if domain.dim == 3.0:
+                self.domain_density = np.ones([domain.nx, domain.ny, domain.nz])
+            elif domain.nmats > 1:
                 self.domain_density = airsurf(material, domain, self.air_gradient_integer)
-                self.domain_density = np.ones([domain.nx, domain.nz]) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             else:
                 self.domain_density = np.ones([domain.nx, domain.nz])
-            
+
             # Write out the arrays of tensor coefficients
             if self.is_seismic:
                 self.tensor2dat(self.stiffness_coefficients, domain)
@@ -522,110 +523,206 @@ class Model:
         
     def writemask(self, material: Material, domain: Domain):
         """
-        
+        Write a binary geometry mask to ``geometry_mask.dat``. Cells that
+        belong to fluid-like materials (air, water, oil) are set to 1; all
+        others are 0. Supports 2 / 2.5D and true 3D domains.
         """
-        # Define any materials that need to be masked
+        cpml = int(domain.cpml)
         masked_materials = ['air', 'water', 'oil']
-        
-        masked_array = np.zeros([domain.nx, domain.nz])
-        extended_masked_array = np.zeros(
-            [domain.nx + 2*domain.cpml, domain.nz + 2*domain.cpml]
-        )
-        for mm in masked_materials:
-            material_id = material.material_list['id'].loc[material.material_list['Name'] == 'air'].to_numpy()
-            masked_array = masked_array + (domain.geometry == material_id).astype(int)
-        
-        masked_array[masked_array > 0] = 1
-        extended_masked_array[
-                domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
-        ] = masked_array
-        extended_masked_array[0:domain.cpml,:] = extended_masked_array[domain.cpml+1,:]
-        extended_masked_array[domain.nx+domain.cpml:,:] = extended_masked_array[domain.nx+domain.cpml-1,:]
-        extended_masked_array[:,0:domain.cpml] = extended_masked_array[:,domain.cpml+1].reshape(-1,1)
-        extended_masked_array[:,domain.nz+domain.cpml:] = extended_masked_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
-        f = FortranFile('geometry_mask.dat', 'w')
-        f.write_record(extended_masked_array.T)
-        f.close()
-        self.geometry_mask = extended_masked_array
+
+        if domain.dim == 3.0:
+            nx, ny, nz = domain.nx, domain.ny, domain.nz
+            masked_array = np.zeros([nx, ny, nz], dtype=int)
+            for mm in masked_materials:
+                ids = material.material_list['id'].loc[
+                    material.material_list['Name'] == mm
+                ].to_numpy()
+                for mid in ids:
+                    masked_array += (domain.geometry == mid).astype(int)
+            masked_array = (masked_array > 0).astype(int)
+
+            ext = np.zeros([nx + 2*cpml, ny + 2*cpml, nz + 2*cpml], dtype=int)
+            ext[cpml:nx+cpml, cpml:ny+cpml, cpml:nz+cpml] = masked_array
+            # Extend faces
+            ext[:cpml, :, :]    = ext[[cpml], :, :]
+            ext[nx+cpml:, :, :] = ext[[nx+cpml-1], :, :]
+            ext[:, :cpml, :]    = ext[:, [cpml], :]
+            ext[:, ny+cpml:, :] = ext[:, [ny+cpml-1], :]
+            ext[:, :, :cpml]    = ext[:, :, [cpml]]
+            ext[:, :, nz+cpml:] = ext[:, :, [nz+cpml-1]]
+
+            f = FortranFile('geometry_mask.dat', 'w')
+            f.write_record(np.asfortranarray(ext).astype(np.int32))
+            f.close()
+            self.geometry_mask = ext
+
+        else:
+            nx, nz = domain.nx, domain.nz
+            masked_array = np.zeros([nx, nz], dtype=int)
+            for mm in masked_materials:
+                ids = material.material_list['id'].loc[
+                    material.material_list['Name'] == mm
+                ].to_numpy()
+                for mid in ids:
+                    masked_array += (domain.geometry == mid).astype(int)
+            masked_array = (masked_array > 0).astype(int)
+
+            ext = np.zeros([nx + 2*cpml, nz + 2*cpml], dtype=int)
+            ext[cpml:nx+cpml, cpml:nz+cpml] = masked_array
+            ext[:cpml, :]    = ext[[cpml], :]
+            ext[nx+cpml:, :] = ext[[nx+cpml-1], :]
+            ext[:, :cpml]    = ext[:, [cpml]]
+            ext[:, nz+cpml:] = ext[:, [nz+cpml-1]]
+
+            f = FortranFile('geometry_mask.dat', 'w')
+            f.write_record(ext.T.astype(np.int32))
+            f.close()
+            self.geometry_mask = ext
         return 
         
     def tensor2dat(self, tensor, domain):
         """
+        Write per-material tensor coefficients to individual Fortran binary
+        ``.dat`` files, extended into the CPML ghost-cell region by repeating
+        the outermost interior value on every face.
 
+        Supports 2 / 2.5D (geometry shape ``(nx, nz)``) and true 3D (geometry
+        shape ``(nx, ny, nz)``).
         """
+        cpml = int(domain.cpml)
         columns = tensor.columns
+
         for col in columns:
             fn = col + '.dat'
-            
+            vals = tensor[col].values   # shape (nmats,)
+
             if domain.dim == 3.0:
-                coef_array = np.zeros([domain.nx, domain.ny, domain.nz])
-                extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
-                for ii in range(domain.nx):
-                    for jj in range(domain.ny):
-                        for kk in range(domain.nz):
-                            coef_array[ii,jj,kk] = tensor[col][domain.geometry[ii,jj,kk]]
-                
-                # Extend values into the pml
+                # --- vectorised material lookup ---
+                coef_array = vals[domain.geometry]   # (nx, ny, nz)
+
+                nx, ny, nz = domain.nx, domain.ny, domain.nz
+                extended_array = np.zeros([
+                    nx + 2*cpml,
+                    ny + 2*cpml,
+                    nz + 2*cpml
+                ])
+
+                # Fill interior
                 extended_array[
-                        domain.cpml:domain.nx+domain.cpml,
-                        domain.cpml:domain.ny+domain.cpml,
-                        domain.cpml:domain.nz+domain.cpml
-                    ] = coef_array
-                extended_array[0:domain.cpml,:,:] = extended_array[domain.cpml+1,:,:]
-                extended_array[domain.nx+domain.cpml:,:,:] = extended_array[domain.nx+domain.cpml-1,:,:]
-                extended_array[:,0:domain.cpml,:] = extended_array[:,domain.cpml+1,:].reshape(-1,1)
-                extended_array[:,domain.ny+domain.cpml:,:] = extended_array[:,domain.ny+domain.cpml-1,:].reshape(-1,1)
-                extended_array[:,:,0:domain.cpml] = extended_array[:,:,domain.cpml+1].reshape(-1,1)
-                extended_array[:,:,domain.nz+domain.cpml:] = extended_array[:,:,domain.nz+domain.cpml-1].reshape(-1,1)
-            
+                    cpml:nx+cpml,
+                    cpml:ny+cpml,
+                    cpml:nz+cpml
+                ] = coef_array
+
+                # Extend into x-CPML faces (broadcast over the y-z plane)
+                extended_array[:cpml, :, :]       = extended_array[[cpml], :, :]
+                extended_array[nx+cpml:, :, :]    = extended_array[[nx+cpml-1], :, :]
+                # Extend into y-CPML faces (broadcast over the x-z plane)
+                extended_array[:, :cpml, :]       = extended_array[:, [cpml], :]
+                extended_array[:, ny+cpml:, :]    = extended_array[:, [ny+cpml-1], :]
+                # Extend into z-CPML faces (broadcast over the x-y plane)
+                extended_array[:, :, :cpml]       = extended_array[:, :, [cpml]]
+                extended_array[:, :, nz+cpml:]    = extended_array[:, :, [nz+cpml-1]]
+
+                f = FortranFile(fn, 'w')
+                f.write_record(np.asfortranarray(extended_array).astype(np.float64))
+                f.close()
+
             else:
-                coef_array = np.zeros([domain.nx, domain.nz])
-                extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
-                for ii in range(domain.nx):
-                    for jj in range(domain.nz):
-                        coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
-                # Extend values into the pml
+                # 2 / 2.5D path
+                coef_array = vals[domain.geometry]   # (nx, nz)
+                nx, nz = domain.nx, domain.nz
+                extended_array = np.zeros([
+                    nx + 2*cpml,
+                    nz + 2*cpml
+                ])
+
                 extended_array[
-                        domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
-                    ] = coef_array
-                extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
-                extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
-                extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
-                extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
-            
-            f = FortranFile(fn, 'w')
-            f.write_record(extended_array.T)
-            f.close()
+                    cpml:nx+cpml,
+                    cpml:nz+cpml
+                ] = coef_array
+
+                # Extend into x-CPML faces
+                extended_array[:cpml, :]    = extended_array[[cpml], :]
+                extended_array[nx+cpml:, :] = extended_array[[nx+cpml-1], :]
+                # Extend into z-CPML faces
+                extended_array[:, :cpml]    = extended_array[:, [cpml]]
+                extended_array[:, nz+cpml:] = extended_array[:, [nz+cpml-1]]
+
+                f = FortranFile(fn, 'w')
+                f.write_record(extended_array.T)
+                f.close()
         
     def atten2dat(self, tensor, domain, eta_max = None):
         """
+        Write per-material attenuation (gamma) coefficients to Fortran binary
+        ``.dat`` files, extended into the CPML ghost-cell region.
 
+        The last column of *tensor* is the reference frequency and is skipped
+        (it is not written as a spatial field).
+
+        Supports 2 / 2.5D and true 3D domains.
         """
+        cpml = int(domain.cpml)
         columns = tensor.columns
-        coef_array = np.zeros([domain.nx, domain.nz])
-        extended_array = np.zeros([domain.nx+2*domain.cpml, domain.nz+2*domain.cpml])
+        vals_all = {col: tensor[col].values for col in columns[:-1]}
+
         for col in columns[:-1]:
-            fn = col + '.dat' 
-            for ii in range(domain.nx):
-                for jj in range(domain.nz):
-                    coef_array[ii,jj] = tensor[col][domain.geometry[ii,jj]]
-            
-            # Extend values into the pml
-            extended_array[
-                    domain.cpml:domain.nx+domain.cpml,domain.cpml:domain.nz+domain.cpml
+            fn = col + '.dat'
+            vals = vals_all[col]
+
+            if domain.dim == 3.0:
+                nx, ny, nz = domain.nx, domain.ny, domain.nz
+                coef_array = vals[domain.geometry]   # (nx, ny, nz)
+                extended_array = np.zeros([
+                    nx + 2*cpml,
+                    ny + 2*cpml,
+                    nz + 2*cpml
+                ])
+
+                extended_array[
+                    cpml:nx+cpml,
+                    cpml:ny+cpml,
+                    cpml:nz+cpml
                 ] = coef_array
-            extended_array[0:domain.cpml,:] = extended_array[domain.cpml+1,:]
-            extended_array[domain.nx+domain.cpml:,:] = extended_array[domain.nx+domain.cpml-1,:]
-            extended_array[:,0:domain.cpml] = extended_array[:,domain.cpml+1].reshape(-1,1)
-            extended_array[:,domain.nz+domain.cpml:] = extended_array[:,domain.nz+domain.cpml-1].reshape(-1,1)
-            if eta_max:
-                extended_array = sponge_boundary(domain, self.gamma_max, extended_array)
-                        
-            f = FortranFile(fn, 'w')
-            f.write_record(extended_array.T)
-            f.close()
-        
-        return(extended_array)
+
+                # Extend into x-CPML faces
+                extended_array[:cpml, :, :]    = extended_array[[cpml], :, :]
+                extended_array[nx+cpml:, :, :] = extended_array[[nx+cpml-1], :, :]
+                # Extend into y-CPML faces
+                extended_array[:, :cpml, :]    = extended_array[:, [cpml], :]
+                extended_array[:, ny+cpml:, :] = extended_array[:, [ny+cpml-1], :]
+                # Extend into z-CPML faces
+                extended_array[:, :, :cpml]    = extended_array[:, :, [cpml]]
+                extended_array[:, :, nz+cpml:] = extended_array[:, :, [nz+cpml-1]]
+
+                f = FortranFile(fn, 'w')
+                f.write_record(np.asfortranarray(extended_array).astype(np.float64))
+                f.close()
+
+            else:
+                nx, nz = domain.nx, domain.nz
+                coef_array = vals[domain.geometry]   # (nx, nz)
+                extended_array = np.zeros([nx + 2*cpml, nz + 2*cpml])
+
+                extended_array[
+                    cpml:nx+cpml,
+                    cpml:nz+cpml
+                ] = coef_array
+
+                extended_array[:cpml, :]    = extended_array[[cpml], :]
+                extended_array[nx+cpml:, :] = extended_array[[nx+cpml-1], :]
+                extended_array[:, :cpml]    = extended_array[:, [cpml]]
+                extended_array[:, nz+cpml:] = extended_array[:, [nz+cpml-1]]
+
+                if eta_max:
+                    extended_array = sponge_boundary(domain, self.gamma_max, extended_array)
+
+                f = FortranFile(fn, 'w')
+                f.write_record(extended_array.T)
+                f.close()
+
+        return extended_array
 
     # --------------------------------------------------------------------------
     def add_noise(self, domain, scalar_amplitude: float = 1e0):
@@ -1505,23 +1602,70 @@ class VolumeBuilder:
     # ----------------------------------
     def prjbuild(self, output_json):
         """
-        Generate the project file like the 2/2.5D uses
+        Generate the JSON project file for a 3D OBJ-sourced domain, analogous
+        to the 2 / 2.5D ``prjbuild`` function in ``prjbuild.py``.
+
+        :param output_json: Path to write the project JSON file.
+        :type output_json: str
         """
         self.material_ids = np.unique(self.label_grid)
         self.nmats = len(self.material_ids)
+
+        # Build template with dim=3 so that loadproject and the Fortran solver
+        # know this is a full 3-D simulation.
         template = generate_template(
-            self.nmats, 
-            Domain_nx = self.nx, Domain_nz = self.nz, Domain_ny = self.ny,
-            Domain_dx = self.dx, Domain_dz = self.dz, Domain_dy = self.dy,
+            self.nmats,
+            dim = 3,
+            Domain_nx = self.nx,
+            Domain_ny = self.ny,
+            Domain_nz = self.nz,
+            Domain_dx = self.dx,
+            Domain_dy = self.dy,
+            Domain_dz = self.dz,
         )
         updates = {}
-        
+
         for i, mid in enumerate(self.material_ids):
             rgb = self.label_to_rgb.get(mid, np.array([128, 128, 128]))
-            updates[("Materials", mid, "rgb")]  = '/'.join(rgb.astype(str))
-        
-        updates[("Domain", "image_file")] = self.obj_path 
-        updated_template = update_json(template, updates) 
-        
-        with open(output_json, 'w') as f: 
-            json.dump(updated_template, f, indent = 4) 
+            updates[("Materials", mid, "rgb")] = '/'.join(rgb.astype(str))
+
+        # Store the OBJ path so loadproject can find it; for 3D the geometry
+        # is read from geometry.dat, not re-parsed from the OBJ.
+        updates[("Domain", "image_file")] = self.obj_path
+        updated_template = update_json(template, updates)
+
+        with open(output_json, 'w') as f:
+            json.dump(updated_template, f, indent=4)
+
+    # ----------------------------------
+    # Load the geometry back into a Domain object
+    # ----------------------------------
+    def loadgeometry(self, domain):
+        """
+        Populate *domain.geometry* from the ``geometry.dat`` file that was
+        written by :meth:`label_domain`. Call this after constructing the
+        :class:`Domain` object (but before :meth:`Model.build`) so that the
+        domain has a correct 3-D integer label array.
+
+        The file is read as a Fortran-ordered binary record of ``int32``
+        values and reshaped to ``(nx, ny, nz)`` to match the indexing used
+        throughout the Python side.
+
+        :param domain: The domain object whose ``geometry`` attribute will be
+            set.
+        :type domain: Domain
+        """
+        nx = int(domain.nx)
+        ny = int(domain.ny)
+        nz = int(domain.nz)
+
+        with FortranFile('geometry.dat', 'r') as ff:
+            data = ff.read_ints(dtype=np.int32)
+
+        # geometry.dat was written as np.asfortranarray((nx, ny, nz)) so
+        # reshape with Fortran (column-major) order to recover the correct
+        # axis ordering on the Python side.
+        domain.geometry = data.reshape((nx, ny, nz), order='F')
+        domain.dim = 3.0
+        domain.nmats = len(np.unique(domain.geometry))
+        return domain 

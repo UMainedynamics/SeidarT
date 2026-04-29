@@ -291,9 +291,24 @@ def loadproject(
     #     domain.NP, domain.NPA, domain.Rcoef,
     #     domain.imfile 
     # ) = list(data['Domain'].values())
-    im,__ = image2int(data['Domain']['image_file'])
-    domain.geometry = im.transpose().astype(int)
-    
+    # Load geometry: 2/2.5D reads from a PNG image file; 3D reads the
+    # integer label array that VolumeBuilder.label_domain() wrote to
+    # geometry.dat so we avoid re-parsing the OBJ on every load.
+    dim_val = float(data['Domain']['dim'])
+    if dim_val == 3.0:
+        nx = int(data['Domain']['nx'])
+        ny = int(data['Domain']['ny'])
+        nz = int(data['Domain']['nz'])
+        with FortranFile('geometry.dat', 'r') as _ff:
+            _geom = _ff.read_ints(dtype=np.int32)
+        # geometry.dat was written as np.asfortranarray((nx, ny, nz)), so
+        # reshape with Fortran order to recover (nx, ny, nz) on the Python side.
+        domain.geometry = _geom.reshape((nx, ny, nz), order='F')
+    else:
+        im, __ = image2int(data['Domain']['image_file'])
+        domain.geometry = im.transpose().astype(int)
+
+
     # ---------------------------- Seismic Values ------------------------------
     
     seismic.dt = data['Seismic']['Source']['dt']
@@ -471,151 +486,266 @@ def cpmlcompute(
     """
     Computes CPML parameters for a given direction and updates model/domain.
 
+    For 2 / 2.5-D domains the output arrays are 2-D ``(nx+2c, nz+2c)`` and
+    are written as Fortran binary records (row-major transpose).
+
+    For true 3-D domains (``domain.dim == 3``) separate damping profiles are
+    built along *x*, *y*, and *z* independently and the output arrays are
+    3-D ``(nx+2c, ny+2c, nz+2c)``, written in Fortran-array order.
+
     :param modelclass: The model class instance to update.
     :param domain: The domain class instance to update.
-    # :param direction: Direction to compute CPML ('x', 'y', or 'z').
-    :param half: Flag to compute half CPML parameters. Defaults to False.
-    :param pml_smoothing: Specify the type of smoothing to apply to the PML
-        layer to avoid impedence contrasts and instability within the region. 
-        Options are: 
-            None - no smoothing is applied and cpml parameters will reflect the inner modeling domain boundary values
-            global (Default) - set the max values from the max velocity in the domain 
-            smoothed - computes the max from the boundary value and smooths within the PML using the arithmetic mean
+    :param half: Flag to compute half-step CPML parameters. Defaults to False.
+    :param pml_smoothing: Smoothing strategy for the PML boundary values.
+        Options are ``None``, ``'global'`` (default), or ``'smoothed'``.
     :type modelclass: Model
     :type domain: Domain
-    # :type direction: str
     :type half: bool
     """
-    nx = domain.nx + 2*domain.cpml
-    nz = domain.nz + 2*domain.cpml
-    if domain.dim == 2.5:
-        # ny = domain.ny + 2*domain.cpml
-        deltamin = np.min([domain.dx, domain.dy, domain.dz]) 
+    cpml = int(domain.cpml)
+    is_3d = (float(domain.dim) == 3.0)
+
+    nx_full = domain.nx + 2*cpml
+    nz_full = domain.nz + 2*cpml
+
+    if is_3d or domain.dim == 2.5:
+        deltamin = np.min([domain.dx, domain.dy, domain.dz])
     else:
-        deltamin = np.min([domain.dx, domain.dz]) 
-        
-    # -----------------------------------------------------------------------------
-    # Compute the distance along the absorbing boundary relative to the end of the 
-    # original model space. 
-    distx = domain.dx * np.arange(0, domain.cpml)
-    distz = domain.dz * np.arange(0, domain.cpml)
+        deltamin = np.min([domain.dx, domain.dz])
+
+    # -------------------------------------------------------------------------
+    # Build normalised distance profiles for x and z (half-step offset if needed)
+    distx = domain.dx * np.arange(0, cpml)
+    distz = domain.dz * np.arange(0, cpml)
     if half:
-        distx = distx + domain.dx/2
-        distz = distz + domain.dz/2
-    
-    distx = domain.dx*domain.cpml - distx
-    distz = domain.dz*domain.cpml - distz
-    distx = distx/(domain.dx*domain.cpml)
-    distz = distz/(domain.dz*domain.cpml)
-    
-    modelclass.compute_max_velocities(dim = domain.dim) 
-    
-    # build separate max velocities for x and z directions
+        distx = distx + domain.dx / 2
+        distz = distz + domain.dz / 2
+
+    distx = (domain.dx * cpml - distx) / (domain.dx * cpml)
+    distz = (domain.dz * cpml - distz) / (domain.dz * cpml)
+
+    # -------------------------------------------------------------------------
+    # Velocity maps  
+    modelclass.compute_max_velocities(dim=domain.dim)
+
     lookup_array_x = np.zeros(domain.nmats)
     lookup_array_z = np.zeros(domain.nmats)
-    
-    modelclass.compute_max_velocities(dim = domain.dim, directions='x')
+
+    modelclass.compute_max_velocities(dim=domain.dim, directions='x')
     for mat_id, v in modelclass.vmax_x.items():
         lookup_array_x[mat_id] = v
-    
-    modelclass.compute_max_velocities(dim = domain.dim, directions='z')
+
+    modelclass.compute_max_velocities(dim=domain.dim, directions='z')
     for mat_id, v in modelclass.vmax_z.items():
         lookup_array_z[mat_id] = v
-    
-    velocity_map_x = lookup_array_x[domain.geometry]
-    velocity_map_z = lookup_array_z[domain.geometry]
-    
-    # Compute the maximum sigma, and alpha values for the CPML.  
-    if modelclass.is_seismic:    
-        alpha_max = domain.alpha_max_scalar * np.pi*modelclass.f0
-        quasi_cp_max_x = velocity_scaling_factor * 0.7 * velocity_map_x / 2.0
-        quasi_cp_max_z = velocity_scaling_factor *  0.7 * velocity_map_z / 2.0
-        sig_max_x = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max_x / (2.0 * domain.cpml)
-        sig_max_z = - np.log(domain.Rcoef) * (domain.NP+1) * quasi_cp_max_z / (2.0 * domain.cpml)
+
+    # For 3D, also build the y velocity map using the same max-velocity approach
+    if is_3d:
+        lookup_array_y = np.zeros(domain.nmats)
+        modelclass.compute_max_velocities(dim=domain.dim, directions='y')
+        for mat_id, v in modelclass.max_velocity_per_material.items():
+            lookup_array_y[mat_id] = v
+
+    # Map material IDs to per-cell velocities.
+    # For 3D, domain.geometry is (nx, ny, nz); for 2D, (nx, nz).
+    if is_3d:
+        # Reduce to the boundary faces that set sig_max.
+        # Use the global max for the 'global' smoothing mode; for spatial
+        # variation we need the full volume.
+        velocity_map_x = lookup_array_x[domain.geometry]   # (nx, ny, nz)
+        velocity_map_y = lookup_array_y[domain.geometry]
+        velocity_map_z = lookup_array_z[domain.geometry]
     else:
-        c_max_x = clight / np.sqrt(velocity_map_x)
-        c_max_z = clight / np.sqrt(velocity_map_z) 
-        sig_max_x = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max_x / (2 * domain.cpml * deltamin)
-        sig_max_z = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * c_max_z / (2 * domain.cpml * deltamin)
-        alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0 
-    
-    # -------------------- apply pml_smoothing strategy --------------------
-    # We only need the tangential boundary lines because cpml_parameters
-    # consumes sig_max_x[0, :], sig_max_x[-1, :], sig_max_z[:, 0], sig_max_z[:, -1].
+        velocity_map_x = lookup_array_x[domain.geometry]   # (nx, nz)
+        velocity_map_z = lookup_array_z[domain.geometry]
+
+    # -------------------------------------------------------------------------
+    # Maximum sigma / alpha values
+    if modelclass.is_seismic:
+        alpha_max = domain.alpha_max_scalar * np.pi * modelclass.f0
+        _seismic_sig = lambda vmap: (
+            -np.log(domain.Rcoef) * (domain.NP + 1) *
+            velocity_scaling_factor * 0.7 * vmap / (2.0 * cpml)
+        )
+        sig_max_x = _seismic_sig(velocity_map_x)
+        sig_max_z = _seismic_sig(velocity_map_z)
+        if is_3d:
+            sig_max_y = _seismic_sig(velocity_map_y)
+    else:
+        alpha_max = domain.alpha_max_scalar * np.pi * eps0 * modelclass.f0
+        _em_sig = lambda vmap: (
+            -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 *
+            (clight / np.sqrt(np.maximum(vmap, 1e-30))) /
+            (2 * cpml * deltamin)
+        )
+        sig_max_x = _em_sig(velocity_map_x)
+        sig_max_z = _em_sig(velocity_map_z)
+        if is_3d:
+            sig_max_y = _em_sig(velocity_map_y)
+
+    # -------------------------------------------------------------------------
+    # Apply pml_smoothing strategy
     mode = (pml_smoothing or "global").lower()
-    
-    if mode == "global":
-        if modelclass.is_seismic:
-            vgx = float(np.nanmax(velocity_map_x))
-            vgz = float(np.nanmax(velocity_map_z))
-            qc_x = velocity_scaling_factor * 0.7 * vgx / 2.0
-            qc_z = velocity_scaling_factor * 0.7 * vgz / 2.0
-            s_x = - np.log(domain.Rcoef) * (domain.NP + 1) * qc_x / (2.0 * domain.cpml)
-            s_z = - np.log(domain.Rcoef) * (domain.NP + 1) * qc_z / (2.0 * domain.cpml)
+
+    def _apply_smoothing_2d(smx, smz):
+        """Overwrite sig_max arrays with smoothed / global values (2D)."""
+        if mode == "global":
+            if modelclass.is_seismic:
+                vgx = float(np.nanmax(velocity_map_x))
+                vgz = float(np.nanmax(velocity_map_z))
+                s_x = (-np.log(domain.Rcoef) * (domain.NP + 1) *
+                        velocity_scaling_factor * 0.7 * vgx / (2.0 * cpml))
+                s_z = (-np.log(domain.Rcoef) * (domain.NP + 1) *
+                        velocity_scaling_factor * 0.7 * vgz / (2.0 * cpml))
+            else:
+                cmax_x = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_x, 1.0))))
+                cmax_z = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_z, 1.0))))
+                s_x = (-(domain.NP + 1) * np.log(domain.Rcoef) * eps0 *
+                        cmax_x / (2.0 * cpml * deltamin))
+                s_z = (-(domain.NP + 1) * np.log(domain.Rcoef) * eps0 *
+                        cmax_z / (2.0 * cpml * deltamin))
+            smx = np.full_like(smx, s_x, dtype=float)
+            smz = np.full_like(smz, s_z, dtype=float)
+        elif mode == "smoothed":
+            smx[0,  :] = smooth1d(smx[0,  :], k=smoothing_window, passes=smoothing_passes)
+            smx[-1, :] = smooth1d(smx[-1, :], k=smoothing_window, passes=smoothing_passes)
+            smz[:, 0]  = smooth1d(smz[:, 0],  k=smoothing_window, passes=smoothing_passes)
+            smz[:, -1] = smooth1d(smz[:, -1], k=smoothing_window, passes=smoothing_passes)
+            np.maximum(smx, 0.0, out=smx)
+            np.maximum(smz, 0.0, out=smz)
+        return smx, smz
+
+    # -------------------------------------------------------------------------
+    # Suffix for half-step files
+    suffix = '_half_cpml.dat' if half else '_cpml.dat'
+
+    # =========================================================================
+    # 3-D branch: build (nx+2c, ny+2c, nz+2c) arrays
+    # =========================================================================
+    if is_3d:
+        ny_full = domain.ny + 2*cpml
+
+        # y distance profile
+        disty = domain.dy * np.arange(0, cpml)
+        if half:
+            disty = disty + domain.dy / 2
+        disty = (domain.dy * cpml - disty) / (domain.dy * cpml)
+
+        # Global smoothing in 3D: use the scalar global max for each axis
+        if mode == "global":
+            def _gmax_sig(vmap):
+                vg = float(np.nanmax(vmap))
+                if modelclass.is_seismic:
+                    return float(-np.log(domain.Rcoef) * (domain.NP + 1) *
+                                 velocity_scaling_factor * 0.7 * vg / (2.0 * cpml))
+                else:
+                    cg = float(clight / np.sqrt(max(vg, 1.0)))
+                    return float(-(domain.NP + 1) * np.log(domain.Rcoef) * eps0 *
+                                  cg / (2.0 * cpml * deltamin))
+            sx = _gmax_sig(velocity_map_x)
+            sy = _gmax_sig(velocity_map_y)
+            sz = _gmax_sig(velocity_map_z)
         else:
-            cmax_x = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_x, 1.0))))
-            cmax_z = float(np.nanmax(clight / np.sqrt(np.maximum(velocity_map_z, 1.0))))
-            s_x = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * cmax_x / (2.0 * domain.cpml * deltamin)
-            s_z = -(domain.NP + 1) * np.log(domain.Rcoef) * eps0 * cmax_z / (2.0 * domain.cpml * deltamin)
-        
-        # overwrite with constants (most robust)
-        sig_max_x = np.full_like(sig_max_x, s_x, dtype=float)
-        sig_max_z = np.full_like(sig_max_z, s_z, dtype=float)
-    elif mode == "smoothed":
-        # Smooth tangential lines only (avoid jagged contrasts along the PML):
-        # - for x-sides, smooth along z: rows 0 and -1
-        # - for z-sides, smooth along x: cols 0 and -1
-        # (The variation across thickness comes from the rx/rz profiles inside cpml_parameters.)
-        sig_max_x[0,  :]  = _smooth1d(sig_max_x[0,  :], k=7, passes=2)
-        sig_max_x[-1, :]  = _smooth1d(sig_max_x[-1, :], k=7, passes=2)
-        sig_max_z[:, 0]   = _smooth1d(sig_max_z[:, 0],  k=7, passes=2)
-        sig_max_z[:, -1]  = _smooth1d(sig_max_z[:, -1], k=7, passes=2)
-        
-        # Ensure non-negativity
-        np.maximum(sig_max_x, 0.0, out=sig_max_x)
-        np.maximum(sig_max_z, 0.0, out=sig_max_z)
-    else:
-        # Do nothing
-        print("No cpml smoothing specified.")
-    
-    
+            # Fall back to face maxima
+            sx = float(np.nanmax(sig_max_x))
+            sy = float(np.nanmax(sig_max_y))
+            sz = float(np.nanmax(sig_max_z))
+
+        # Polynomial grading profiles along each axis
+        rx = distx ** domain.NP
+        ry = disty ** domain.NP
+        rz = distz ** domain.NP
+
+        m = len(distx)   # = cpml
+        n = len(distz)   # = cpml
+        p = len(disty)   # = cpml
+
+        sigma  = np.zeros([nx_full, ny_full, nz_full])
+        kappa  = np.ones( [nx_full, ny_full, nz_full])
+        alpha  = np.zeros([nx_full, ny_full, nz_full])
+        acoef  = np.zeros([nx_full, ny_full, nz_full])
+        bcoef  = np.zeros([nx_full, ny_full, nz_full])
+
+        # --- x-direction PML slab ---
+        for ii in range(m):
+            sigma[ii,    :, :] += sx * rx[ii]
+            sigma[-(ii+1), :, :] += sx * rx[ii]
+            kappa[ii,    :, :] *= (1.0 + (domain.kappa_max - 1.0) * rx[ii])
+            kappa[-(ii+1), :, :] *= (1.0 + (domain.kappa_max - 1.0) * rx[ii])
+            alpha[ii,    :, :] = alpha_max * (1.0 - distx[ii]) ** domain.NPA
+            alpha[-(ii+1), :, :] = alpha_max * (1.0 - distx[ii]) ** domain.NPA
+
+        # --- y-direction PML slab ---
+        for jj in range(p):
+            sigma[:, jj,    :] += sy * ry[jj]
+            sigma[:, -(jj+1), :] += sy * ry[jj]
+            kappa[:, jj,    :] *= (1.0 + (domain.kappa_max - 1.0) * ry[jj])
+            kappa[:, -(jj+1), :] *= (1.0 + (domain.kappa_max - 1.0) * ry[jj])
+            alpha[:, jj,    :] = np.maximum(alpha[:, jj,    :],
+                                             alpha_max * (1.0 - disty[jj]) ** domain.NPA)
+            alpha[:, -(jj+1), :] = np.maximum(alpha[:, -(jj+1), :],
+                                               alpha_max * (1.0 - disty[jj]) ** domain.NPA)
+
+        # --- z-direction PML slab ---
+        for kk in range(n):
+            sigma[:, :, kk   ] += sz * rz[kk]
+            sigma[:, :, -(kk+1)] += sz * rz[kk]
+            kappa[:, :, kk   ] *= (1.0 + (domain.kappa_max - 1.0) * rz[kk])
+            kappa[:, :, -(kk+1)] *= (1.0 + (domain.kappa_max - 1.0) * rz[kk])
+            alpha[:, :, kk   ] = np.maximum(alpha[:, :, kk   ],
+                                             alpha_max * (1.0 - distz[kk]) ** domain.NPA)
+            alpha[:, :, -(kk+1)] = np.maximum(alpha[:, :, -(kk+1)],
+                                               alpha_max * (1.0 - distz[kk]) ** domain.NPA)
+
+        # --- Auxiliary coefficients ---
+        alpha = np.maximum(alpha, 0.0)
+        if modelclass.is_seismic:
+            bcoef = np.exp(-(sigma / np.maximum(kappa, 1e-30) + alpha) * modelclass.dt)
+        else:
+            bcoef = np.exp(-(sigma / np.maximum(kappa, 1e-30) + alpha) * (modelclass.dt / eps0))
+
+        nz_idx = np.abs(sigma) > 1e-6
+        acoef[nz_idx] = (sigma[nz_idx] * (bcoef[nz_idx] - 1.0) /
+                          (kappa[nz_idx] * sigma[nz_idx] +
+                           kappa[nz_idx] * alpha[nz_idx]))
+
+        def _write3d(arr, fn):
+            f = FortranFile(fn, 'w')
+            f.write_record(np.asfortranarray(arr).astype(np.float64))
+            f.close()
+
+        _write3d(sigma, 'sigma' + suffix)
+        _write3d(kappa, 'kappa' + suffix)
+        _write3d(alpha, 'alpha' + suffix)
+        _write3d(acoef, 'acoef' + suffix)
+        _write3d(bcoef, 'bcoef' + suffix)
+
+        return sigma, kappa, alpha, acoef, bcoef
+
+    # =========================================================================
+    # 2 / 2.5-D branch (original logic, unchanged in behaviour)
+    # =========================================================================
+    sig_max_x, sig_max_z = _apply_smoothing_2d(sig_max_x, sig_max_z)
+
     sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
-        sig_max_x, sig_max_z, alpha_max, domain.kappa_max, nx, nz,
-        distx, distz, domain.NP, domain.NPA, modelclass.dt, is_seismic=False
+        sig_max_x, sig_max_z, alpha_max, domain.kappa_max, nx_full, nz_full,
+        distx, distz, domain.NP, domain.NPA, modelclass.dt,
+        is_seismic=modelclass.is_seismic
     )
-    
-    # Save the results to a fortran binary
-    if half:
-        sigma_fn = 'sigma_half_cpml.dat'
-        kappa_fn = 'kappa_half_cpml.dat'
-        alpha_fn = 'alpha_half_cpml.dat'
-        acoef_fn = 'acoef_half_cpml.dat'
-        bcoef_fn = 'bcoef_half_cpml.dat'
-    else:
-        sigma_fn = 'sigma_cpml.dat'
-        kappa_fn = 'kappa_cpml.dat'
-        alpha_fn = 'alpha_cpml.dat'
-        acoef_fn = 'acoef_cpml.dat'
-        bcoef_fn = 'bcoef_cpml.dat'
-    
-    f = FortranFile(sigma_fn, 'w')
-    f.write_record(sigma.T)
-    f.close()
-    f = FortranFile(kappa_fn, 'w')
-    f.write_record(kappa.T)
-    f.close()
-    f = FortranFile(alpha_fn, 'w')
-    f.write_record(alpha.T)
-    f.close()
-        
-    f = FortranFile(acoef_fn, 'w')
-    f.write_record(acoef.T)
-    f.close()
-    f = FortranFile(bcoef_fn, 'w')
-    f.write_record(bcoef.T)
-    f.close()
-    
+
+    def _write2d(arr, fn):
+        f = FortranFile(fn, 'w')
+        f.write_record(arr.T)
+        f.close()
+
+    _write2d(sigma, 'sigma' + suffix)
+    _write2d(kappa, 'kappa' + suffix)
+    _write2d(alpha, 'alpha' + suffix)
+    _write2d(acoef, 'acoef' + suffix)
+    _write2d(bcoef, 'bcoef' + suffix)
+
     return sigma, kappa, alpha, acoef, bcoef
+
 
 # ------------------------------------------------------------------------------
 def smooth1d(x: ArrayLike, k: int = 7, passes: int = 1) -> NDArray[np.floating]:
