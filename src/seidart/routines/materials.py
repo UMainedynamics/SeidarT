@@ -3817,7 +3817,7 @@ def em_layer_tangential_normal(df, t1, t2, col_prefix="e"):
     return Ett, Enn, E_local, Q
 
 # ------------------------------------------------------------------------------
-def em_backus_average(df, t1, t2, tensor_prefix="e", thickness_col="h"):
+def em_backus_average(df, t1, t2, thickness_array,tensor_prefix="e"):
     """
     Backus-type averaging of a stack of anisotropic EM layers
     (2nd-order property tensor).
@@ -3897,7 +3897,7 @@ def em_backus_average(df, t1, t2, tensor_prefix="e", thickness_col="h"):
     t2_hat, n_hat). [web:3][web:98]
     """
     # Thickness weights
-    h = df[thickness_col].to_numpy(dtype=float)
+    h = thickness_array #df[thickness_col].to_numpy(dtype=float)
     w = h / h.sum()
 
     # We will reuse the same Q for all layers; compute from t1,t2 once

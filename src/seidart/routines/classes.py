@@ -467,6 +467,9 @@ class Model:
                 self.get_perm(self, material)
         
         # Always recalculate dt
+        # if not self.is_seismic and np.linalg.det(self.permittivity_coefficients[.to_numpy()) == 0:
+        #     max_vel = clight / np.sqrt(self.permittivity_coefficients['e11'])
+        # else:
         self.compute_max_velocities(dim = domain.dim) 
         max_vel = max(self.max_velocity_per_material.values() ) 
         
