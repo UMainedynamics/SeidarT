@@ -2807,6 +2807,116 @@ def mass_matrix_tensor(
 #                                Permittivity
 # ==============================================================================
 # -----------------------------------------------------------------------------
+def conglomerate_permittivity_conductivity(
+        T: float,  
+        composition: dict, 
+        max_epsilon_weights: dict, 
+        lwc: float=0.0, 
+        porosity: float=0.0, 
+        method = 'arithmetic'
+    ):
+    """
+    Compute bulk relative permittivity and electrical conductivity for a
+    heterogeneous material mixture.
+
+    The relative permittivity of each material is estimated by linearly
+    interpolating between literature minimum and maximum values using the
+    corresponding weight in ``max_epsilon_weights``. Bulk permittivity is then
+    computed using the selected mixing rule. Electrical conductivity is mixed
+    arithmetically at both the dry-mix and bulk-mix stages.
+
+    :param T: Temperature in degrees Celsius.
+    :type T: float
+    :param composition: Dictionary mapping material names to fractional
+        abundances. If the fractions do not sum to 1, they are normalized.
+    :type composition: dict
+    :param max_epsilon_weights: Dictionary mapping material names to
+        interpolation weights in the range [0, 1], where 0 selects the
+        literature minimum and 1 selects the literature maximum.
+    :type max_epsilon_weights: dict
+    :param lwc: Liquid water content in percent, from 0 to 100.
+    :type lwc: float, optional
+    :param porosity: Porosity in percent, from 0 to 100.
+    :type porosity: float, optional
+    :param method: Mixing rule used for permittivity. Supported values are
+        ``"arithmetic"``, ``"crim"``, and ``"lichtenecker"``.
+    :type method: str, optional
+    :return: Bulk relative permittivity and electrical conductivity.
+    :rtype: tuple[float, float]
+    :raises KeyError: If a material name is missing from ``max_epsilon_weights``
+        or ``isotropic_materials``.
+    :raises ValueError: If ``method`` is not supported, or if a non-positive
+        permittivity is used with the Lichtenecker rule.
+    """
+    porosity /= 100.0 
+    lwc /= 100.0
+    
+    # Check that composition sums to 1
+    if not np.isclose(sum(composition.values()), 1.0):
+        print("Composition fractions must sum to 1. Normalizing...")
+        composition = {mat: val / sum(composition.values()) for mat, val in composition.items()}
+        
+    # Material properties for sand, silt, and clay (from experimental data)
+    mats = composition.keys()
+    
+    # Permittivity and conductivity of water at given temperature (Debye model)
+    epsilon_water = 80.36 - 0.3 * (T - 25)  # Empirical relationship
+    sigma_water = 0.055 * np.exp(0.02 * (T - 25))  # S/m (increases with temp)
+    
+    # Permittivity and conductivity of air
+    epsilon_air = 1.0
+    sigma_air = 0.0
+
+    epsilon_dry = 0.0
+    sigma_dry = 0.0
+    for material_name, comp in composition.items():
+        wt = np.clip(max_epsilon_weights[material_name], 0.0, 1.0)
+        
+        eps_min, eps_max = isotropic_materials[material_name][4:6]
+        sig_min, sig_max = isotropic_materials[material_name][6:]
+        
+        epsilon_ave = (1.0 - wt) * eps_min + wt * eps_max
+        sigma_ave = (1.0 - wt) * sig_min + wt * sig_max
+        
+        if method == 'crim':
+            epsilon_dry += comp * np.sqrt(epsilon_ave)
+        elif method == 'lichtenecker':
+            epsilon_dry += comp * np.log(epsilon_ave)
+        else: # Arithmetic
+            epsilon_dry += comp * epsilon_ave 
+        
+        sigma_dry += comp * sigma_ave
+    
+    if method == 'crim':
+        epsilon_dry = epsilon_dry ** 2 
+        sigma_dry = sigma_dry ** 2 
+
+        epsilon_mix = (
+            (1 - porosity) * np.sqrt(epsilon_dry) +
+            (porosity * (1 - lwc)) * np.sqrt(epsilon_air) +
+            (porosity * lwc) * np.sqrt(epsilon_water)
+        ) ** 2
+
+    elif method == 'lichtenecker': 
+        epsilon_dry = np.exp(epsilon_dry) 
+        sigma_dry = np.exp(sigma_dry)
+
+        epsilon_mix = np.exp(
+            (1 - porosity) * np.log(epsilon_dry) +
+            (porosity * (1 - lwc)) * np.log(epsilon_air) +
+            (porosity * lwc) * np.log(epsilon_water)
+        )
+    else:
+        epsilon_mix = (1 - porosity) * epsilon_dry + \
+        porosity * (1 - lwc) * epsilon_air + \
+            porosity * lwc * epsilon_water
+    
+    sigma_mix = (1 - porosity) * sigma_dry + \
+    porosity * (1 - lwc) * sigma_air + \
+        porosity * lwc * sigma_water
+    
+    return epsilon_mix, sigma_mix
+
 
 def sand_silt_clay_permittivity_conductivity(
         T, lwc, porosity, 
