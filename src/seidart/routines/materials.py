@@ -2804,11 +2804,54 @@ def mass_matrix_tensor(
     return rho11, rho12, rho22
 
 # -----------------------------------------------------------------------------
+def tortuosity_from_porosity(
+        porosity: float,
+        method: str = "berryman",
+        shape_factor: float = 0.5,
+        minimum_porosity: float = 1.0e-6,
+    ) -> float:
+    """
+    Compute scalar tortuosity from porosity.
+
+    Supported methods are ``"sqrt"`` for :math:`alpha = 1 / sqrt(phi)` and
+    ``"berryman"`` for :math:`alpha = 1 + s(1 / phi - 1)`, where ``s`` is a
+    pore-shape factor. With the default ``s = 0.5``, the Berryman form reduces
+    to ``0.5 * (1 + 1 / phi)``.
+    """
+    if float(porosity) <= 0.0:
+        return 1.0
+    phi = max(float(porosity), minimum_porosity)
+    method = method.lower()
+
+    if method in ["sqrt", "square_root", "1/sqrt"]:
+        return 1.0 / np.sqrt(phi)
+    if method == "berryman":
+        return 1.0 + float(shape_factor) * (1.0 / phi - 1.0)
+
+    raise ValueError('Unsupported tortuosity method. Use "berryman" or "sqrt".')
+
+# -----------------------------------------------------------------------------
+def stiffness_bulk_modulus_voigt(C: NDArray[np.floating]) -> float:
+    """
+    Compute a robust Voigt bulk modulus from a 6x6 stiffness tensor.
+
+    This avoids requiring an invertible stiffness matrix, which is important for
+    air, water, and very weak materials that can have singular shear blocks.
+    """
+    C = np.asarray(C, dtype=float)
+    return (
+        C[0, 0] + C[1, 1] + C[2, 2] +
+        2.0 * (C[0, 1] + C[0, 2] + C[1, 2])
+    ) / 9.0
+
+# -----------------------------------------------------------------------------
 def get_biot(
         self,
         material,
         grain_size: float = 1.0e-3,
         tortuosity: NDArray[np.floating] | None = None,
+        tortuosity_method: str = "berryman",
+        shape_factor: float | NDArray[np.floating] = 0.5,
     ) -> None:
     """
     Compute per-material Biot poroelastic coefficients for FDTD input files.
@@ -2820,22 +2863,49 @@ def get_biot(
     columns = [
         "alpha_x", "alpha_y", "alpha_z", "alpha_yz", "alpha_xz", "alpha_xy",
         "biot_m", "rho_fluid", "permeability_x", "permeability_y",
-        "permeability_z", "viscosity"
+        "permeability_z", "viscosity", "tortuosity_x", "tortuosity_y",
+        "tortuosity_z"
     ]
     self.biot_coefficients = pd.DataFrame(
         np.zeros([len(material.temp), len(columns)]), columns=columns
     )
+    shape_factor_values = np.asarray(shape_factor, dtype=float)
+    if shape_factor_values.ndim == 0:
+        shape_factor_values = np.full(len(material.temp), float(shape_factor_values))
+    elif len(shape_factor_values) != len(material.temp):
+        raise ValueError("shape_factor must be scalar or have one value per material")
 
     for ind in range(len(material.temp)):
         phi = np.clip(float(material.porosity[ind]) / 100.0, 0.0, 0.999999)
         lwc = np.clip(float(material.lwc[ind]) / 100.0, 0.0, 1.0)
+        if tortuosity is None:
+            tau_scalar = tortuosity_from_porosity(
+                phi,
+                method=tortuosity_method,
+                shape_factor=shape_factor_values[ind],
+            )
+            tau_tensor = tau_scalar * np.eye(3)
+        else:
+            tau_array = np.asarray(tortuosity, dtype=float)
+            if tau_array.ndim == 1:
+                tau_tensor = np.diag(tau_array)
+            elif tau_array.ndim == 2:
+                tau_tensor = tau_array
+            elif tau_array.ndim == 3:
+                tau_tensor = tau_array[ind]
+            else:
+                raise ValueError("tortuosity must be a scalar vector, 3x3 tensor, or per-material tensor array")
 
         stiffness_values = self.stiffness_coefficients.loc[ind].drop("rho").to_numpy(dtype=float)
         C = np.zeros([6, 6], dtype=float)
         iu = np.triu_indices(6)
         C[iu] = stiffness_values
         C = C + np.triu(C, 1).T
-        K_frame, _, _ = astiffness2moduli(C)
+        try:
+            K_frame, _, _ = astiffness2moduli(C)
+        except np.linalg.LinAlgError:
+            K_frame = stiffness_bulk_modulus_voigt(C)
+        K_frame = max(float(K_frame), 1.0)
 
         K_water, _ = bulk_modulus_water(float(material.temp[ind]))
         K_air, _, rho_air = bulk_modulus_air(float(material.temp[ind]))
@@ -2892,6 +2962,9 @@ def get_biot(
             max(k_tensor[1, 1], 0.0),
             max(k_tensor[2, 2], 0.0),
             max(mu_fluid, 1.0e-6),
+            tau_tensor[0, 0],
+            tau_tensor[1, 1],
+            tau_tensor[2, 2],
         ]
 
 # ==============================================================================

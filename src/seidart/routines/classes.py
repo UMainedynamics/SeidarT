@@ -1309,17 +1309,24 @@ class Model:
 # ------------------------------------------------------------------------------
 class Biot(Model):
     """
-    Biot poroelastic seismic model.
+    Biot DG poroelastic seismic model.
 
     The class reuses the elastic ``Model`` setup for sources, stiffness,
     attenuation, CPML files, and initial conditions, then adds Biot-specific
-    coefficient fields consumed by the backend ``biot2`` and ``biot25``
-    subroutines.
+    coefficient fields consumed by the backend ``biotdg2``, ``biotdg25``,
+    and ``biotdg3`` subroutines.
     """
     def __init__(self) -> None:
         super().__init__()
         self.is_seismic = True
         self.is_poroelastic = True
+        self.numerical_method = "dg"
+        self.polynomial_order = 4
+        self.riemann_flux = "rusanov"
+        self.time_integrator = "rk4"
+        self.CFL = 0.05
+        self.tortuosity_method = "berryman"
+        self.shape_factor = 0.5
         self.grain_size = 1.0e-3
         self.tortuosity = None
         self.biot_coefficients = None
@@ -1332,9 +1339,6 @@ class Biot(Model):
             recompute_tensors: bool = True,
             write_tensor: bool = True,
         ) -> None:
-        if float(domain.dim) == 3.0:
-            raise NotImplementedError("Biot poroelasticity is currently implemented for 2D and 2.5D domains.")
-
         super().build(
             material,
             domain,
@@ -1343,12 +1347,16 @@ class Biot(Model):
         )
 
         if write_tensor:
+            if np.asarray(self.shape_factor).ndim == 0:
+                self.shape_factor = np.full(domain.nmats, float(self.shape_factor))
             print("Computing and writing Biot poroelastic coefficients.")
             self.get_biot(
                 self,
                 material,
                 grain_size=self.grain_size,
                 tortuosity=self.tortuosity,
+                tortuosity_method=self.tortuosity_method,
+                shape_factor=self.shape_factor,
             )
             self.tensor2dat(self.biot_coefficients, domain)
 
