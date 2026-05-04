@@ -21,6 +21,7 @@ __all__ = [
     'Domain',
     'Material',
     'Model',
+    'Biot',
     'AnimatedGif'
 ]
 
@@ -1304,6 +1305,90 @@ class Model:
         plt.show()
         
         return fig, ax1, ax2, ax3
+
+# ------------------------------------------------------------------------------
+class Biot(Model):
+    """
+    Biot poroelastic seismic model.
+
+    The class reuses the elastic ``Model`` setup for sources, stiffness,
+    attenuation, CPML files, and initial conditions, then adds Biot-specific
+    coefficient fields consumed by the backend ``biot2`` and ``biot25``
+    subroutines.
+    """
+    def __init__(self) -> None:
+        super().__init__()
+        self.is_seismic = True
+        self.is_poroelastic = True
+        self.grain_size = 1.0e-3
+        self.tortuosity = None
+        self.biot_coefficients = None
+        self.get_biot = mf.get_biot
+
+    def build(
+            self,
+            material: Material,
+            domain: Domain,
+            recompute_tensors: bool = True,
+            write_tensor: bool = True,
+        ) -> None:
+        if float(domain.dim) == 3.0:
+            raise NotImplementedError("Biot poroelasticity is currently implemented for 2D and 2.5D domains.")
+
+        super().build(
+            material,
+            domain,
+            recompute_tensors=recompute_tensors,
+            write_tensor=write_tensor,
+        )
+
+        if write_tensor:
+            print("Computing and writing Biot poroelastic coefficients.")
+            self.get_biot(
+                self,
+                material,
+                grain_size=self.grain_size,
+                tortuosity=self.tortuosity,
+            )
+            self.tensor2dat(self.biot_coefficients, domain)
+
+    def run(self, num_threads=1, jsonfile=None):
+        if self.is_seismic:
+            M = 'V'
+        else:
+            M = 'E'
+
+        f = FortranFile(f'initialcondition{M}x.dat', 'w')
+        f.write_record(self.initialcondition_x.T)
+        f.close()
+
+        f = FortranFile(f'initialcondition{M}y.dat', 'w')
+        f.write_record(self.initialcondition_y.T)
+        f.close()
+
+        f = FortranFile(f'initialcondition{M}z.dat', 'w')
+        f.write_record(self.initialcondition_z.T)
+        f.close()
+
+        if not jsonfile:
+            jsonfile = self.project_file
+
+        self.save_to_json(jsonfile=jsonfile)
+
+        args = [
+            'seidartfdtd',
+            jsonfile,
+            f'seismic={str(self.is_seismic).lower()}',
+            'poroelastic=true',
+            f'density_method={str(self.density_method).lower()}',
+        ]
+
+        if num_threads > 1:
+            env = os.environ.copy()
+            env['OMP_NUM_THREADS'] = str(num_threads)
+            call(args, env=env)
+        else:
+            call(args)
 
 # ------------------------------------------------------------------------------
 class AnimatedGif:

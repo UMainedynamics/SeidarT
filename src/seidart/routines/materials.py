@@ -2803,6 +2803,97 @@ def mass_matrix_tensor(
     
     return rho11, rho12, rho22
 
+# -----------------------------------------------------------------------------
+def get_biot(
+        self,
+        material,
+        grain_size: float = 1.0e-3,
+        tortuosity: NDArray[np.floating] | None = None,
+    ) -> None:
+    """
+    Compute per-material Biot poroelastic coefficients for FDTD input files.
+
+    This helper expects ``self.stiffness_coefficients`` to be populated. It
+    writes a ``biot_coefficients`` DataFrame on ``self`` with coefficient names
+    matching the new backend ``biot2`` and ``biot25`` routines.
+    """
+    columns = [
+        "alpha_x", "alpha_y", "alpha_z", "alpha_yz", "alpha_xz", "alpha_xy",
+        "biot_m", "rho_fluid", "permeability_x", "permeability_y",
+        "permeability_z", "viscosity"
+    ]
+    self.biot_coefficients = pd.DataFrame(
+        np.zeros([len(material.temp), len(columns)]), columns=columns
+    )
+
+    for ind in range(len(material.temp)):
+        phi = np.clip(float(material.porosity[ind]) / 100.0, 0.0, 0.999999)
+        lwc = np.clip(float(material.lwc[ind]) / 100.0, 0.0, 1.0)
+
+        stiffness_values = self.stiffness_coefficients.loc[ind].drop("rho").to_numpy(dtype=float)
+        C = np.zeros([6, 6], dtype=float)
+        iu = np.triu_indices(6)
+        C[iu] = stiffness_values
+        C = C + np.triu(C, 1).T
+        K_frame, _, _ = astiffness2moduli(C)
+
+        K_water, _ = bulk_modulus_water(float(material.temp[ind]))
+        K_air, _, rho_air = bulk_modulus_air(float(material.temp[ind]))
+        rho_water = rho_water_correction(float(material.temp[ind]))
+        rho_fluid = lwc * rho_water + (1.0 - lwc) * rho_air
+        K_fluid = 1.0 / ((lwc / K_water) + ((1.0 - lwc) / K_air))
+
+        if phi > 0.0:
+            K_mineral = max(K_frame / max((1.0 - phi) ** 2, 1.0e-12), K_frame * 1.000001)
+        else:
+            K_mineral = max(K_frame * 1.000001, 1.0)
+
+        euler = None
+        is_anisotropic = str(material.is_anisotropic[ind]).lower() == "true"
+        if is_anisotropic and material.angfile[ind] not in [None, "n/a", ""]:
+            try:
+                euler = read_ang(material.angfile[ind])
+            except Exception:
+                euler = None
+
+        alpha, alpha_tensor, Minv = biot_stress(
+            max(K_frame, 1.0),
+            max(K_mineral, 1.0),
+            max(K_fluid, 1.0),
+            phi,
+            euler_angles=euler,
+        )
+        biot_m = 1.0 / max(Minv, 1.0e-18)
+
+        if phi > 0.0:
+            if euler is None:
+                k_iso = (phi**3 * grain_size**2) / max((1.0 - phi) ** 2, 1.0e-18)
+                k_tensor = k_iso * np.eye(3)
+            else:
+                _, k_tensor = permeability(phi, grain_size, euler)
+        else:
+            k_tensor = np.zeros([3, 3], dtype=float)
+
+        try:
+            mu_fluid = viscosity_water(float(material.temp[ind]), units="PaS")
+        except Exception:
+            mu_fluid = 1.0e-3
+
+        self.biot_coefficients.loc[ind] = [
+            alpha_tensor[0, 0],
+            alpha_tensor[1, 1],
+            alpha_tensor[2, 2],
+            alpha_tensor[1, 2],
+            alpha_tensor[0, 2],
+            alpha_tensor[0, 1],
+            biot_m,
+            max(rho_fluid, 1.0),
+            max(k_tensor[0, 0], 0.0),
+            max(k_tensor[1, 1], 0.0),
+            max(k_tensor[2, 2], 0.0),
+            max(mu_fluid, 1.0e-6),
+        ]
+
 # ==============================================================================
 #                                Permittivity
 # ==============================================================================
