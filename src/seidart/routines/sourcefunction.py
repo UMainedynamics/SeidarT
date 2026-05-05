@@ -16,6 +16,8 @@ __all__ = [
     'plotsource',
     'writesrc',
     'pointsource',
+    'is_fluid_source',
+    'is_pressure_source',
     'find_zero_crossing',
     'double_couple_tensor'
 ]
@@ -169,6 +171,28 @@ def writesrc(fn: str, srcarray: np.ndarray) -> None:
     f.close()
 
 # ----------------------------------------------------------------------------
+def _normalized_source_type(source_type: str) -> str:
+    return str(source_type).strip().lower().replace("-", "_")
+
+# ----------------------------------------------------------------------------
+def is_fluid_source(source_type: str) -> bool:
+    return _normalized_source_type(source_type) in {
+        "fluid",
+        "fluid_injection",
+        "fi",
+        "q",
+    }
+
+# ----------------------------------------------------------------------------
+def is_pressure_source(source_type: str) -> bool:
+    return _normalized_source_type(source_type) in {
+        "pressure",
+        "pressure_injection",
+        "pi",
+        "p",
+    }
+
+# ----------------------------------------------------------------------------
 def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
                          M0: float = 1.0) -> np.ndarray:
     """
@@ -256,6 +280,8 @@ def pointsource(
         "ac" - accelerated weight drop
         "dc" - double couple 
         "tnt" - explosive 
+        "fluid" or "fluid_injection" - point fluid flux injection into qx/qy/qz
+        "pressure" or "pressure_injection" - scalar pressure injection
         "omni_ps" - omnidirectional p and s waves; 3 direction dc plus explosive source (for testing)
     """
     N = int(modelclass.time_steps)
@@ -286,14 +312,19 @@ def pointsource(
     sigma_xy = np.zeros(N)
     sigma_xz = np.zeros(N)
     sigma_yz = np.zeros(N)
+    fluidx = np.zeros(N)
+    fluidy = np.zeros(N)
+    fluidz = np.zeros(N)
+    pressure = np.zeros(N)
     
     if modelclass.is_seismic:
-        if modelclass.source_type=='ac':  
+        source_type = _normalized_source_type(modelclass.source_type)
+        if source_type == 'ac':
             R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
             forcez = R[0,2] * srcfn
             forcey = R[1,2] * srcfn
             forcex = R[2,2] * srcfn      
-        elif modelclass.source_type=='dc':
+        elif source_type == 'dc':
             M = double_couple_tensor(modelclass.phi, modelclass.theta, modelclass.psi, M0=1.0)
             modelclass.moment_tensor = M.copy() 
             sigma_xx = srcfn * M[0,0]
@@ -302,14 +333,20 @@ def pointsource(
             sigma_xy = srcfn * M[0,1] 
             sigma_xz = srcfn * M[0,2] 
             sigma_yz = srcfn * M[1,2]
-        elif modelclass.source_type == 'tnt':
+        elif source_type == 'tnt':
             # Isotropic stress-rate: σxx=σyy=σzz = srcfn, shears = 0 
             sigma_xx = srcfn.copy() 
             sigma_yy = srcfn.copy() 
             sigma_zz = srcfn.copy() 
             modelclass.moment_tensor = isotropic_tensor(M0=1.0)
-    
-        elif modelclass.source_type == 'omni_ps':    
+        elif is_fluid_source(source_type):
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
+            fluidz = R[0,2] * srcfn
+            fluidy = R[1,2] * srcfn
+            fluidx = R[2,2] * srcfn
+        elif is_pressure_source(source_type):
+            pressure = srcfn.copy()
+        elif source_type == 'omni_ps':
             R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
             # First omni-P/explosion
             s_iso = a_iso * srcfn 
@@ -331,7 +368,7 @@ def pointsource(
             sigma_xy += s_dc * Mavg[0,1]
             sigma_xz += s_dc * Mavg[0,2]
             sigma_yz += s_dc * Mavg[1,2]
-        elif modelclass.source_type == 'omni_s':    
+        elif source_type == 'omni_s':
             R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
             # omin-S/3 double couples 
             s_dc = b_dc * srcfn 
@@ -361,6 +398,10 @@ def pointsource(
         writesrc("seismicsourceyy.dat", sigma_yy)
         writesrc("seismicsourceyz.dat", sigma_yz)
         writesrc("seismicsourcezz.dat", sigma_zz)
+        writesrc("seismicsourceqx.dat", fluidx)
+        writesrc("seismicsourceqy.dat", fluidy)
+        writesrc("seismicsourceqz.dat", fluidz)
+        writesrc("seismicsourcep.dat", pressure)
         
     else:
         R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
@@ -377,6 +418,10 @@ def pointsource(
     modelclass.source_sigma_yy = sigma_yy 
     modelclass.source_sigma_yz = sigma_yz 
     modelclass.source_sigma_zz = sigma_zz 
+    modelclass.source_fluid_x = fluidx
+    modelclass.source_fluid_y = fluidy
+    modelclass.source_fluid_z = fluidz
+    modelclass.source_pressure = pressure
     modelclass.sourcefunction_x = forcex
     modelclass.sourcefunction_y = forcey
     modelclass.sourcefunction_z = forcez

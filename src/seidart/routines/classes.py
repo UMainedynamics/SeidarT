@@ -22,6 +22,7 @@ __all__ = [
     'Material',
     'Model',
     'Biot',
+    'JCA',
     'AnimatedGif'
 ]
 
@@ -1388,6 +1389,92 @@ class Biot(Model):
             jsonfile,
             f'seismic={str(self.is_seismic).lower()}',
             'poroelastic=true',
+            f'density_method={str(self.density_method).lower()}',
+        ]
+
+        if num_threads > 1:
+            env = os.environ.copy()
+            env['OMP_NUM_THREADS'] = str(num_threads)
+            call(args, env=env)
+        else:
+            call(args)
+
+# ------------------------------------------------------------------------------
+class JCA(Model):
+    """
+    Johnson-Champoux-Allard equivalent-fluid acoustic model.
+
+    The class reuses the standard seismic source and grid setup, then writes
+    JCA effective density, bulk modulus, and attenuation fields for the backend
+    ``jcadg`` routines.
+    """
+    def __init__(self) -> None:
+        super().__init__()
+        self.is_seismic = True
+        self.is_poroelastic = False
+        self.is_jca = True
+        self.numerical_method = "dg"
+        self.polynomial_order = 4
+        self.time_integrator = "rk4"
+        self.CFL = 0.05
+        self.air_pressure = 101325.0
+        self.flow_resistivity = None
+        self.tortuosity = None
+        self.viscous_characteristic_length = None
+        self.thermal_characteristic_length = None
+        self.jca_coefficients = None
+        self.get_jca = mf.get_jca
+
+    def build(
+            self,
+            material: Material,
+            domain: Domain,
+            recompute_tensors: bool = True,
+            write_tensor: bool = True,
+        ) -> None:
+        super().build(
+            material,
+            domain,
+            recompute_tensors=recompute_tensors,
+            write_tensor=write_tensor,
+        )
+
+        if write_tensor:
+            print("Computing and writing Johnson-Champoux-Allard coefficients.")
+            self.get_jca(
+                self,
+                material,
+                flow_resistivity=self.flow_resistivity,
+                tortuosity=self.tortuosity,
+                viscous_characteristic_length=self.viscous_characteristic_length,
+                thermal_characteristic_length=self.thermal_characteristic_length,
+                pressure=self.air_pressure,
+            )
+            self.tensor2dat(self.jca_coefficients, domain)
+
+    def run(self, num_threads=1, jsonfile=None):
+        f = FortranFile('initialconditionVx.dat', 'w')
+        f.write_record(self.initialcondition_x.T)
+        f.close()
+
+        f = FortranFile('initialconditionVy.dat', 'w')
+        f.write_record(self.initialcondition_y.T)
+        f.close()
+
+        f = FortranFile('initialconditionVz.dat', 'w')
+        f.write_record(self.initialcondition_z.T)
+        f.close()
+
+        if not jsonfile:
+            jsonfile = self.project_file
+
+        self.save_to_json(jsonfile=jsonfile)
+
+        args = [
+            'seidartfdtd',
+            jsonfile,
+            f'seismic={str(self.is_seismic).lower()}',
+            'jca=true',
             f'density_method={str(self.density_method).lower()}',
         ]
 

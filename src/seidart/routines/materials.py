@@ -12,6 +12,7 @@ __all__ = [
     'anisotropic_boolean',
     'get_seismic',
     'get_perm',
+    'get_jca',
     'rho_water_correction',
     'isotropic_stiffness_tensor',
     'isotropic_permittivity_tensor',
@@ -2965,6 +2966,150 @@ def get_biot(
             tau_tensor[0, 0],
             tau_tensor[1, 1],
             tau_tensor[2, 2],
+        ]
+
+# -----------------------------------------------------------------------------
+def viscosity_air(temperature: float) -> float:
+    """
+    Compute dynamic viscosity of air in Pa s using Sutherland's law.
+    """
+    temp_k = float(temperature) + 273.15
+    mu0 = 1.716e-5
+    t0 = 273.15
+    sutherland = 111.0
+    return mu0 * (temp_k / t0) ** 1.5 * (t0 + sutherland) / (temp_k + sutherland)
+
+# -----------------------------------------------------------------------------
+def thermal_conductivity_air(temperature: float) -> float:
+    """
+    Compute a simple temperature-dependent thermal conductivity for air.
+    """
+    temp_k = float(temperature) + 273.15
+    return 0.0241 * (temp_k / 273.15) ** 0.9
+
+# -----------------------------------------------------------------------------
+def jca_effective_properties(
+        frequency: float,
+        porosity: float,
+        flow_resistivity: float,
+        tortuosity: float,
+        viscous_length: float,
+        thermal_length: float,
+        temperature: float,
+        pressure: float = 101325.0,
+    ) -> tuple[complex, complex, float]:
+    """
+    Compute Johnson-Champoux-Allard equivalent-fluid properties.
+
+    Returns complex effective density, complex bulk modulus, and an attenuation
+    coefficient estimated from the complex wavenumber. Porosity is a fraction.
+    """
+    phi = np.clip(float(porosity), 1.0e-6, 0.999999)
+    sigma = max(float(flow_resistivity), 1.0e-12)
+    alpha_inf = max(float(tortuosity), 1.0)
+    lambda_v = max(float(viscous_length), 1.0e-12)
+    lambda_t = max(float(thermal_length), 1.0e-12)
+    omega = 2.0 * np.pi * max(float(frequency), 1.0e-12)
+    eta = viscosity_air(temperature)
+    gamma = 1.4
+    prandtl = 0.71
+    p0 = float(pressure)
+    _, c0, rho0 = bulk_modulus_air(float(temperature), P=p0)
+
+    density_term = np.sqrt(
+        1.0 + 4.0j * alpha_inf**2 * eta * rho0 * omega /
+        (sigma**2 * lambda_v**2 * phi**2)
+    )
+    rho_eff = (rho0 * alpha_inf / phi) * (
+        1.0 + sigma * phi / (1.0j * omega * rho0 * alpha_inf) * density_term
+    )
+
+    thermal_term = np.sqrt(
+        1.0 + 1.0j * rho0 * omega * prandtl * lambda_t**2 / (16.0 * eta)
+    )
+    thermal_correction = (
+        1.0 + 8.0 * eta /
+        (1.0j * omega * prandtl * rho0 * lambda_t**2) * thermal_term
+    )
+    bulk_eff = (gamma * p0 / phi) / (gamma - (gamma - 1.0) / thermal_correction)
+
+    wave_number = omega * np.sqrt(rho_eff / bulk_eff)
+    attenuation = max(float(np.imag(wave_number)), 0.0) * c0
+    return rho_eff, bulk_eff, attenuation
+
+# -----------------------------------------------------------------------------
+def get_jca(
+        self,
+        material,
+        flow_resistivity: float | NDArray[np.floating] | None = None,
+        tortuosity: float | NDArray[np.floating] | None = None,
+        viscous_characteristic_length: float | NDArray[np.floating] | None = None,
+        thermal_characteristic_length: float | NDArray[np.floating] | None = None,
+        pressure: float = 101325.0,
+    ) -> None:
+    """
+    Compute Johnson-Champoux-Allard coefficients for air-saturated media.
+
+    Coefficients are evaluated at ``self.f0`` and stored as real-valued fields
+    consumed by the backend time-domain equivalent-fluid solver.
+    """
+    columns = [
+        "jca_rho_x", "jca_rho_y", "jca_rho_z", "jca_bulk_modulus",
+        "jca_attenuation", "jca_phase_velocity", "jca_impedance",
+        "jca_flow_resistivity"
+    ]
+    nmat = len(material.temp)
+    self.jca_coefficients = pd.DataFrame(np.zeros([nmat, len(columns)]), columns=columns)
+
+    def per_material_values(values, default):
+        if values is None:
+            default_arr = np.asarray(default, dtype=float)
+            if default_arr.ndim == 0:
+                return np.full(nmat, float(default_arr), dtype=float)
+            if len(default_arr) != nmat:
+                raise ValueError("JCA default arrays must have one value per material")
+            return default_arr
+        arr = np.asarray(values, dtype=float)
+        if arr.ndim == 0:
+            return np.full(nmat, float(arr), dtype=float)
+        if len(arr) != nmat:
+            raise ValueError("JCA parameter arrays must have one value per material")
+        return arr
+
+    phi_values = np.clip(np.asarray(material.porosity, dtype=float) / 100.0, 1.0e-6, 0.999999)
+    sigma_values = per_material_values(
+        flow_resistivity,
+        180.0 * viscosity_air(0.0) / np.maximum(phi_values, 1.0e-6) ** 3 / (1.0e-3 ** 2),
+    )
+    tau_values = per_material_values(tortuosity, 1.0 + 0.5 * (1.0 / phi_values - 1.0))
+    viscous_values = per_material_values(viscous_characteristic_length, 1.0e-4)
+    thermal_values = per_material_values(thermal_characteristic_length, 2.0 * viscous_values)
+
+    for ind in range(nmat):
+        rho_eff, bulk_eff, attenuation = jca_effective_properties(
+            self.f0,
+            phi_values[ind],
+            sigma_values[ind],
+            tau_values[ind],
+            viscous_values[ind],
+            thermal_values[ind],
+            material.temp[ind],
+            pressure=pressure,
+        )
+        rho_real = max(float(np.real(rho_eff)), 1.0e-6)
+        bulk_real = max(float(np.real(bulk_eff)), 1.0)
+        phase_velocity = np.sqrt(bulk_real / rho_real)
+        impedance = np.sqrt(bulk_real * rho_real)
+
+        self.jca_coefficients.loc[ind] = [
+            rho_real,
+            rho_real,
+            rho_real,
+            bulk_real,
+            attenuation,
+            phase_velocity,
+            impedance,
+            sigma_values[ind],
         ]
 
 # ==============================================================================
