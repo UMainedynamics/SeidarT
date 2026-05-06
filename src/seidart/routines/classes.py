@@ -615,7 +615,10 @@ class Model:
         Supports 2 / 2.5D (geometry shape ``(nx, nz)``) and true 3D (geometry
         shape ``(nx, ny, nz)``).
         """
-        cpml = int(domain.cpml)
+        if getattr(self, 'numerical_method', 'fdtd') == 'dg':
+            cpml = 0
+        else:
+            cpml = int(domain.cpml)
         columns = tensor.columns
 
         for col in columns:
