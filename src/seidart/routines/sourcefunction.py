@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from seidart.routines.definitions import *
-from seidart.routines.materials import *
+from seidart.routines.materials import * 
 from scipy import signal
 import numpy.fft as fft
 from scipy.signal import butter, filtfilt, firwin, minimum_phase
@@ -16,8 +16,6 @@ __all__ = [
     'plotsource',
     'writesrc',
     'pointsource',
-    'is_fluid_source',
-    'is_pressure_source',
     'find_zero_crossing',
     'double_couple_tensor'
 ]
@@ -31,16 +29,16 @@ def wavelet(timevec: np.ndarray, f: float, stype: str = 'gaus1', omni=False) -> 
     a = (2.0 * np.pi * f) ** 2
     to = 1.0 / f
     if stype == 'gaus0':
-        bw = 0.2 / (np.pi * f)
+        bw = 0.2 / (np.pi * f) 
         a = (timevec - to) / bw
         x = np.exp(-a*a)
     elif stype == 'gaus1':
-        a = np.pi * f * (timevec - to)
-        e = np.exp(-a * a)
-        x = (1.0 - 2.0*a*a) * e
+        a = np.pi * f * (timevec - to) 
+        e = np.exp(-a * a) 
+        x = (1.0 - 2.0*a*a) * e 
     elif stype == 'gaus2':
-        dt = (timevec - to)
-        k = np.pi * np.pi * f * f
+        dt = (timevec - to) 
+        k = np.pi * np.pi * f * f 
         e = np.exp(-k*dt*dt)
         x = 2.0 * k*dt * (2.0*k*dt*dt - 3.0) * e
     elif stype == 'chirp':
@@ -55,7 +53,7 @@ def wavelet(timevec: np.ndarray, f: float, stype: str = 'gaus1', omni=False) -> 
             x = np.array(stype)
         except:
             raise ValueError(f"Unknown wavelet type: {stype}")
-
+    
     return x / np.max(np.abs(x))
 
 # ----------------------------------------------------------------------------
@@ -83,7 +81,7 @@ def multimodesrc(
         timevec: np.ndarray,
         f: float,
         stype: str,
-        center: bool = False,
+        center: bool = False, 
         num_octaves = 3
     ) -> np.ndarray:
     """
@@ -171,28 +169,6 @@ def writesrc(fn: str, srcarray: np.ndarray) -> None:
     f.close()
 
 # ----------------------------------------------------------------------------
-def _normalized_source_type(source_type: str) -> str:
-    return str(source_type).strip().lower().replace("-", "_")
-
-# ----------------------------------------------------------------------------
-def is_fluid_source(source_type: str) -> bool:
-    return _normalized_source_type(source_type) in {
-        "fluid",
-        "fluid_injection",
-        "fi",
-        "q",
-    }
-
-# ----------------------------------------------------------------------------
-def is_pressure_source(source_type: str) -> bool:
-    return _normalized_source_type(source_type) in {
-        "pressure",
-        "pressure_injection",
-        "pi",
-        "p",
-    }
-
-# ----------------------------------------------------------------------------
 def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
                          M0: float = 1.0) -> np.ndarray:
     """
@@ -201,7 +177,7 @@ def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
     strike = np.deg2rad(strike_deg)
     dip    = np.deg2rad(dip_deg)
     rake   = np.deg2rad(rake_deg)
-
+    
     # Fault normal n and slip direction d (global coordinates)
     # (Aki & Richards 2002; n points out of the fault plane, d is in-plane slip)
     s_hat = np.array([-np.sin(strike), np.cos(strike), 0.0])
@@ -210,24 +186,24 @@ def double_couple_tensor(strike_deg: float, dip_deg: float, rake_deg: float,
     d_hat /= np.linalg.norm(d_hat)
     n_hat  = np.cross(s_hat, d_hat)
     n_hat /= np.linalg.norm(n_hat)
-
+    
     # slip direction from rake (in-plane rotation)
     slip = np.cos(rake)*s_hat + np.sin(rake)*d_hat
     slip /= np.linalg.norm(slip)
-
+    
     # DC tensor
     M = M0*(np.outer(slip, n_hat) + np.outer(n_hat, slip))
-    M = 0.5 * (M + M.T)
-    M -= np.trace(M)/3.0 * np.eye(3)
-
+    M = 0.5 * (M + M.T) 
+    M -= np.trace(M)/3.0 * np.eye(3) 
+    
     return M
 
 def isotropic_tensor(M0: float = 1.0) -> np.ndarray:
     """
-    Isotropic moment tensor
+    Isotropic moment tensor 
     M0 > 0 - explosion; M0 < 0 - implosion
     """
-    return M0 * np.eye(3)
+    return M0 * np.eye(3) 
 
 # ----------------------------------------------------------------------------
 def clvd_tensor(axis_vec: np.ndarray, M0: float = 1.0, mode: str = "tensile") -> np.ndarray:
@@ -245,14 +221,14 @@ def clvd_tensor(axis_vec: np.ndarray, M0: float = 1.0, mode: str = "tensile") ->
     e1 /= (np.linalg.norm(e1) + 1e-15)
     e2 = np.cross(a, e1)
     R = np.column_stack((e1, e2, a))  # columns are eigenvectors
-
+    
     if mode == "tensile":
         lam = np.diag([1.0, -0.5, -0.5]) * 2.0  # -> (2, -1, -1)
     elif mode == "compressional":
         lam = np.diag([-1.0, 0.5, 0.5]) * 2.0   # -> (-2, 1, 1)
     else:
         raise ValueError("mode must be 'tensile' or 'compressional'")
-
+    
     M = (R @ lam @ R.T) * M0
     # hygiene: enforce symmetry & zero trace numerically
     M = 0.5*(M + M.T)
@@ -271,19 +247,15 @@ def pointsource(
         source: str = "ac",
         mt: np.ndarray = None,
         a_iso=1.0,                     # weight for ISO (diagonal) part → omni P
-        b_dc=0.7,
+        b_dc=0.7,  
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Build and write point-source time series.
-
+    
     source can be:
         "ac" - accelerated weight drop
-        "dc" - double couple
-        "tnt" - explosive
-        "pw" - plane wave
-        "ps" - point source (electromag); same as ac 
-        "fluid" or "fluid_injection" - point fluid flux injection into qx/qy/qz
-        "pressure" or "pressure_injection" - scalar pressure injection
+        "dc" - double couple 
+        "tnt" - explosive 
         "omni_ps" - omnidirectional p and s waves; 3 direction dc plus explosive source (for testing)
     """
     N = int(modelclass.time_steps)
@@ -303,60 +275,49 @@ def pointsource(
             srcfn = amp * wavelet_center0(timevec, f0, modelclass.source_wavelet)
         else:
             srcfn = amp * wavelet(timevec, f0, modelclass.source_wavelet)
-
-    # Pre-allocate output time series
+    
+    # Pre-allocate output time series 
     forcex = np.zeros(N)
-    forcey = np.zeros(N)
-    forcez = np.zeros(N)
+    forcey = np.zeros(N) 
+    forcez = np.zeros(N) 
     sigma_xx = np.zeros(N)
     sigma_yy = np.zeros(N)
     sigma_zz = np.zeros(N)
     sigma_xy = np.zeros(N)
     sigma_xz = np.zeros(N)
     sigma_yz = np.zeros(N)
-    fluidx = np.zeros(N)
-    fluidy = np.zeros(N)
-    fluidz = np.zeros(N)
-    pressure = np.zeros(N)
-
+    
     if modelclass.is_seismic:
-        source_type = _normalized_source_type(modelclass.source_type)
-        if source_type == 'ac':
-            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
+        if modelclass.source_type=='ac':  
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
             forcez = R[0,2] * srcfn
             forcey = R[1,2] * srcfn
-            forcex = R[2,2] * srcfn
-        elif source_type == 'dc':
+            forcex = R[2,2] * srcfn      
+        elif modelclass.source_type=='dc':
             M = double_couple_tensor(modelclass.phi, modelclass.theta, modelclass.psi, M0=1.0)
-            modelclass.moment_tensor = M.copy()
+            modelclass.moment_tensor = M.copy() 
             sigma_xx = srcfn * M[0,0]
-            sigma_yy = srcfn * M[1,1]
+            sigma_yy = srcfn * M[1,1] 
             sigma_zz = srcfn * M[2,2]
-            sigma_xy = srcfn * M[0,1]
-            sigma_xz = srcfn * M[0,2]
+            sigma_xy = srcfn * M[0,1] 
+            sigma_xz = srcfn * M[0,2] 
             sigma_yz = srcfn * M[1,2]
-        elif source_type == 'tnt':
-            # Isotropic stress-rate: σxx=σyy=σzz = srcfn, shears = 0
-            sigma_xx = srcfn.copy()
-            sigma_yy = srcfn.copy()
-            sigma_zz = srcfn.copy()
+        elif modelclass.source_type == 'tnt':
+            # Isotropic stress-rate: σxx=σyy=σzz = srcfn, shears = 0 
+            sigma_xx = srcfn.copy() 
+            sigma_yy = srcfn.copy() 
+            sigma_zz = srcfn.copy() 
             modelclass.moment_tensor = isotropic_tensor(M0=1.0)
-        elif is_fluid_source(source_type):
-            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
-            fluidz = R[0,2] * srcfn
-            fluidy = R[1,2] * srcfn
-            fluidx = R[2,2] * srcfn
-        elif is_pressure_source(source_type):
-            pressure = srcfn.copy()
-        elif source_type == 'omni_ps':
-            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
+    
+        elif modelclass.source_type == 'omni_ps':    
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
             # First omni-P/explosion
-            s_iso = a_iso * srcfn
+            s_iso = a_iso * srcfn 
             sigma_xx += s_iso
-            sigma_yy += s_iso
-            sigma_zz += s_iso
-            # Now omin-S/3 double couples
-            s_dc = b_dc * srcfn
+            sigma_yy += s_iso 
+            sigma_zz += s_iso 
+            # Now omin-S/3 double couples 
+            s_dc = b_dc * srcfn 
             e1, e2, e3 = R[:,0], R[:,1], R[:,2]
             DCs = [
                 np.outer(e1, e2) + np.outer(e2, e1),
@@ -370,10 +331,10 @@ def pointsource(
             sigma_xy += s_dc * Mavg[0,1]
             sigma_xz += s_dc * Mavg[0,2]
             sigma_yz += s_dc * Mavg[1,2]
-        elif source_type == 'omni_s':
-            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
-            # omin-S/3 double couples
-            s_dc = b_dc * srcfn
+        elif modelclass.source_type == 'omni_s':    
+            R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)    
+            # omin-S/3 double couples 
+            s_dc = b_dc * srcfn 
             e1, e2, e3 = R[:,0], R[:,1], R[:,2]
             DCs = [
                 np.outer(e1, e2) + np.outer(e2, e1),
@@ -387,107 +348,39 @@ def pointsource(
             sigma_xy += s_dc * Mavg[0,1]
             sigma_xz += s_dc * Mavg[0,2]
             sigma_yz += s_dc * Mavg[1,2]
-        else:
+        else: 
             raise ValueError(f"Unkown source type '{source}'")
-
+        
         writesrc("seismicsourcex.dat", forcex)
         writesrc("seismicsourcey.dat", forcey)
         writesrc("seismicsourcez.dat", forcez)
-
+        
         writesrc("seismicsourcexx.dat", sigma_xx)
         writesrc("seismicsourcexy.dat", sigma_xy)
         writesrc("seismicsourcexz.dat", sigma_xz)
         writesrc("seismicsourceyy.dat", sigma_yy)
         writesrc("seismicsourceyz.dat", sigma_yz)
         writesrc("seismicsourcezz.dat", sigma_zz)
-        writesrc("seismicsourceqx.dat", fluidx)
-        writesrc("seismicsourceqy.dat", fluidy)
-        writesrc("seismicsourceqz.dat", fluidz)
-        writesrc("seismicsourcep.dat", pressure)
-
+        
     else:
-        R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)
+        R = rotate_sdr(modelclass.phi, modelclass.theta, modelclass.psi)       
         forcez = R[0,2] * srcfn
         forcey = R[1,2] * srcfn
-        forcex = R[2,2] * srcfn
+        forcex = R[2,2] * srcfn  
         writesrc("electromagneticsourcex.dat", forcex)
         writesrc("electromagneticsourcey.dat", forcey)
         writesrc("electromagneticsourcez.dat", forcez)
-
+    
     modelclass.source_sigma_xx = sigma_xx
-    modelclass.source_sigma_xy = sigma_xy
-    modelclass.source_sigma_xz = sigma_xz
-    modelclass.source_sigma_yy = sigma_yy
-    modelclass.source_sigma_yz = sigma_yz
-    modelclass.source_sigma_zz = sigma_zz
-    modelclass.source_fluid_x = fluidx
-    modelclass.source_fluid_y = fluidy
-    modelclass.source_fluid_z = fluidz
-    modelclass.source_pressure = pressure
+    modelclass.source_sigma_xy = sigma_xy 
+    modelclass.source_sigma_xz = sigma_xz 
+    modelclass.source_sigma_yy = sigma_yy 
+    modelclass.source_sigma_yz = sigma_yz 
+    modelclass.source_sigma_zz = sigma_zz 
     modelclass.sourcefunction_x = forcex
     modelclass.sourcefunction_y = forcey
     modelclass.sourcefunction_z = forcez
     return timevec, forcex, forcey, forcez, srcfn
-
-# ----------------------------------------------------------------------------
-# def omnisource(
-#         modelclass,
-#         multimodal: bool = False,
-#         broadband: bool = False,
-#         fmin: float = None,
-#         fmax: float = None,
-#         center: bool = False,
-#         num_octaves: int = 2
-#     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-#     """
-#     Build and write point-source time series.
-#     """
-#     N = int(modelclass.time_steps)
-#     dt = float(modelclass.dt)
-#     timevec = np.arange(N) * dt
-#     f0 = float(modelclass.f0)
-
-#     if broadband:
-#         srcfn = modelclass.source_amplitude * broadbandsrc(timevec, fmin, fmax)
-#     elif multimodal:
-#         srcfn = modelclass.source_amplitude * multimodesrc(
-#             timevec, f0, modelclass.source_wavelet, center=center, num_octaves = num_octaves
-#         )
-#     else:
-#         if center:
-#             srcf n = modelclass.source_amplitude * wavelet_center0(timevec, f0, modelclass.source_wavelet)
-#         else:
-#             srcfn = modelclass.source_amplitude * wavelet(timevec, f0, modelclass.source_wavelet)
-
-#     theta = np.deg2rad(modelclass.theta)
-#     phi = np.deg2rad(modelclass.phi)
-#     forcez = np.sin(theta) * np.cos(phi) * srcfn
-#     forcey = np.sin(theta) * np.sin(phi) * srcfn
-#     forcex = np.cos(theta) * srcfn
-
-#     if modelclass.is_seismic:
-#         if stress_output:
-#             writesrc("seismicsourcexx.dat", forcexx)
-#             writesrc("seismicsourcexy.dat", forcexy)
-#             writesrc("seismicsourcexz.dat", forcexz)
-#             writesrc("seismicsourceyy.dat", forceyy)
-#             writesrc("seismicsourceyz.dat", forceyz)
-#             writesrc("seismicsourcezz.dat", forcezz)
-#         else:
-#             writesrc("seismicsourcex.dat", forcex)
-#             writesrc("seismicsourcey.dat", forcey)
-#             writesrc("seismicsourcez.dat", forcez)
-#     else:
-#         writesrc("electromagneticsourcex.dat", forcex)
-#         writesrc("electromagneticsourcey.dat", forcey)
-#         writesrc("electromagneticsourcez.dat", forcez)
-
-#     modelclass.sourcefunction_x = forcex
-#     modelclass.sourcefunction_y = forcey
-#     modelclass.sourcefunction_z = forcez
-#     return timevec, forcex, forcey, forcez, srcfn
-
-
 
 
 # ----------------------------------------------------------------------------

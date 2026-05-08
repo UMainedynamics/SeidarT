@@ -10,7 +10,7 @@ import matplotlib as mpl
 
 import argparse
 from seidart.routines.definitions import *
-from seidart.routines.classes import Domain, Material, Model, Model
+from seidart.routines.classes import Domain, Material, Model, Biot
 import matplotlib.image as mpimg
 
 from glob2 import glob 
@@ -35,7 +35,8 @@ class FDTDImage:
             self, 
             project_file, inputfile,
             is_single_precision: bool = True,
-            plottype: str = 'magnitude'
+            plottype: str = 'magnitude',
+            numerical_method: str = 'fdtd'
         ):
         self.project_file = project_file
         self.x = None
@@ -53,6 +54,7 @@ class FDTDImage:
         self.dz = None
         self.nx = None 
         self.nz = None
+        self.numerical_method = numerical_method
         # Flags
         self.is_single_precision = is_single_precision
         
@@ -73,13 +75,21 @@ class FDTDImage:
         """
         Builds the domain, material, seismic, and electromagnetic models from the project file.
         """
+        if self.numerical_method == 'dg':
+            model_seismic = Biot()
+        else:
+            model_seismic = Model()
+        
         self.domain, self.material, self.seismic, self.electromag = loadproject(
             self.project_file,
             Domain(), 
             Material(),
-            Model(),
+            model_seismic,
             Model()
         )
+        
+        if self.numerical_method == 'dg':
+            self.domain.cpml = 0 
         
         # Define the channel given the input file name
         self.channel = self.inputfile[0:2]

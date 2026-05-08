@@ -14,7 +14,7 @@ import trimesh
 import seidart.routines.materials as mf
 from seidart.routines import sourcefunction
 from seidart.routines.definitions import *
-from seidart.routines.prjbuild import readwrite_json
+from seidart.routines.prjbuild import readwrite_json, update_json
 import seidart.routines.materials as mf
 
 __all__ = [
@@ -511,15 +511,16 @@ class Model:
                 
         direction = ['x', 'y', 'z']
         # Compute CPML
-        print('Computing CPML boundary values and writing outputs to Fortran files.')
-        for d in direction:
-            __ = cpmlcompute(
-                self, domain, 
-                velocity_scaling_factor = self.velocity_scaling_factor, 
-            )
-            __ = cpmlcompute(self, domain, half = True,
-                velocity_scaling_factor = self.velocity_scaling_factor, 
-            )
+        if getattr(self, 'numerical_method', 'fdtd') != 'dg':
+            print('Computing CPML boundary values and writing outputs to Fortran files.')
+            for d in direction:
+                __ = cpmlcompute(
+                    self, domain, 
+                    velocity_scaling_factor = self.velocity_scaling_factor, 
+                )
+                __ = cpmlcompute(self, domain, half = True,
+                    velocity_scaling_factor = self.velocity_scaling_factor, 
+                )
         
         # ----------------------
         # Write out the tensor components to file
@@ -615,10 +616,7 @@ class Model:
         Supports 2 / 2.5D (geometry shape ``(nx, nz)``) and true 3D (geometry
         shape ``(nx, ny, nz)``).
         """
-        if getattr(self, 'numerical_method', 'fdtd') == 'dg':
-            cpml = 0
-        else:
-            cpml = int(domain.cpml)
+        cpml = int(domain.cpml)
         columns = tensor.columns
 
         for col in columns:
@@ -1343,6 +1341,11 @@ class Biot(Model):
             recompute_tensors: bool = True,
             write_tensor: bool = True,
         ) -> None:
+        
+        # DG methods do not use CPML absorbing boundary padding
+        if getattr(self, 'numerical_method', 'fdtd') == 'dg':
+            domain.cpml = 0
+
         super().build(
             material,
             domain,
@@ -1363,6 +1366,12 @@ class Biot(Model):
                 shape_factor=self.shape_factor,
             )
             self.tensor2dat(self.biot_coefficients, domain)
+            print("Writing stiffness and attenuation coefficients.")
+            self.tensor2dat(self.stiffness_coefficients, domain)
+            # gamma/attenuation coefficients need to be scaled by the 
+            # dominant frequency of the source
+            print("Writing attenuation coefficients.")
+            self.atten2dat(self.attenuation_coefficients * self.f0, domain, self.gamma_max)
 
     def run(self, num_threads=1, jsonfile=None):
         if self.is_seismic:

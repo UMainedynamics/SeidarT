@@ -22,7 +22,8 @@ def build_animation(
         numsteps, 
         alpha = 0.3, 
         is_single_precision: bool = True,
-        plottype: str = 'magnitude'
+        plottype: str = 'magnitude', 
+        numerical_method: str = 'fdtd'
     ):
     '''
     This function builds a gif from the set of images output of the FDTD modeling. 
@@ -70,7 +71,7 @@ def build_animation(
             mag = FDTDImage(
                 project_file, fn, 
                 is_single_precision = is_single_precision,
-                plottype = plottype
+                plottype = plottype, numerical_method = numerical_method
             )
             mag.magnitudeplot(alpha = alpha)
             mag.addlabels()
