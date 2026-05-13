@@ -21,8 +21,6 @@ __all__ = [
     'Domain',
     'Material',
     'Model',
-    'Biot',
-    'JCA',
     'AnimatedGif'
 ]
 
@@ -1309,193 +1307,193 @@ class Model:
         return fig, ax1, ax2, ax3
 
 # ------------------------------------------------------------------------------
-class Biot(Model):
-    """
-    Biot DG poroelastic seismic model.
+# class Biot(Model):
+#     """
+#     Biot DG poroelastic seismic model.
 
-    The class reuses the elastic ``Model`` setup for sources, stiffness,
-    attenuation, CPML files, and initial conditions, then adds Biot-specific
-    coefficient fields consumed by the backend ``biotdg2``, ``biotdg25``,
-    and ``biotdg3`` subroutines.
-    """
-    def __init__(self) -> None:
-        super().__init__()
-        self.is_seismic = True
-        self.is_poroelastic = True
-        self.numerical_method = "dg"
-        self.polynomial_order = 4
-        self.riemann_flux = "rusanov"
-        self.time_integrator = "rk4"
-        self.CFL = 0.05
-        self.tortuosity_method = "berryman"
-        self.shape_factor = 0.5
-        self.grain_size = 1.0e-3
-        self.tortuosity = None
-        self.biot_coefficients = None
-        self.get_biot = mf.get_biot
+#     The class reuses the elastic ``Model`` setup for sources, stiffness,
+#     attenuation, CPML files, and initial conditions, then adds Biot-specific
+#     coefficient fields consumed by the backend ``biotdg2``, ``biotdg25``,
+#     and ``biotdg3`` subroutines.
+#     """
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.is_seismic = True
+#         self.is_poroelastic = True
+#         self.numerical_method = "dg"
+#         self.polynomial_order = 4
+#         self.riemann_flux = "rusanov"
+#         self.time_integrator = "rk4"
+#         self.CFL = 0.05
+#         self.tortuosity_method = "berryman"
+#         self.shape_factor = 0.5
+#         self.grain_size = 1.0e-3
+#         self.tortuosity = None
+#         self.biot_coefficients = None
+#         self.get_biot = mf.get_biot
 
-    def build(
-            self,
-            material: Material,
-            domain: Domain,
-            recompute_tensors: bool = True,
-            write_tensor: bool = True,
-        ) -> None:
+#     def build(
+#             self,
+#             material: Material,
+#             domain: Domain,
+#             recompute_tensors: bool = True,
+#             write_tensor: bool = True,
+#         ) -> None:
         
-        # DG methods do not use CPML absorbing boundary padding
-        if getattr(self, 'numerical_method', 'fdtd') == 'dg':
-            domain.cpml = 0
+#         # DG methods do not use CPML absorbing boundary padding
+#         if getattr(self, 'numerical_method', 'fdtd') == 'dg':
+#             domain.cpml = 0
 
-        super().build(
-            material,
-            domain,
-            recompute_tensors=recompute_tensors,
-            write_tensor=write_tensor,
-        )
+#         super().build(
+#             material,
+#             domain,
+#             recompute_tensors=recompute_tensors,
+#             write_tensor=write_tensor,
+#         )
 
-        if write_tensor:
-            if np.asarray(self.shape_factor).ndim == 0:
-                self.shape_factor = np.full(domain.nmats, float(self.shape_factor))
-            print("Computing and writing Biot poroelastic coefficients.")
-            self.get_biot(
-                self,
-                material,
-                grain_size=self.grain_size,
-                tortuosity=self.tortuosity,
-                tortuosity_method=self.tortuosity_method,
-                shape_factor=self.shape_factor,
-            )
-            self.tensor2dat(self.biot_coefficients, domain)
-            print("Writing stiffness and attenuation coefficients.")
-            self.tensor2dat(self.stiffness_coefficients, domain)
-            # gamma/attenuation coefficients need to be scaled by the 
-            # dominant frequency of the source
-            print("Writing attenuation coefficients.")
-            self.atten2dat(self.attenuation_coefficients * self.f0, domain, self.gamma_max)
+#         if write_tensor:
+#             if np.asarray(self.shape_factor).ndim == 0:
+#                 self.shape_factor = np.full(domain.nmats, float(self.shape_factor))
+#             print("Computing and writing Biot poroelastic coefficients.")
+#             self.get_biot(
+#                 self,
+#                 material,
+#                 grain_size=self.grain_size,
+#                 tortuosity=self.tortuosity,
+#                 tortuosity_method=self.tortuosity_method,
+#                 shape_factor=self.shape_factor,
+#             )
+#             self.tensor2dat(self.biot_coefficients, domain)
+#             print("Writing stiffness and attenuation coefficients.")
+#             self.tensor2dat(self.stiffness_coefficients, domain)
+#             # gamma/attenuation coefficients need to be scaled by the 
+#             # dominant frequency of the source
+#             print("Writing attenuation coefficients.")
+#             self.atten2dat(self.attenuation_coefficients * self.f0, domain, self.gamma_max)
 
-    def run(self, num_threads=1, jsonfile=None):
-        if self.is_seismic:
-            M = 'V'
-        else:
-            M = 'E'
+#     def run(self, num_threads=1, jsonfile=None):
+#         if self.is_seismic:
+#             M = 'V'
+#         else:
+#             M = 'E'
 
-        f = FortranFile(f'initialcondition{M}x.dat', 'w')
-        f.write_record(self.initialcondition_x.T)
-        f.close()
+#         f = FortranFile(f'initialcondition{M}x.dat', 'w')
+#         f.write_record(self.initialcondition_x.T)
+#         f.close()
 
-        f = FortranFile(f'initialcondition{M}y.dat', 'w')
-        f.write_record(self.initialcondition_y.T)
-        f.close()
+#         f = FortranFile(f'initialcondition{M}y.dat', 'w')
+#         f.write_record(self.initialcondition_y.T)
+#         f.close()
 
-        f = FortranFile(f'initialcondition{M}z.dat', 'w')
-        f.write_record(self.initialcondition_z.T)
-        f.close()
+#         f = FortranFile(f'initialcondition{M}z.dat', 'w')
+#         f.write_record(self.initialcondition_z.T)
+#         f.close()
 
-        if not jsonfile:
-            jsonfile = self.project_file
+#         if not jsonfile:
+#             jsonfile = self.project_file
 
-        self.save_to_json(jsonfile=jsonfile)
+#         self.save_to_json(jsonfile=jsonfile)
 
-        args = [
-            'seidartfdtd',
-            jsonfile,
-            f'seismic={str(self.is_seismic).lower()}',
-            'poroelastic=true',
-            f'density_method={str(self.density_method).lower()}',
-        ]
+#         args = [
+#             'seidartfdtd',
+#             jsonfile,
+#             f'seismic={str(self.is_seismic).lower()}',
+#             'poroelastic=true',
+#             f'density_method={str(self.density_method).lower()}',
+#         ]
 
-        if num_threads > 1:
-            env = os.environ.copy()
-            env['OMP_NUM_THREADS'] = str(num_threads)
-            call(args, env=env)
-        else:
-            call(args)
+#         if num_threads > 1:
+#             env = os.environ.copy()
+#             env['OMP_NUM_THREADS'] = str(num_threads)
+#             call(args, env=env)
+#         else:
+#             call(args)
 
-# ------------------------------------------------------------------------------
-class JCA(Model):
-    """
-    Johnson-Champoux-Allard equivalent-fluid acoustic model.
+# # ------------------------------------------------------------------------------
+# class JCA(Model):
+#     """
+#     Johnson-Champoux-Allard equivalent-fluid acoustic model.
 
-    The class reuses the standard seismic source and grid setup, then writes
-    JCA effective density, bulk modulus, and attenuation fields for the backend
-    ``jcadg`` routines.
-    """
-    def __init__(self) -> None:
-        super().__init__()
-        self.is_seismic = True
-        self.is_poroelastic = False
-        self.is_jca = True
-        self.numerical_method = "dg"
-        self.polynomial_order = 4
-        self.time_integrator = "rk4"
-        self.CFL = 0.05
-        self.air_pressure = 101325.0
-        self.flow_resistivity = None
-        self.tortuosity = None
-        self.viscous_characteristic_length = None
-        self.thermal_characteristic_length = None
-        self.jca_coefficients = None
-        self.get_jca = mf.get_jca
+#     The class reuses the standard seismic source and grid setup, then writes
+#     JCA effective density, bulk modulus, and attenuation fields for the backend
+#     ``jcadg`` routines.
+#     """
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.is_seismic = True
+#         self.is_poroelastic = False
+#         self.is_jca = True
+#         self.numerical_method = "dg"
+#         self.polynomial_order = 4
+#         self.time_integrator = "rk4"
+#         self.CFL = 0.05
+#         self.air_pressure = 101325.0
+#         self.flow_resistivity = None
+#         self.tortuosity = None
+#         self.viscous_characteristic_length = None
+#         self.thermal_characteristic_length = None
+#         self.jca_coefficients = None
+#         self.get_jca = mf.get_jca
 
-    def build(
-            self,
-            material: Material,
-            domain: Domain,
-            recompute_tensors: bool = True,
-            write_tensor: bool = True,
-        ) -> None:
-        super().build(
-            material,
-            domain,
-            recompute_tensors=recompute_tensors,
-            write_tensor=write_tensor,
-        )
+#     def build(
+#             self,
+#             material: Material,
+#             domain: Domain,
+#             recompute_tensors: bool = True,
+#             write_tensor: bool = True,
+#         ) -> None:
+#         super().build(
+#             material,
+#             domain,
+#             recompute_tensors=recompute_tensors,
+#             write_tensor=write_tensor,
+#         )
 
-        if write_tensor:
-            print("Computing and writing Johnson-Champoux-Allard coefficients.")
-            self.get_jca(
-                self,
-                material,
-                flow_resistivity=self.flow_resistivity,
-                tortuosity=self.tortuosity,
-                viscous_characteristic_length=self.viscous_characteristic_length,
-                thermal_characteristic_length=self.thermal_characteristic_length,
-                pressure=self.air_pressure,
-            )
-            self.tensor2dat(self.jca_coefficients, domain)
+#         if write_tensor:
+#             print("Computing and writing Johnson-Champoux-Allard coefficients.")
+#             self.get_jca(
+#                 self,
+#                 material,
+#                 flow_resistivity=self.flow_resistivity,
+#                 tortuosity=self.tortuosity,
+#                 viscous_characteristic_length=self.viscous_characteristic_length,
+#                 thermal_characteristic_length=self.thermal_characteristic_length,
+#                 pressure=self.air_pressure,
+#             )
+#             self.tensor2dat(self.jca_coefficients, domain)
 
-    def run(self, num_threads=1, jsonfile=None):
-        f = FortranFile('initialconditionVx.dat', 'w')
-        f.write_record(self.initialcondition_x.T)
-        f.close()
+#     def run(self, num_threads=1, jsonfile=None):
+#         f = FortranFile('initialconditionVx.dat', 'w')
+#         f.write_record(self.initialcondition_x.T)
+#         f.close()
 
-        f = FortranFile('initialconditionVy.dat', 'w')
-        f.write_record(self.initialcondition_y.T)
-        f.close()
+#         f = FortranFile('initialconditionVy.dat', 'w')
+#         f.write_record(self.initialcondition_y.T)
+#         f.close()
 
-        f = FortranFile('initialconditionVz.dat', 'w')
-        f.write_record(self.initialcondition_z.T)
-        f.close()
+#         f = FortranFile('initialconditionVz.dat', 'w')
+#         f.write_record(self.initialcondition_z.T)
+#         f.close()
 
-        if not jsonfile:
-            jsonfile = self.project_file
+#         if not jsonfile:
+#             jsonfile = self.project_file
 
-        self.save_to_json(jsonfile=jsonfile)
+#         self.save_to_json(jsonfile=jsonfile)
 
-        args = [
-            'seidartfdtd',
-            jsonfile,
-            f'seismic={str(self.is_seismic).lower()}',
-            'jca=true',
-            f'density_method={str(self.density_method).lower()}',
-        ]
+#         args = [
+#             'seidartfdtd',
+#             jsonfile,
+#             f'seismic={str(self.is_seismic).lower()}',
+#             'jca=true',
+#             f'density_method={str(self.density_method).lower()}',
+#         ]
 
-        if num_threads > 1:
-            env = os.environ.copy()
-            env['OMP_NUM_THREADS'] = str(num_threads)
-            call(args, env=env)
-        else:
-            call(args)
+#         if num_threads > 1:
+#             env = os.environ.copy()
+#             env['OMP_NUM_THREADS'] = str(num_threads)
+#             call(args, env=env)
+#         else:
+#             call(args)
 
 # ------------------------------------------------------------------------------
 class AnimatedGif:

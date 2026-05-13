@@ -214,6 +214,27 @@ class Array:
                 self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '.dat'
             )
         all_files.sort()
+
+        block_pattern = None
+        if self.domain.dim == 2.5 and not all_files and self.channel in ['Ex', 'Ey', 'Ez']:
+            block_pattern = em25_block_pattern(src_ind)
+            if has_em25_blocks(pattern=block_pattern):
+                receiver_indices = np.asarray(self.receiver_indices, dtype=int)
+                single_receiver = receiver_indices.ndim == 1 or len(receiver_indices) == 1
+                if single_receiver:
+                    receiver_indices = receiver_indices.reshape(1, 3)
+
+                block_series = extract_em25_timeseries(
+                    receiver_indices,
+                    channels=[self.channel],
+                    pattern=block_pattern,
+                    dtype=np.float32 if self.single_precision else np.float64,
+                )
+                self.timeseries = block_series[self.channel]
+                if single_receiver and self.timeseries.ndim == 2:
+                    self.timeseries = self.timeseries[:, 0]
+                return
+
         m = len(all_files)
         if len(self.receiver_indices) == 1:
             n = 1

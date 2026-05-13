@@ -2865,7 +2865,7 @@ def get_biot(
         "alpha_x", "alpha_y", "alpha_z", "alpha_yz", "alpha_xz", "alpha_xy",
         "biot_m", "rho_fluid", "permeability_x", "permeability_y",
         "permeability_z", "viscosity", "tortuosity_x", "tortuosity_y",
-        "tortuosity_z"
+        "tortuosity_z", "hydraulic_active", "mechanical_active"
     ]
     self.biot_coefficients = pd.DataFrame(
         np.zeros([len(material.temp), len(columns)]), columns=columns
@@ -2877,7 +2877,8 @@ def get_biot(
         raise ValueError("shape_factor must be scalar or have one value per material")
 
     for ind in range(len(material.temp)):
-        phi = np.clip(float(material.porosity[ind]) / 100.0, 0.0, 0.999999)
+        phi_raw = np.clip(float(material.porosity[ind]) / 100.0, 0.0, 0.999999)
+        phi = np.clip(max(phi_raw, 1.0e-4), 1.0e-4, 0.999999)
         lwc = np.clip(float(material.lwc[ind]) / 100.0, 0.0, 1.0)
         if tortuosity is None:
             tau_scalar = tortuosity_from_porosity(
@@ -2944,11 +2945,19 @@ def get_biot(
                 _, k_tensor = permeability(phi, grain_size, euler)
         else:
             k_tensor = np.zeros([3, 3], dtype=float)
+        hydraulic_active = float(phi_raw > 0.0 and np.max(np.diag(k_tensor)) > 0.0)
+        material_name = str(material.material[ind]).strip().lower()
+        mechanical_active = float(material_name not in {"air", "water", "oil"})
 
         try:
-            mu_fluid = viscosity_water(float(material.temp[ind]), units="PaS")
+            mu_water = viscosity_water(float(material.temp[ind]), units="PaS")
         except Exception:
-            mu_fluid = 1.0e-3
+            mu_water = 1.0e-3
+        try:
+            mu_air = viscosity_air(float(material.temp[ind]))
+        except Exception:
+            mu_air = 1.8e-5
+        mu_fluid = lwc * mu_water + (1.0 - lwc) * mu_air
 
         self.biot_coefficients.loc[ind] = [
             alpha_tensor[0, 0],
@@ -2966,6 +2975,8 @@ def get_biot(
             tau_tensor[0, 0],
             tau_tensor[1, 1],
             tau_tensor[2, 2],
+            hydraulic_active,
+            mechanical_active,
         ]
 
 # -----------------------------------------------------------------------------

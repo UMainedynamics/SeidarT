@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 # ==================== Create the object and assign inputs ====================
 def slicer(
             project_file, channel, indslice, num_steps, delay,
-            plane = 'xz', alpha = 0.3, is_single = True
+            plane = 'xz', alpha = 0.3, is_single = True, read_blocks = True
         ):
     """
     Create a gif for a given plane of a 2.5D model. The function will create a
@@ -57,35 +57,19 @@ def slicer(
         Model(),
         Model()
     )
-    # First check to see if the inputs are indices or
-    domain.dim = domain.dim
+
     # Adjust the object fields relative to the cpml
-    domain.nx = int(domain.nx + 2*domain.cpml)
-    domain.ny = int(domain.ny + 2*domain.cpml)
-    domain.nz = int(domain.nz + 2*domain.cpml)
+    NZ = int(domain.nx + 2*domain.cpml)
+    NY = int(domain.ny + 2*domain.cpml)
+    NX = int(domain.nz + 2*domain.cpml)
     
-    # Get the list of files to load
-    all_files = glob(channel + '*.dat')
-    all_files.sort()
+    if read_blocks:
+        all_files = glob('*.blk.gz')
+        load_blocks(all_files, channel, domain, single = is_single)
+    else: 
+        all_files = glob(r'{channel}*.dat')
     
     m = len(all_files)
-    
-    # if channel == 'Ex':
-    #     NX = domain.nz
-    #     NY = domain.ny
-    #     NZ = domain.nx-1
-    # elif channel == 'Ey':
-    #     NX = domain.nz
-    #     NY = domain.ny-1
-    #     NZ = domain.nx
-    # elif channel == 'Ez':
-    #     NX = domain.nz-1
-    #     NY = domain.ny
-    #     NZ = domain.nx
-    # else:
-    NX = domain.nz
-    NY = domain.ny 
-    NZ = domain.nx
     
     # Pre allocate depending on what dimension we are slicing
     if plane == 'xy':
@@ -95,34 +79,39 @@ def slicer(
     else:
         imageseries = np.zeros([NX, NY, m])
     
-    # We'll start counting with the first frame
-    n=num_steps
     axscale = np.array([domain.nz, domain.ny, domain.nx])
     axscale = axscale/axscale.max() 
     
     for ind, fn in enumerate(all_files, start = 0):
-        if n == num_steps:
-            mag = FDTDImage(project_file, fn)
-            mag.getprjvals()
-            npdat = read_dat(
+        mag = FDTDImage(project_file, fn)
+        mag.getprjvals()
+        if read_blocks:
+            npdat = read_fdtd_image(
                 fn, channel, domain, single=is_single
             )
+        else:   
+            npdat = read_dat(
+                    fn, channel, domain, single=is_single
+                )
             if plane == 'xy':
                 npdat = npdat[int(indslice),:,:]
             elif plane == 'yz':
                 npdat = npdat[:,:,int(indslice)]
             else:
                 npdat = npdat[:,int(indslice),:]
-            # mag.nx = npdat.shape[1]
-            # mag.nz = npdat.shape[0]
-            mag.sliceplot(npdat, axscale, plane, alpha = alpha)
-            mag.addlabels()
-            mag.plotfile = 'magnitude.' + fn[:-3] + '.png'
-            plt.savefig(mag.plotfile)
-            plt.close()
-            n = 1
+        
+        if plane == 'xy':
+            npdat = npdat[int(indslice),:,:]
+        elif plane == 'yz':
+            npdat = npdat[:,:,int(indslice)]
         else:
-            n = n + 1
+            npdat = npdat[:,int(indslice),:]
+
+        mag.sliceplot(npdat, axscale, plane, alpha = alpha)
+        mag.addlabels()
+        mag.plotfile = 'magnitude.' + frame_label(fn) + '.png'
+        plt.savefig(mag.plotfile)
+        plt.close()
     
     print('Creating the GIF')
     # Use imagemagick via shell command to create the gif

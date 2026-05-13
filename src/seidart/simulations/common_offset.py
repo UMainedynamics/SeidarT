@@ -201,10 +201,12 @@ class CommonOffset(Array):
         
         if self.is_seismic:
             file_pattern = f'V[xyz].0*.{pattern_input}.dat'
+            files_to_remove = glob(file_pattern)
         else:
             file_pattern = f'E[xyz].0*.{pattern_input}.dat'
+            files_to_remove = glob(file_pattern)
+            files_to_remove.extend(str(path) for path in em25_block_files(pattern=em25_block_pattern(source_ind)))
         
-        files_to_remove = glob(file_pattern)
         files_to_remove.append(json_parameterfile)
         
         if files_to_remove:

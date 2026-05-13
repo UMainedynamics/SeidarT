@@ -6,6 +6,7 @@ import matplotlib.animation as anim
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import os.path
+from pathlib import Path
 from typing import Tuple, Optional, Dict, List, Union
 from numpy.typing import ArrayLike, NDArray
 from subprocess import call
@@ -17,6 +18,7 @@ from scipy.signal.windows import tukey
 import glob2
 import copy
 import json
+import zstandard as zstd
 
 
 import seidart.routines.materials as mf
@@ -24,6 +26,7 @@ from seidart.routines.prjbuild import image2int, update_json, readwrite_json
 
 __all__ = [
     'read_dat',
+    'read_block',
     'complex2str',
     'str2complex',
     'loadproject',
@@ -57,7 +60,7 @@ __all__ = [
     'compute_fk_spectrum',
     'plot_fk_spectrum',
     'CFL', 
-    'clight',
+    'clight'
 ]
 
 # --------------------------------- Globals ------------------------------------
@@ -72,8 +75,7 @@ CFL = 1/np.sqrt(3) # 3D CFL but can be changed to 1/np.sqrt(2) for 2D.
 
 # -------------------------- Function Definitions ------------------------------
 def read_dat(
-        fn: str, 
-        channel: str, 
+        fn: str,  
         domain, 
         single: bool =False
     ) -> np.ndarray:
@@ -132,6 +134,87 @@ def read_dat(
     
     f.close()
     return(dat)
+
+
+# ---------------------------- Block Reading ----------------------------
+def read_block(
+        filename: Union[str, os.PathLike],
+        channels: Optional[List[str]] = None,
+        dtype: np.dtype = np.float32,
+    ) -> Dict[str, Union[Dict[str, int], Dict[str, np.ndarray]]]:
+    """
+    Read one compressed ``electromag25`` block written by the Fortran backend.
+    
+    The backend stores each field as signed 16-bit block-floating data with
+    per-channel/per-timestep min and max values. This function reconstructs
+    arrays with shape ``(nt, nx, ny, nz)`` for each requested channel.
+    """
+    dtype = np.dtype(dtype).type
+    requested = None if channels is None else {ch.strip() for ch in channels}
+    with _open_binary_maybe_gzip(filename) as f:
+        magic = f.read(16).decode('ascii').strip()
+        if magic != 'SEIDART_EM25B1':
+            raise ValueError(f'{filename} is not a SeidarT EM25 block file')
+        
+        version = np.frombuffer(f.read(4), dtype='<i4')[0]
+        if version != 1:
+            raise ValueError(f'Unsupported EM25 block version: {version}')
+        
+        nx, ny, nz = np.frombuffer(f.read(12), dtype='<i4')
+        first_step, step_count, component_count = np.frombuffer(f.read(12), dtype='<i4')
+        nvalues = int(nx) * int(ny) * int(nz)
+        
+        metadata = {
+            'version': int(version),
+            'nx': int(nx),
+            'ny': int(ny),
+            'nz': int(nz),
+            'first_step': int(first_step),
+            'step_count': int(step_count),
+            'component_count': int(component_count),
+        }
+        fields: Dict[str, np.ndarray] = {}
+        scales: Dict[str, List[Tuple[int, float, float]]] = {}
+        
+        for _ in range(int(step_count) * int(component_count)):
+            step = int(np.frombuffer(f.read(4), dtype='<i4')[0])
+            channel = f.read(2).decode('ascii')
+            fmin, fmax = np.frombuffer(f.read(8), dtype='<f4').astype(dtype)
+            raw = np.frombuffer(f.read(nvalues * 2), dtype='<i2')
+            
+            if requested is not None and channel not in requested:
+                continue
+            
+            if channel not in fields:
+                fields[channel] = np.empty(
+                    (int(step_count), int(nx), int(ny), int(nz)),
+                    dtype=dtype,
+                    order='C',
+                )
+                scales[channel] = []
+            
+            time_index = step - int(first_step)
+            if fmax == fmin:
+                fields[channel][time_index, :, :, :] = fmin
+            else:
+                normalized = (raw.astype(dtype) + dtype(32767.0)) / dtype(65534.0)
+                values = normalized * (fmax - fmin) + fmin
+                fields[channel][time_index, :, :, :] = values.reshape(
+                    (int(nx), int(ny), int(nz)),
+                    order='F',
+                )
+            scales[channel].append((step, float(fmin), float(fmax)))
+    
+    return {
+        'metadata': metadata,
+        'fields': fields,
+        'scales': scales,
+    }
+
+
+# -----------------------------------------------------------------------------
+
+
 
 # =============================================================================
 # ============================== Useful Functions =============================

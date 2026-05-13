@@ -59,28 +59,19 @@ def build_animation(
     :type plottype: str, optional
     :return: None
     '''
-    # Check if the .dat files are still around
-    files = glob(channel + '*.dat')
-    files.sort()
-
-    # We'll start counting with the first frame
-    n=numsteps
+    files = fdtd_output_frames(channel, frame_interval=numsteps)
 
     for fn in files:
-        if n == numsteps:
-            mag = FDTDImage(
-                project_file, fn, 
-                is_single_precision = is_single_precision,
-                plottype = plottype, numerical_method = numerical_method
-            )
-            mag.magnitudeplot(alpha = alpha)
-            mag.addlabels()
-            mag.plotfile = 'magnitude.' + fn[:-3] + '.png'
-            plt.savefig(mag.plotfile)
-            plt.close()
-            n = 1
-        else:
-            n = n + 1
+        mag = FDTDImage(
+            project_file, fn,
+            is_single_precision = is_single_precision,
+            plottype = plottype, numerical_method = numerical_method
+        )
+        mag.magnitudeplot(alpha = alpha)
+        mag.addlabels()
+        mag.plotfile = 'magnitude.' + frame_label(fn) + '.png'
+        plt.savefig(mag.plotfile)
+        plt.close()
 
 
     print('Creating the GIF')

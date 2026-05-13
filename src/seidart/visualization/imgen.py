@@ -9,11 +9,104 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 import argparse
+import gzip
+from pathlib import Path
 from seidart.routines.definitions import *
-from seidart.routines.classes import Domain, Material, Model, Biot
+from seidart.routines.classes import Domain, Material, Model
 import matplotlib.image as mpimg
 
 from glob2 import glob 
+
+
+
+def is_em25_block_ref(filename: str) -> bool:
+    return isinstance(filename, str) and '|EM25|' in filename
+
+
+def make_em25_block_ref(filename: str, channel: str, step: int) -> str:
+    return f'{filename}|EM25|{channel}|{int(step)}'
+
+
+def parse_em25_block_ref(filename: str):
+    block_file, _, channel, step = filename.rsplit('|', 3)
+    return block_file, channel, int(step)
+
+
+_EM25_BLOCK_CACHE = {}
+
+
+def _open_em25_header(filename: str):
+    if filename.endswith('.gz'):
+        return gzip.open(filename, 'rb')
+    return open(filename, 'rb')
+
+
+def _read_em25_block_metadata(filename: str):
+    with _open_em25_header(filename) as f:
+        magic = f.read(16).decode('ascii').strip()
+        if magic != 'SEIDART_EM25B1':
+            raise ValueError(f'{filename} is not a SeidarT EM25 block file')
+        version = int(np.frombuffer(f.read(4), dtype='<i4')[0])
+        nx, ny, nz = np.frombuffer(f.read(12), dtype='<i4')
+        first_step, step_count, component_count = np.frombuffer(f.read(12), dtype='<i4')
+    return {
+        'version': version,
+        'nx': int(nx),
+        'ny': int(ny),
+        'nz': int(nz),
+        'first_step': int(first_step),
+        'step_count': int(step_count),
+        'component_count': int(component_count),
+    }
+
+
+def em25_block_frames(channel: str, path: str = '.', pattern: str = 'EM25.*.blk*'):
+    frames = []
+    for block_file in sorted(glob(f'{path}/{pattern}')):
+        metadata = _read_em25_block_metadata(block_file)
+        first_step = metadata['first_step']
+        step_count = metadata['step_count']
+        for step in range(first_step, first_step + step_count):
+            frames.append(make_em25_block_ref(block_file, channel, step))
+    return frames
+
+
+def select_frame_interval(files, frame_interval: int):
+    frame_interval = int(frame_interval)
+    if frame_interval < 1:
+        raise ValueError('frame_interval must be greater than or equal to 1')
+    return list(files)[::frame_interval]
+
+
+def fdtd_output_frames(channel: str, frame_interval: int = 1, path: str = '.'):
+    # Keep legacy behavior first. Only use EM25 blocks when the per-step files
+    # are absent, then apply the same interval to logical timesteps.
+    files = glob(f'{path}/{channel}*.dat')
+    files.sort()
+    if not files and channel in ['Ex', 'Ey', 'Ez']:
+        files = em25_block_frames(channel, path=path)
+    return select_frame_interval(files, frame_interval)
+
+
+def read_fdtd_image(filename: str, channel: str, domain, single: bool = True) -> np.ndarray:
+    if is_em25_block_ref(filename):
+        block_file, block_channel, step = parse_em25_block_ref(filename)
+        cache_key = (block_file, block_channel)
+        if cache_key not in _EM25_BLOCK_CACHE:
+            _EM25_BLOCK_CACHE[cache_key] = read_em25_block(block_file, channels=[block_channel])
+        block = _EM25_BLOCK_CACHE[cache_key]
+        time_index = step - block['metadata']['first_step']
+        # EM25 blocks are stored as (time, nx, ny, nz). The legacy visualization
+        # path expects (nz, ny, nx), matching read_dat for 2.5D fields.
+        return np.transpose(block['fields'][block_channel][time_index], (2, 1, 0))
+    return read_dat(filename, channel, domain, single=single)
+
+
+def frame_label(filename: str) -> str:
+    if is_em25_block_ref(filename):
+        block_file, channel, step = parse_em25_block_ref(filename)
+        return f'{channel}.{step:06d}.{Path(block_file).stem}'
+    return filename[:-3]
 
 # ============================ Create the objects =============================
 class FDTDImage:
@@ -92,16 +185,25 @@ class FDTDImage:
             self.domain.cpml = 0 
         
         # Define the channel given the input file name
-        self.channel = self.inputfile[0:2]
+        if is_em25_block_ref(self.inputfile):
+            block_file, self.channel, step = parse_em25_block_ref(self.inputfile)
+        else:
+            block_file = None
+            step = None
+            self.channel = self.inputfile[0:2]
         if self.plottype == 'quiver':
             if 'E' in self.channel:
-                self.xfile = 'Ex' + self.inputfile[2:]
-                self.zfile = 'Ez' + self.inputfile[2:]
+                if block_file is None:
+                    self.xfile = 'Ex' + self.inputfile[2:]
+                    self.zfile = 'Ez' + self.inputfile[2:]
+                else:
+                    self.xfile = make_em25_block_ref(block_file, 'Ex', step)
+                    self.zfile = make_em25_block_ref(block_file, 'Ez', step)
             else:
                 self.xfile = 'Vx' + self.inputfile[2:]
                 self.zfile = 'Vz' + self.inputfile[2:]
             
-        self.plotfile = self.plottype + '.' + self.inputfile[2:-3] + '.png'
+        self.plotfile = self.plottype + '.' + frame_label(self.inputfile) + '.png'
     
     def getprjvals(self):
         """
@@ -175,16 +277,16 @@ class FDTDImage:
         # Append the cpml values 
         x, z = np.meshgrid(x,z)
 
-        u = read_dat(
-            self.xfile, 
-            self.channel[0] + 'x', 
-            self.domain, 
+        u = read_fdtd_image(
+            self.xfile,
+            self.channel[0] + 'x',
+            self.domain,
             single = self.is_single_precision
         )
-        v = read_dat(
-            self.zfile, 
-            self.channel[0] + 'z', 
-            self.domain, 
+        v = read_fdtd_image(
+            self.zfile,
+            self.channel[0] + 'z',
+            self.domain,
             single = self.is_single_precision
         )        
         # Set the figure size to be for a full two column width
@@ -230,10 +332,10 @@ class FDTDImage:
         :param papercolumnwidth: The width of the paper column for the plot.
         :type papercolumnwidth: float, optional
         """
-        dat = read_dat(
-            self.inputfile, 
-            self.channel, 
-            self.domain, 
+        dat = read_fdtd_image(
+            self.inputfile,
+            self.channel,
+            self.domain,
             single = self.is_single_precision
         )
         
