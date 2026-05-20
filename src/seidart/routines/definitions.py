@@ -27,6 +27,7 @@ from seidart.routines.prjbuild import image2int, update_json, readwrite_json
 __all__ = [
     'read_dat',
     'read_block',
+    'read_zstd_block_2d',
     'complex2str',
     'str2complex',
     'loadproject',
@@ -110,27 +111,19 @@ def read_dat(
     else:
         dtype = np.float64 
     
-    if domain.dim == 2.5:
-        NX = domain.nz
-        NY = domain.ny
-        NZ = domain.nx
-    else:
-        NZ = domain.nx #! This should be nx and the next one should be nz
-        NX = domain.nz
-    #
+    # Both 2D and 2.5D solvers write 2D arrays (nx, nz).
+    # The 2.5D solvers use Fourier transform in y, so there is no y-dimension
+    # in the output files.
+    NZ = domain.nx
+    NX = domain.nz
 
     with FortranFile(fn, 'r') as f:
         if single:
             dat = f.read_reals(dtype = np.float32)
-            # dat = np.fromfile(fn, dtype = np.float32)
         else:
             dat = f.read_reals(dtype = np.float64)
-            # dat = np.fromfile(fn, dtype = np.float64)
 
-    if domain.dim == 2.5:
-        dat = dat.reshape(NX, NY, NZ)
-    else:
-        dat = dat.reshape(NX, NZ)
+    dat = dat.reshape(NX, NZ)
     
     f.close()
     return(dat)
@@ -209,6 +202,61 @@ def read_block(
         'metadata': metadata,
         'fields': fields,
         'scales': scales,
+    }
+
+
+def read_zstd_block_2d(
+        filename: Union[str, os.PathLike],
+        nx: int,
+        nz: int,
+    ) -> Dict[str, Union[Dict, np.ndarray]]:
+    """
+    Read a raw zstd-compressed 2D block written by ``add_step_to_block_2d``.
+    
+    The Fortran backend writes the block buffer as raw float32 data with shape
+    ``(output_nx, 1, output_nz, 3, n_steps)`` in Fortran (column-major) order,
+    then compresses it with zstd. There is **no header**; the dimensions must
+    be supplied by the caller.
+    
+    Returns a dict with keys 'Vx'/'Vy'/'Vz' (or 'Ex'/'Ey'/'Ez' depending on
+    the solver), each containing a ``(n_steps, nx, nz)`` float32 array.
+    
+    :param filename: Path to the .blk.zst file.
+    :param nx: Interior x-dimension (grid nx minus 2*cpml).
+    :param nz: Interior z-dimension (grid nz minus 2*cpml).
+    :returns: Dict with 'fields' mapping channel -> (n_steps, nx, nz) array,
+              and 'metadata' with 'nx', 'nz', 'n_steps'.
+    """
+    path = Path(filename)
+    raw_bytes = path.read_bytes()
+    
+    dctx = zstd.ZstdDecompressor()
+    decompressed = dctx.decompress(raw_bytes)
+    
+    data = np.frombuffer(decompressed, dtype=np.float32)
+    # Fortran buffer shape: (nx, 1, nz, 3, n_steps) in column-major order
+    n_values_per_step = nx * 1 * nz * 3
+    n_steps = len(data) // n_values_per_step
+    if n_steps * n_values_per_step != len(data):
+        raise ValueError(
+            f"Block size mismatch: {len(data)} float32 values does not divide "
+            f"evenly into steps of {n_values_per_step} values (nx={nx}, nz={nz})"
+        )
+    
+    # Reshape in Fortran order to recover (nx, 1, nz, 3, n_steps)
+    block = data.reshape((nx, 1, nz, 3, n_steps), order='F')
+    # Squeeze out the singleton y-dimension -> (nx, nz, 3, n_steps)
+    block = block[:, 0, :, :, :]
+    # Rearrange to (n_steps, 3, nx, nz) for convenient indexing
+    block = np.transpose(block, (3, 2, 0, 1))
+    
+    return {
+        'metadata': {'nx': nx, 'nz': nz, 'n_steps': n_steps},
+        'fields': {
+            0: block[:, 0, :, :],  # component 0 (Vx or Ex)
+            1: block[:, 1, :, :],  # component 1 (Vy or Ey)
+            2: block[:, 2, :, :],  # component 2 (Vz or Ez)
+        },
     }
 
 

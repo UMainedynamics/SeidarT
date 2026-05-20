@@ -280,6 +280,7 @@ class Model:
         self.f0 = None
         self.theta = None
         self.phi = None
+        self.psi = None
         self.source_amplitude = None 
         self.source_wavelet = None
         self.source_type = None
@@ -314,6 +315,10 @@ class Model:
         self.velocity_scaling_factor = 1.0 
         self.voigt_to_full_tensor = mf.voigt_to_full_tensor
         self.gamma_max = None # Sponge layer parameter
+        self.n_bg = 1.0 # Background refractive index for electromagnetic simulations
+        self.ky_theta = np.pi / 2
+        self.block_output = False
+        self.single_output = True
         
     def kband_check(self, domain):
         '''
@@ -363,6 +368,11 @@ class Model:
                 f'Wavenumber bandlimit is satisfied for step limit = {step_limit}'
             )
     
+    def ky_from_angle(self):
+        k0 = 2.0 * np.pi * self.f0 / clight
+        self.ky = k0 * self.n_bg * np.sin(self.ky_theta)
+        os.environ["KY"] = str(self.ky)
+
     # --------------------------------------------------------------------------
     def parameter_check(self) -> None:
         """
@@ -411,10 +421,18 @@ class Model:
         """
         global clight
         
+        # Save any environment variables that we need for the Fortran code 
+        self.ky_from_angle() 
+        if self.block_output:
+            os.environ["BLOCK_OUTPUT"] = str(self.block_output)
+        
+        if self.single_output:
+            os.environ["SINGLE_OUTPUT"] = str(self.single_output)
+        
         self.xind = int(self.x / domain.dx )
         self.yind = int(self.y / domain.dy )
         self.zind = int(self.z / domain.dz )
-                
+        
         # Set the CFL to its max value if it exceeds the 
         if domain.dim == 2.5:
             self.CFL = np.min([self.CFL, 1/np.sqrt(3)])
@@ -506,7 +524,7 @@ class Model:
             fmax = self.broadband_fmax,
             num_octaves = self.source_n_octaves
         )
-                
+        
         direction = ['x', 'y', 'z']
         # Compute CPML
         if getattr(self, 'numerical_method', 'fdtd') != 'dg':
@@ -532,7 +550,7 @@ class Model:
                 self.domain_density = airsurf(material, domain, self.air_gradient_integer)
             else:
                 self.domain_density = np.ones([domain.nx, domain.nz])
-
+            
             # Write out the arrays of tensor coefficients
             if self.is_seismic:
                 self.tensor2dat(self.stiffness_coefficients, domain)
@@ -545,7 +563,7 @@ class Model:
         else:
             print('Tensor components have already been written to .dat files.')
             return
-        
+    
     def writemask(self, material: Material, domain: Domain):
         """
         Write a binary geometry mask to ``geometry_mask.dat``. Cells that
@@ -824,6 +842,7 @@ class Model:
         json_dictionary[section]['Source']['source_frequency'] = self.f0
         json_dictionary[section]['Source']['x-z_rotation'] = self.theta
         json_dictionary[section]['Source']['x-y_rotation'] = self.phi
+        json_dictionary[section]['Source']['y-z_rotation'] = self.psi
         json_dictionary[section]['Source']['amplitude'] = self.source_amplitude
         json_dictionary[section]['Source']['source_wavelet'] = self.source_wavelet
         

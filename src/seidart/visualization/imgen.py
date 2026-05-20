@@ -71,6 +71,57 @@ def em25_block_frames(channel: str, path: str = '.', pattern: str = 'EM25.*.blk*
     return frames
 
 
+# -------------------- Raw zstd 2D block helpers (S25, EM25) --------------------
+def is_zstd2d_block_ref(filename: str) -> bool:
+    """Check if a filename is a zstd 2D block reference string."""
+    return isinstance(filename, str) and '|ZSTD2D|' in filename
+
+
+def make_zstd2d_block_ref(filename: str, channel: str, step: int) -> str:
+    """Create an encoded block reference for a zstd 2D block file."""
+    return f'{filename}|ZSTD2D|{channel}|{int(step)}'
+
+
+def parse_zstd2d_block_ref(filename: str):
+    """Parse a zstd 2D block reference into (block_file, channel, step)."""
+    block_file, _, channel, step = filename.rsplit('|', 3)
+    return block_file, channel, int(step)
+
+
+_ZSTD2D_BLOCK_CACHE = {}
+
+
+def _zstd2d_block_step_range(filename: str):
+    """
+    Extract the step range from a zstd 2D block filename.
+    
+    Filenames have the format: S25.000001-000100.x.y.z.blk.zst
+    Returns (first_step, last_step).
+    """
+    stem = Path(filename).name
+    # Strip the .blk.zst suffix
+    parts = stem.split('.')
+    # parts[0] = 'S25' or 'EM25', parts[1] = '000001-000100', ...
+    step_range = parts[1]
+    first_str, last_str = step_range.split('-')
+    return int(first_str), int(last_str)
+
+
+def zstd2d_block_frames(channel: str, path: str = '.', 
+                         pattern: str = 'S25.*.blk.zst'):
+    """
+    Discover all time steps in raw zstd 2D block files matching the pattern.
+    Returns a list of encoded block references.
+    """
+    frames = []
+    for block_file in sorted(glob(f'{path}/{pattern}')):
+        first_step, last_step = _zstd2d_block_step_range(block_file)
+        n_steps = last_step - first_step + 1
+        for step in range(n_steps):
+            frames.append(make_zstd2d_block_ref(block_file, channel, step))
+    return frames
+
+
 def select_frame_interval(files, frame_interval: int):
     frame_interval = int(frame_interval)
     if frame_interval < 1:
@@ -79,13 +130,33 @@ def select_frame_interval(files, frame_interval: int):
 
 
 def fdtd_output_frames(channel: str, frame_interval: int = 1, path: str = '.'):
-    # Keep legacy behavior first. Only use EM25 blocks when the per-step files
-    # are absent, then apply the same interval to logical timesteps.
+    # Keep legacy behavior first: look for per-step .dat files
     files = glob(f'{path}/{channel}*.dat')
     files.sort()
-    if not files and channel in ['Ex', 'Ey', 'Ez']:
-        files = em25_block_frames(channel, path=path)
+    if not files:
+        # Fall back to block files
+        if channel in ['Ex', 'Ey', 'Ez']:
+            # Try EM25 header blocks first, then raw zstd 2D blocks
+            files = em25_block_frames(channel, path=path)
+            if not files:
+                files = zstd2d_block_frames(channel, path=path, 
+                                             pattern='EM25.*.blk.zst')
+        if channel in ['Vx', 'Vy', 'Vz']:
+            # Seismic 2.5D raw zstd 2D blocks
+            files = zstd2d_block_frames(channel, path=path,
+                                         pattern='S25.*.blk.zst')
     return select_frame_interval(files, frame_interval)
+
+
+def _read_zstd2d_cached(block_file: str, domain):
+    """Read and cache a zstd 2D block file."""
+    if block_file not in _ZSTD2D_BLOCK_CACHE:
+        nx = int(domain.nx)
+        nz = int(domain.nz)
+        _ZSTD2D_BLOCK_CACHE[block_file] = read_zstd_block_2d(
+            block_file, nx, nz
+        )
+    return _ZSTD2D_BLOCK_CACHE[block_file]
 
 
 def read_fdtd_image(filename: str, channel: str, domain, single: bool = True) -> np.ndarray:
@@ -99,14 +170,28 @@ def read_fdtd_image(filename: str, channel: str, domain, single: bool = True) ->
         # EM25 blocks are stored as (time, nx, ny, nz). The legacy visualization
         # path expects (nz, ny, nx), matching read_dat for 2.5D fields.
         return np.transpose(block['fields'][block_channel][time_index], (2, 1, 0))
-    return read_dat(filename, channel, domain, single=single)
+    
+    if is_zstd2d_block_ref(filename):
+        block_file, block_channel, step = parse_zstd2d_block_ref(filename)
+        block = _read_zstd2d_cached(block_file, domain)
+        # Map channel name to component index
+        channel_map = {'Vx': 0, 'Vy': 1, 'Vz': 2, 'Ex': 0, 'Ey': 1, 'Ez': 2}
+        comp = channel_map.get(block_channel, 0)
+        # block['fields'][comp] is (n_steps, nx, nz)
+        # Return as (nz, nx) to match read_dat convention
+        return block['fields'][comp][step].T
+    
+    return read_dat(filename, domain, single=single)
 
 
 def frame_label(filename: str) -> str:
     if is_em25_block_ref(filename):
         block_file, channel, step = parse_em25_block_ref(filename)
         return f'{channel}.{step:06d}.{Path(block_file).stem}'
-    return filename[:-3]
+    if is_zstd2d_block_ref(filename):
+        block_file, channel, step = parse_zstd2d_block_ref(filename)
+        return f'{channel}.{step:06d}.{Path(block_file).stem}'
+    return Path(filename).stem
 
 # ============================ Create the objects =============================
 class FDTDImage:
@@ -187,6 +272,8 @@ class FDTDImage:
         # Define the channel given the input file name
         if is_em25_block_ref(self.inputfile):
             block_file, self.channel, step = parse_em25_block_ref(self.inputfile)
+        elif is_zstd2d_block_ref(self.inputfile):
+            block_file, self.channel, step = parse_zstd2d_block_ref(self.inputfile)
         else:
             block_file = None
             step = None
@@ -196,12 +283,19 @@ class FDTDImage:
                 if block_file is None:
                     self.xfile = 'Ex' + self.inputfile[2:]
                     self.zfile = 'Ez' + self.inputfile[2:]
-                else:
+                elif is_em25_block_ref(self.inputfile):
                     self.xfile = make_em25_block_ref(block_file, 'Ex', step)
                     self.zfile = make_em25_block_ref(block_file, 'Ez', step)
+                else:
+                    self.xfile = make_zstd2d_block_ref(block_file, 'Ex', step)
+                    self.zfile = make_zstd2d_block_ref(block_file, 'Ez', step)
             else:
-                self.xfile = 'Vx' + self.inputfile[2:]
-                self.zfile = 'Vz' + self.inputfile[2:]
+                if block_file is None:
+                    self.xfile = 'Vx' + self.inputfile[2:]
+                    self.zfile = 'Vz' + self.inputfile[2:]
+                else:
+                    self.xfile = make_zstd2d_block_ref(block_file, 'Vx', step)
+                    self.zfile = make_zstd2d_block_ref(block_file, 'Vz', step)
             
         self.plotfile = self.plottype + '.' + frame_label(self.inputfile) + '.png'
     
