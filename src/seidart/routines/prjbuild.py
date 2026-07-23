@@ -8,9 +8,11 @@
 import argparse
 import numpy as np
 import matplotlib.image as mpimg
-from typing import Tuple
+from typing import Tuple, List, Dict
 from scipy.io import FortranFile
 import json 
+import xml.etree.ElementTree as ET  
+import re                           
 
 __all__ = [
     'prjbuild',
@@ -356,7 +358,7 @@ def readwrite_json(jsonfile: str, data: dict = None):
                     if isinstance(obj, np.ndarray):
                         return obj.tolist()
                     return super(NumpyEncoder, self).default(obj)
-
+            
             json.dump(data, file, indent=4, cls=NumpyEncoder)
     else:
         with open(jsonfile, 'r') as file:
@@ -364,14 +366,120 @@ def readwrite_json(jsonfile: str, data: dict = None):
         return(data)
     
     file.close()
-# ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+def svg2materials(svg_filename: str) -> Tuple[List[str], Dict[str, str]]:
+    """
+    Parses the SVG file as text/XML, extracting unique hex RGB fill values robustly.
+     Handles inline styles, presentation attributes, and document class stylesheets.
+    """
+    tree = ET.parse(svg_filename)
+    root = tree.getroot()
+    namespaces = {'svg': 'http://www.w3.org/2000/svg'}
+    
+    # 1. First, parse any global CSS classes defined in the header stylesheet
+    class_colors = {}
+    for style_elem in root.findall('.//svg:style', namespaces):
+        if style_elem.text:
+            # Find definitions like .cls-1{fill:#ff0000}
+            matches = re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{\s*[^}]*fill:\s*(#[0-9a-fA-F]{3,6})', style_elem.text)
+            for cls_name, color in matches:
+                class_colors[cls_name] = color.lower()
+
+    unique_colors = set()
+    
+    # 2. Iterate over all path vector elements across all layers
+    for path in root.findall('.//svg:path', namespaces):
+        # Check A: Direct inline style string style="fill:#ff0000;"
+        style_str = path.get('style', '')
+        fill_match = re.search(r'fill:\s*(#[0-9a-fA-F]{3,6})', style_str)
+        
+        if fill_match:
+            unique_colors.add(fill_match.group(1).lower())
+            continue
+            
+        # Check B: Direct fallback attribute fill="#ff0000"
+        fill_attr = path.get('fill')
+        if fill_attr and fill_attr.startswith('#'):
+            unique_colors.add(fill_attr.lower())
+            continue
+
+        # Check C: Class-based stylesheet link class="cls-1"
+        class_attr = path.get('class')
+        if class_attr in class_colors:
+            unique_colors.add(class_colors[class_attr])
+            continue
+                
+    unique_colors_list = sorted(list(unique_colors))
+    
+    # Build mapping translation matching SeidarT notation rules
+    rgb_mapping = {}
+    for color in unique_colors_list:
+        rgb_mapping[color] = hex_to_rgb_string(color)
+        
+    print(f"Vector parser located {len(unique_colors_list)} unique material layers: {unique_colors_list}")
+    return unique_colors_list, rgb_mapping
+
+# ------------------------------------------------------------------------------
+def build_svg(image_file: str, outputjson: str) -> None:
+    """
+    Generates a project file (.json) based on an input SVG file instead of a PNG.
+    The domain structure is driven by explicit mathematical vector definitions.
+    """
+    # Extract unique vector layers by their unique RGB definitions
+    unique_hex_colors, rgb_mapping = svg2materials(image_file)
+    nmats = len(unique_hex_colors)
+    
+    # Base initialization
+    template = generate_template(nmats)
+    
+    # Map physical parameters matching your key tuple design rules
+    updates = {}
+    for i, hex_color in enumerate(unique_hex_colors):
+        updates[("Materials", i, "rgb")] = rgb_mapping[hex_color]
+        updates[("Materials", i, "name")] = f"Layer_{hex_color.replace('#','')}"
+    
+    updates[("Domain", "image_file")] = image_file
+    
+    # Note: Vector documents do not contain integer pixel grids (nx, nz).
+    # These fields are left as placeholders for the subsequent mesh initialization.
+    updates[("Domain", "nx")] = "MESH_DEFINED"
+    updates[("Domain", "nz")] = "MESH_DEFINED"
+    
+    updated_template = update_json(template, updates)
+    
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.integer): return int(obj)
+            if isinstance(obj, np.floating): return float(obj)
+            if isinstance(obj, np.ndarray): return obj.tolist()
+            return super(NumpyEncoder, self).default(obj)
+
+    with open(outputjson, 'w') as f:
+        json.dump(updated_template, f, indent=4, cls=NumpyEncoder)
+        
+    print(f"Project template successfully compiled using SVG vector parameters: {outputjson}")
+
+# ------------------------------------------------------------------------------
+def hex_to_rgb_string(hex_str: str) -> str:
+    """Converts a #RRGGBB hex string into a 'R/G/B' string format for SeidarT."""
+    hex_str = hex_str.lstrip('#')
+    # If shorthand hex like #fff, convert to standard #ffffff
+    if len(hex_str) == 3:
+        hex_str = ''.join([c*2 for c in hex_str])
+    r = int(hex_str[0:2], 16)
+    g = int(hex_str[2:4], 16)
+    b = int(hex_str[4:6], 16)
+    return f"{r}/{g}/{b}"
+
+# ------------------------------------------------------------------------------
 def prjbuild(
-        image_file: str, 
-        outputjson: str
+        image_file: str=None,
+        svg_file: str=None, 
+        outputjson: str=None,
     ) -> None:
     """
-    Generates a project file (.prj) based on an input image file. This file
+    Generates a project file (.json) based on an input image file. This file
     contains domain parameters, material parameters, attenuation parameters,
     seismic parameters, and electromagnetic parameters derived from the image.
 
@@ -380,29 +488,35 @@ def prjbuild(
     :type image_file: str
     :type outputjson: str
     
-    
     """
-    # ----- Read the image file
-    im, rgb = image2int(image_file)
-    im = im.transpose()
-    material_id = np.unique(im)
-    
-    nx, nz = im.shape
-    nmats = len(material_id)
-    template = generate_template(nmats, Domain_nx = nx, Domain_nz = nz)
+    if image_file:
+        # ----- Read the image file
+        im, rgb = image2int(image_file)
+        im = im.transpose()
+        material_id = np.unique(im)
         
-        # -------------------------------------------------------------------------
-    updates = {}
-    for i in range(nmats):
-        updates[("Materials", material_id[i], "rgb")] = '/'.join(rgb[i].astype(str))
-    
-    updates[("Domain","image_file")] = image_file
-    updated_template = update_json(template, updates)
+        nx, nz = im.shape
+        nmats = len(material_id)
+        template = generate_template(nmats, Domain_nx = nx, Domain_nz = nz)
+            
+            # -------------------------------------------------------------------------
+        updates = {}
+        for i in range(nmats):
+            updates[("Materials", material_id[i], "rgb")] = '/'.join(rgb[i].astype(str))
+        
+        updates[("Domain","image_file")] = image_file
+        updated_template = update_json(template, updates)
+        # Save the generated template JSON file
+        with open(outputjson, 'w') as f:
+            json.dump(updated_template, f, indent=4)
+        
+    elif svg_file:
+        updated_template = build_svg(svg_file, outputjson)
+    else:
+        raise ValueError("Either an image file or an SVG file must be provided.")
     # -------------------------------------------------------------------------
     
-    # Save the generated template JSON file
-    with open(outputjson, 'w') as f:
-        json.dump(updated_template, f, indent=4)
+    
     
 
 def buildwizard(jsonfile):
@@ -433,23 +547,28 @@ def main():
     
     parser.add_argument(
         '-i','--imagefile', 
-        nargs=1, type=str, required = True,
-        help='the full file path for the image', default=None
+        nargs=1, type=str, required = False,
+        help='the full file path for the PNG image', default=None
     )
-
+    
+    parser.add_argument(
+        '-s', '--svgfile',
+        nargs=1, type=str, required = False,
+        help='the full file path for the SVG image (alternative to PNG)', default=None
+    )
+    
     parser.add_argument(
         '-o', '--outputjson',
-        nargs=1, type=str, required = False, default = 'steven_bernsen_rules.prj',
+        nargs=1, type=str, required = False, default = 'steven_bernsen_rules.json',
         help = """Name of output file path with extension .json and excluding
         the full path directory."""
     )
-
+    
     # Get the arguments
     args = parser.parse_args()
-    image_file = ''.join(args.imagefile)
+    image_file = ''.join(args.imagefile) if args.imagefile is not None else None
+    svg_file = ''.join(args.svgfile) if args.svgfile is not None else None
     outputjson = ''.join(args.outputjson)
-    prjbuild(image_file, outputjson)
-
-
+    prjbuild(image_file=image_file, svg_file=svg_file, outputjson=outputjson)
 if __name__ == "__main__":
     main()
