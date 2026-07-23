@@ -253,7 +253,7 @@ class Array:
             for i in range(m):
                 npdat = read_dat(
                     all_files[i], 
-                    self.channel, 
+                    # self.channel, 
                     self.domain, 
                     single = self.single_precision
                 )
@@ -275,7 +275,7 @@ class Array:
             for i in range(m):
                 npdat = read_dat(
                     all_files[i], 
-                    self.channel, 
+                    # self.channel, 
                     self.domain, 
                     single = self.single_precision
                 )

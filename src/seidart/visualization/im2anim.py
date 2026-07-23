@@ -62,6 +62,7 @@ def build_animation(
     files = fdtd_output_frames(channel, frame_interval=numsteps)
 
     for fn in files:
+        fn = fn.split('/')[-1]
         mag = FDTDImage(
             project_file, fn,
             is_single_precision = is_single_precision,

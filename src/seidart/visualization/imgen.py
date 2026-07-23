@@ -99,7 +99,7 @@ def read_fdtd_image(filename: str, channel: str, domain, single: bool = True) ->
         # EM25 blocks are stored as (time, nx, ny, nz). The legacy visualization
         # path expects (nz, ny, nx), matching read_dat for 2.5D fields.
         return np.transpose(block['fields'][block_channel][time_index], (2, 1, 0))
-    return read_dat(filename, channel, domain, single=single)
+    return read_dat(filename, domain, single=single)
 
 
 def frame_label(filename: str) -> str:
