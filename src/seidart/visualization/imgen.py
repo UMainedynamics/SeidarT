@@ -170,20 +170,6 @@ def read_fdtd_image(filename: str, channel: str, domain, single: bool = True) ->
         # EM25 blocks are stored as (time, nx, ny, nz). The legacy visualization
         # path expects (nz, ny, nx), matching read_dat for 2.5D fields.
         return np.transpose(block['fields'][block_channel][time_index], (2, 1, 0))
-<<<<<<< HEAD
-=======
-    
-    if is_zstd2d_block_ref(filename):
-        block_file, block_channel, step = parse_zstd2d_block_ref(filename)
-        block = _read_zstd2d_cached(block_file, domain)
-        # Map channel name to component index
-        channel_map = {'Vx': 0, 'Vy': 1, 'Vz': 2, 'Ex': 0, 'Ey': 1, 'Ez': 2}
-        comp = channel_map.get(block_channel, 0)
-        # block['fields'][comp] is (n_steps, nx, nz)
-        # Return as (nz, nx) to match read_dat convention
-        return block['fields'][comp][step].T
-    
->>>>>>> d3ec33e90b6ef5ea59f8fcf79ea4c1c567f2dec0
     return read_dat(filename, domain, single=single)
 
 

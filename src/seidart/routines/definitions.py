@@ -678,7 +678,7 @@ def cpmlcompute(
             lookup_array_y[mat_id] = v
 
     # Map material IDs to per-cell velocities.
-    # For 3D, domain.geometry is (nx, ny, nz); for 2D, (nx, nz).
+    # For 3D, domain.geometry is (nx, ny, nz); for 2D, (nx, nz).    
     if is_3d:
         # Reduce to the boundary faces that set sig_max.
         # Use the global max for the 'global' smoothing mode; for spatial
@@ -857,7 +857,7 @@ def cpmlcompute(
     # 2 / 2.5-D branch (original logic, unchanged in behaviour)
     # =========================================================================
     sig_max_x, sig_max_z = _apply_smoothing_2d(sig_max_x, sig_max_z)
-
+    
     sigma, kappa, alpha, acoef, bcoef = cpml_parameters(
         sig_max_x, sig_max_z, alpha_max, domain.kappa_max, nx_full, nz_full,
         distx, distz, domain.NP, domain.NPA, modelclass.dt,

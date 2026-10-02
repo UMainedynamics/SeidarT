@@ -2618,115 +2618,121 @@ def viscosity_water(
         raise ValueError('Unsupported units "{units}". Use "mPas" or "PaS".')
 
 # -----------------------------------------------------------------------------
-def biot_stress(
-        K_dry: float,
-        K_mineral: float,
-        K_fluid: float,
-        porosity: float,
-        euler_angles: NDArray[np.floating] | None = None,
-    ) -> Tuple[float, NDArray[np.floating], float]:
+def biot_material(
+        Cmineral: NDArray[6, 6], porosity: float, temperature: float, 
+        Keff: float, eulerangles = None,
+        )
+    -> Tuple[
+        NDArray[np.float], 
+        NDArray[np.float], 
+        NDArray[np.float], 
+        NDArray[np.float], 
+        float, 
+    ]:
     """
-    Compute Biot's effective stress coefficient and its anisotropic tensor form.
-
-    The scalar Biot coefficient is computed from dry-frame and mineral
-    bulk moduli, then distributed anisotropically using a fabric tensor
-    built from Euler angles. An effective inverse Biot modulus is also
-    evaluated.
-
-    :param K_dry: Dry-frame bulk modulus in pascals.
-    :type K_dry: float
-    :param K_mineral: Mineral (solid grain) bulk modulus in pascals.
-    :type K_mineral: float
-    :param K_fluid: Pore fluid bulk modulus in pascals.
-    :type K_fluid: float
+    Compute the Biot poroelastic material properties from mineral stiffness,
+    porosity, and the the effective bulk modulus of the fluid.
+    
+    :param Cmineral: 6x6 stiffness tensor of the mineral (Pa).
     :param porosity: Porosity as a fraction in the range ``[0, 1)``.
+    :param temperature: Temperature in degrees Celsius.
+    :param Keff: Effective bulk modulus of the pore fluid (Pa).
+    :param eulerangles: Optional array of Euler angle triplets with shape
+                        ``(M, 3)`` used to construct the fabric tensor via
+                        :func:`fabric_tensor`. If ``None``, no anisotropic
+                        weighting is applied and the coefficient remains
+                        isotropic.
+    # :param method: Method for computing the dry frame stiffness. Options are
+    #                ``"SCA"`` (Self-Consistent Approximation) or ``"Hill"``.
+    # :param frame_exponent: Exponent used in the empirical relation for the
+    #                         dry frame stiffness, typically in the range
+    #                         ``[1, 3]``. Default is ``2.0``.
+    :type Cmineral: numpy.typing.NDArray[numpy.floating]
     :type porosity: float
-    :param euler_angles: Optional array of Euler angle triplets with
-                         shape ``(M, 3)`` used to construct the fabric
-                         tensor via :func:`fabric_tensor`. If ``None``,
-                         no anisotropic weighting is applied and the
-                         coefficient remains isotropic.
-    :type euler_angles: numpy.typing.NDArray[numpy.floating] or None
-    :returns: A tuple ``(alpha, alpha_global, Minv)`` where:
-              ``alpha`` is the scalar Biot coefficient,
-              ``alpha_global`` is the 3x3 Biot coefficient tensor in the
-              global frame, and
-              ``Minv`` is the inverse Biot modulus (1/Pa).
-    :rtype: tuple[float, numpy.typing.NDArray[numpy.floating], float]
-    :raises ValueError: If ``porosity`` is not in ``[0, 1)``, or required
-                        moduli are non-positive.
-    
-    .. note::
-    
-       The scalar Biot coefficient is defined as
-    
-       .. math::
-    
-          \\alpha = 1 - \\frac{K_\\mathrm{dry}}{K_\\mathrm{mineral}}.
-    
-       The inverse Biot modulus is computed as
-    
-       .. math::
-    
-          M^{-1} = \\frac{\\alpha - \\phi}{K_\\mathrm{mineral}} +
-                   \\frac{\\phi}{K_\\mathrm{fluid}},
-    
-       where :math:`\\phi` is porosity. When a fabric tensor is
-       available, eigenvalues of the fabric are used to weight ``alpha``
-       directionally, forming a principal tensor which is then rotated
-       back to the global coordinates.
-    
-       If the fabric tensor is degenerate (sum of eigenvalues
-       non-positive), an isotropic tensor :math:`\\alpha I_3` is used.
-    
-    .. code-block:: python
-    
-       # Example: Biot coefficient tensor from moduli and fabric
-       K_dry = 2.0e9
-       K_min = 8.0e9
-       K_fluid = 2.2e9
-       phi = 0.3
-       eulers = np.random.rand(100, 3)
-    
-       alpha, alpha_tensor, Minv = biot_stress(
-           K_dry,
-           K_min,
-           K_fluid,
-           porosity=phi,
-           euler_angles=eulers,
-       )
-    
+    :type temperature: float
+    :type Keff: float
+    :type eulerangles: numpy.typing.NDArray[numpy.floating] or None
+    # :type method: str
+    # :type frame_exponent: float
+    :returns: A tuple ``(Cdry, alpha, Cbiot)`` where
+              ``Cdry`` is the 6x6 dry-frame stiffness tensor (Pa),
+              ``alpha`` is the 6, set of Biot coefficient, and
+              ``Cbiot`` is the 6x6 saturated-undrained stiffness tensor (Pa).
+    :rtype: tuple[numpy.typing.NDArray[numpy.floating], float, numpy.typing.NDArray[numpy.floating]]
+    :raises ValueError: If ``porosity`` is not in ``[0, 1)``, or 
+        if ``Cmineral`` is not a valid 6x6 stiffness tensor.
     """
     if not (0.0 <= porosity < 1.0):
         raise ValueError("porosity must lie in [0, 1)")
-    if K_dry <= 0 or K_mineral <= 0 or K_fluid <= 0:
-        raise ValueError("K_dry, K_mineral, and K_fluid must be positive")
+    if Cmineral.shape != (6, 6):
+        raise ValueError("Cmineral must be a 6x6 stiffness tensor") 
+
+    if eulerangles is not None:
+        Csolid = vrh4(Cmineral, eulerangles)
+    else:
+        Csolid = Cmineral.copy()
+
+    __, C_air, __ = bulk_modulus_air(temperature)
+    Cdrained = self_consistent_approximation(Csolid, C_air, porosity)
+    alpha, Cundrained, Minv = biot_tensors(Csolid, Cdrained, Keff, porosity)
+
+    M = 1.0 / Minv
     
-    # Scalar Biot coefficient
-    alpha = 1.0 - K_dry / K_mineral
-    
-    # If no fabric is provided, just return isotropic tensor and Minv
-    if euler_angles is None:
-        alpha_global = alpha * np.eye(3)
-        Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
-        return alpha, alpha_global, Minv
-    
-    F = fabric_tensor(euler_angles)
-    eigval, eigvec = np.linalg.eig(F)
-    
-    if np.sum(eigval) <= 0.0:
-        # Degenerate: fallback isotropic
-        alpha_global = alpha * np.eye(3)
-        Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
-        return alpha, alpha_global, Minv
-    
-    eigval_norm = eigval / np.sum(eigval)
-    
-    alpha_principal = np.diag(3.0 * alpha * eigval_norm)
-    alpha_global = eigvec @ alpha_principal @ eigvec.T
-    Minv = (alpha - porosity) / K_mineral + porosity / K_fluid
-    
-    return alpha, alpha_global, Minv
+    return Csolid, Cdrained, Cundrained, alpha, M    
+
+# -----------------------------------------------------------------------------
+def biot_tensors(
+            Cmineral: NDArray[6, 6],
+            Cdry: NDArray[6, 6],
+            Keff: float,
+            porosity: float,
+    )
+    -> Tuple[NDArray[6, 6], NDArray[6, 6], float]:
+    """
+    Compute anisotropic Biot coefficients and undrained stiffness.
+
+    Uses the single-fluid anisotropic Biot-Gassmann relation in engineering
+    Voigt order [11, 22, 33, 23, 13, 12].
+
+    Parameters
+    ----------
+    Cmineral : NDArray, shape (6, 6)
+        Solid-constituent (unjacketed) stiffness matrix, C^s [Pa]. This is the
+        effective stiffness of the solid mineral grains which may constitute
+        a single mineral or a mixture of minerals. 
+
+    Cdry : NDArray, shape (6, 6)
+        Drained porous-frame stiffness matrix, C^d [Pa]. This is essentially the
+        homogenization that combines Cmineral with the drained pore structure
+        (i.e. air). 
+
+    Keff : float
+        Effective pore-fluid bulk modulus, K_f [Pa]. May represent water,
+        brine, air, or an effective water-air mixture.
+
+    porosity : float
+        Connected pore-volume fraction, phi [-], where 0 <= phi < 1.
+
+    Returns
+    -------
+    alpha : NDArray, shape (6,)
+        Biot coefficient vector
+        [alpha_11, alpha_22, alpha_33, alpha_23, alpha_13, alpha_12].
+
+    Cundrained : NDArray, shape (6, 6)
+        Saturated-undrained stiffness matrix, C^u [Pa].
+
+    Minv : float
+        Inverse Biot modulus, M^(-1) [Pa^-1].
+    """
+    h = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
+    Smineral = np.linalg.inv(Cmineral)
+    beta = Smineral @ h 
+    alpha = h - Cdry @ beta
+    Minv = ( porosity / Keff ) + ( alpha - porosity * h).T @ beta
+    Cundrained = Cdry + np.outer(alpha, alpha) / Minv
+    return alpha, Cundrained, Minv
+
 
 # -----------------------------------------------------------------------------
 def mass_matrix_tensor(
@@ -2784,8 +2790,6 @@ def mass_matrix_tensor(
        rho_f = 1000.0  # kg/m^3
        phi = 0.3
     
-       rho11, rho12, rho22 = mass_matrix_tensor(rho_s, rho_f, phi)
-    
     """
     if not (0.0 <= porosity < 1.0):
         raise ValueError("porosity must lie in [0, 1)")
@@ -2797,10 +2801,12 @@ def mass_matrix_tensor(
         tau = np.asarray(tau, dtype=float)
         if tau.shape != (3, 3):
             raise ValueError("tau must be a 3x3 tensor if provided")
-    
-    rho11 = (1.0 - porosity) * rho_s * I + porosity * rho_f * tau
-    rho12 = porosity * rho_f * (tau - I)
-    rho22 = porosity * rho_f * tau
+
+    dirac = np.eye(3, dtype=float)
+    rhoA = porosity * rho_f *( tau - dirac)
+    rho11 = ( 1 - porosity) * rho_s * dirac + rhoA
+    rho12 = -rhoA
+    rho22 = porosity * rho_f * dirac + rhoA
     
     return rho11, rho12, rho22
 

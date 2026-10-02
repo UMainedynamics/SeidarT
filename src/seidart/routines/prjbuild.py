@@ -36,6 +36,7 @@ def generate_template(nmats, dim=2, **kwargs):
     template = {
         "Domain": {
             "dim": dim,
+            "numerical_model": "sgfdtd",
             "nx": None,
             "ny": 1,
             "nz": None,
@@ -75,10 +76,12 @@ def generate_template(nmats, dim=2, **kwargs):
                 "yind": 0,
                 "zind": 0,
                 "source_frequency": 1.0,
-                "x-z_rotation": 0,
-                "x-y_rotation": 0,
-                "y-z_rotation": 0,
-                "amplitude": 1.0,
+                "strike": 0,
+                "dip": 0,
+                "rake": 0,
+                "azimuth": 0,
+                "plunge": 0,
+                "magnitude": 1.0,
                 "source_wavelet": "gaus1",
                 "source_type": "ac"
             },
@@ -91,6 +94,29 @@ def generate_template(nmats, dim=2, **kwargs):
                     "gamma_yz": 0.0,
                     "gamma_xz": 0.0,
                     "gamma_xy": 0.0,
+                    "reference_frequency": 1.0
+                } for i in range(nmats)
+            ],
+            "Tortuosity": [
+                {
+                    "id": i,
+                    "tau_x": 0.0,
+                    "tau_y": 0.0,
+                    "tau_z": 0.0,
+                    "tau_yz": 0.0,
+                    "tau_xz": 0.0,
+                    "tau_xy": 0.0,
+                } for i in range(nmats)
+            ],
+            "Drag": [
+                {
+                    "id": i,
+                    "b_xx": 0.0,
+                    "b_yy": 0.0,
+                    "b_zz": 0.0,
+                    "b_yz": 0.0,
+                    "b_xz": 0.0,
+                    "b_xy": 0.0,
                     "reference_frequency": 1.0
                 } for i in range(nmats)
             ],
@@ -133,9 +159,8 @@ def generate_template(nmats, dim=2, **kwargs):
                 "yind": 0,
                 "zind": 0,
                 "source_frequency": 1.0,
-                "x-z_rotation": 0,
-                "x-y_rotation": 0,
-                "y-z_rotation": 0,
+                "azimuth": 0,
+                "plunge": 0,
                 "amplitude": 1.0,
                 "source_wavelet": "gaus1",
                 "source_type": "ps"
@@ -160,6 +185,17 @@ def generate_template(nmats, dim=2, **kwargs):
                     "s22": 0.0,
                     "s23": 0.0,
                     "s33": 0.0
+                } for i in range(nmats)
+            ],
+            "Electrokinetic_Coefficients": [
+                {
+                    "id": i,
+                    "l11": 0.0,
+                    "l12": 0.0,
+                    "l13": 0.0,
+                    "l22": 0.0,
+                    "l23": 0.0,
+                    "l33": 0.0
                 } for i in range(nmats)
             ]
         }

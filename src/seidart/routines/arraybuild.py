@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from glob2 import glob
 import argparse
+import os
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from typing import Tuple, Optional, Dict, List, Union
@@ -200,78 +201,131 @@ class Array:
         """
         Loads the time series data for all receivers
         """
+        
+        legacy_output = os.getenv("FDTD_LEGACY_OUTPUT")
+    
         # input rcx as an n-by-2 array integer values for their indices.
-        src_ind = (
-            self.source_xyz / \
-            np.array([self.domain.dx, self.domain.dy, self.domain.dz])
-        ).astype(int)
-        if self.domain.dim == 2.5:
+        if self.domain.dim == 3.0:
+            src_ind = (
+                self.source_xyz / \
+                np.array([self.domain.dx, self.domain.dy, self.domain.dz])
+            ).astype(int)
+        else:
+            src_ind = (
+                self.source_xyz[[0,2]]/ \
+                np.array([self.domain.dx, self.domain.dz])
+            ).astype(int)
+        
+        if self.domain.dim == 2.0:
+            self.domain.ny = None
+            
+        #!!!!!!!!!!============== Under Development ======================================
+        if self.is_seismic:
+            num_steps = self.seismic.time_steps
+            block_str = 'S25' 
+        else:
+            num_steps = self.electromag.time_steps
+            block_str = 'EM25'
+        
+        if not legacy_output:
+            block_pattern = f'{block_str}.*.' + '.'.join(src_ind.astype(str)) +'.blk.zst'
+            all_files = glob(block_pattern) 
+        else:
             all_files = glob(
                 self.channel + '*.' + '.'.join(src_ind.astype(str)) + '.dat'
             )
-        else: 
-            all_files = glob(
-                self.channel + '*.' + '.'.join(src_ind[np.array([0,2])].astype(str)) + '.dat'
-            )
-        all_files.sort()
-
-        block_pattern = None
-        if self.domain.dim == 2.5 and not all_files and self.channel in ['Ex', 'Ey', 'Ez']:
-            block_pattern = em25_block_pattern(src_ind)
-            if has_em25_blocks(pattern=block_pattern):
-                receiver_indices = np.asarray(self.receiver_indices, dtype=int)
-                single_receiver = receiver_indices.ndim == 1 or len(receiver_indices) == 1
-                if single_receiver:
-                    receiver_indices = receiver_indices.reshape(1, 3)
-
-                block_series = extract_em25_timeseries(
-                    receiver_indices,
-                    channels=[self.channel],
-                    pattern=block_pattern,
-                    dtype=np.float32 if self.single_precision else np.float64,
-                )
-                self.timeseries = block_series[self.channel]
-                if single_receiver and self.timeseries.ndim == 2:
-                    self.timeseries = self.timeseries[:, 0]
-                return
-
+            all_files.sort()
+        
         m = len(all_files)
+            
         if len(self.receiver_indices) == 1:
             n = 1
-            timeseries = np.zeros([m])
+            timeseries = np.zeros([num_steps])
             # Sometimes the 1 row array needs to be
             if self.receiver_indices.ndim == 2:
                 self.receiver_indices = self.receiver_indices[0]
         else:
             n = len(self.receiver_indices[:,0])
-            timeseries = np.zeros([m,n])   
-                    
-        if self.domain.dim == 2.0:
-            self.domain.ny = None
+            timeseries = np.zeros([num_steps,n])   
         
-        if self.domain.dim == 2.5:
-            for i in range(m):
-                npdat = read_dat(
-                    all_files[i], 
-                    # self.channel, 
-                    self.domain, 
-                    single = self.single_precision
-                )
-                if n == 1:
-                    timeseries[:,i] = npdat.real[
-                        int(self.receiver_indices[2]), 
-                        int(self.receiver_indices[1]), 
-                        int(self.receiver_indices[0])
-                    ]
-                else:
-                    for j in range(0, n):
-                        # Don't forget x is columns and z is rows
-                        timeseries[i,j] = npdat.real[
-                            int(self.receiver_indices[j,2]),
-                            int(self.receiver_indices[j,1]),
-                            int(self.receiver_indices[j,0])
+        if legacy_output:
+            if self.domain.dim == 3.0:
+                for i in range(m):
+                    npdat = read_dat(
+                        all_files[i], 
+                        # self.channel, 
+                        self.domain, 
+                        single = self.single_precision
+                    )
+                    if n == 1:
+                        timeseries[:,i] = npdat.real[
+                            int(self.receiver_indices[2]), 
+                            int(self.receiver_indices[1]), 
+                            int(self.receiver_indices[0])
                         ]
-        else:
+                    else:
+                        for j in range(0, n):
+                            # Don't forget x is columns and z is rows
+                            timeseries[i,j] = npdat.real[
+                                int(self.receiver_indices[j,2]),
+                                int(self.receiver_indices[j,1]),
+                                int(self.receiver_indices[j,0])
+                            ]
+            else:
+                for i in range(m):
+                    npdat = read_dat(
+                        all_files[i], 
+                        # self.channel, 
+                        self.domain, 
+                        single = self.single_precision
+                    )
+                    if n == 1:
+                        timeseries[i] = npdat.real[
+                            int(self.receiver_indices[2]), int(self.receiver_indices[0])
+                        ]
+                    else:
+                        for j in range(n):
+                            # Don't forget x is columns and z is rows
+                            timeseries[i,j] = npdat.real[
+                                int(self.receiver_indices[j,2]),
+                                int(self.receiver_indices[j,0])
+                            ]
+        else: # Block formatted files
+            for ind in range(m):
+                block_file = all_files[ind]
+                block_range = block_file.split('.')[1] 
+                block_ii = int(block_range.split('-')[0])-1
+                block_jj = int(block_range.split('-')[1])
+                data = read_block(block_file, channels = [self.channel]) #dat is a dictionary with metadata, fields, scales
+                
+                
+        #!!!!!!!!!!============== Under Development ======================================
+                    
+
+        
+        # if self.domain.dim == 3.0:
+        #     for i in range(m):
+        #         npdat = read_dat(
+        #             all_files[i], 
+        #             # self.channel, 
+        #             self.domain, 
+        #             single = self.single_precision
+        #         )
+        #         if n == 1:
+        #             timeseries[:,i] = npdat.real[
+        #                 int(self.receiver_indices[2]), 
+        #                 int(self.receiver_indices[1]), 
+        #                 int(self.receiver_indices[0])
+        #             ]
+        #         else:
+        #             for j in range(0, n):
+        #                 # Don't forget x is columns and z is rows
+        #                 timeseries[i,j] = npdat.real[
+        #                     int(self.receiver_indices[j,2]),
+        #                     int(self.receiver_indices[j,1]),
+        #                     int(self.receiver_indices[j,0])
+        #                 ]
+        # else:
             for i in range(m):
                 npdat = read_dat(
                     all_files[i], 
